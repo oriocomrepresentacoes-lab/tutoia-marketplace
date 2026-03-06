@@ -118,6 +118,9 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 export const paymentWebhook = async (req: Request, res: Response) => {
     try {
         const { action, data, type } = req.body;
+        console.log('--- WEBHOOK RECEIVED ---');
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        console.log('Query:', JSON.stringify(req.query, null, 2));
 
         // Mercado Pago sends notifications in a few formats:
         // 1. Webhooks: { "action": "payment.updated", "data": { "id": "123456" } }
@@ -129,6 +132,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
             paymentId = req.body.data?.id;
         }
 
+        console.log('Resolved Payment ID:', paymentId);
+
         if (paymentId) {
             // Fetch exact payment status from MP API to avoid spoofing
             const response = await fetch(`${MP_API_URL}/${paymentId}`, {
@@ -139,7 +144,9 @@ export const paymentWebhook = async (req: Request, res: Response) => {
 
             if (response.ok) {
                 const mpData: any = await response.json();
+                console.log('MP Payment Data:', JSON.stringify(mpData, null, 2));
                 const externalReference = mpData.external_reference; // Our transaction ID
+                console.log('External Reference (Transaction ID):', externalReference);
 
                 if (externalReference) {
                     const transaction = await prisma.transaction.findUnique({
