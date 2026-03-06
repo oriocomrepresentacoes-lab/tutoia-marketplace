@@ -20,7 +20,7 @@ export const Plans = () => {
                 <div className="box-card" style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ textAlign: 'center', padding: '1rem 0', borderBottom: '1px solid var(--border)' }}>
                         <h2 style={{ fontSize: '1.5rem', color: 'var(--primary)' }}>Destaque com Banner</h2>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>R$ 50,00</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>R$ 0,10</div>
                         <p className="text-light">Válido por 20 dias</p>
                     </div>
                     <div style={{ padding: '1.5rem', flex: 1 }}>
@@ -50,7 +50,7 @@ export const Plans = () => {
                 <div className="box-card" style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ textAlign: 'center', padding: '1rem 0', borderBottom: '1px solid var(--border)' }}>
                         <h2 style={{ fontSize: '1.5rem', color: 'var(--primary)' }}>Mais Imagens</h2>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>R$ 25,00</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>R$ 0,10</div>
                         <p className="text-light">Válido até a desativação do anúncio</p>
                     </div>
                     <div style={{ padding: '1.5rem', flex: 1 }}>

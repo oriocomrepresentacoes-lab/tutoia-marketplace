@@ -67,7 +67,7 @@ export const Checkout = () => {
     }
 
     const planName = planId === 'BANNER' ? 'Destaque com Banner' : 'Mais Imagens';
-    const planPrice = planId === 'BANNER' ? 50.0 : 25.0;
+    const planPrice = 0.10; // Original: planId === 'BANNER' ? 50.0 : 25.0;
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
