@@ -24,8 +24,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             payer_cpf // For PIX
         } = req.body;
 
-        // Pricing logic (Lowered for production testing)
-        const transaction_amount = type === 'BANNER' ? 1.00 : 1.00; // Original: type === 'BANNER' ? 50.00 : 25.00;
+        // Pricing logic
+        const transaction_amount = type === 'BANNER' ? 50.00 : 25.00;
         const description = type === 'BANNER' ? 'Adesão de Banner - TutShop' : 'Adesão de +Imagens - TutShop';
 
         // Create transaction in DB
