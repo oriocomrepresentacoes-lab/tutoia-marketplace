@@ -185,12 +185,15 @@ export const Checkout = () => {
                     identificationNumber: cpf.replace(/\D/g, ''),
                 };
 
+                console.log('Generating Card Token with Data:', { ...cardData, cardNumber: '****' });
                 const cardToken = await mp.createCardToken(cardData);
 
                 if (!cardToken || !cardToken.id) {
-                    throw new Error('Não foi possível gerar o token do cartão. Verifique os dados.');
+                    console.error('Mercado Pago Token Error:', cardToken);
+                    throw new Error('O Mercado Pago não conseguiu validar seu cartão. Verifique os números e o CVV.');
                 }
 
+                console.log('Card Token Generated Successfully:', cardToken.id);
                 payload.token = cardToken.id;
                 payload.payment_method_id = finalBrand;
                 payload.installments = installments;
@@ -307,6 +310,9 @@ export const Checkout = () => {
                     <div className="summary-item total">
                         <span>Total a pagar:</span>
                         <strong>R$ {planPrice.toFixed(2).replace('.', ',')}</strong>
+                    </div>
+                    <div style={{ textAlign: 'right', marginTop: '1rem', opacity: 0.5, fontSize: '0.7rem' }}>
+                        Versão do Sistema: 1.2.0-PROD
                     </div>
                 </div>
 
