@@ -17,6 +17,8 @@ export const Checkout = () => {
     const [loading, setLoading] = useState(false);
     const [pixData, setPixData] = useState<any>(null);
     const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+    const [detectedBrand, setDetectedBrand] = useState<string>('');
+    const [brandLogo, setBrandLogo] = useState<string>('');
 
     // Socket.io for real-time confirmation
     useEffect(() => {
@@ -43,10 +45,35 @@ export const Checkout = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [cpf, setCpf] = useState('');
-    const [cardNumber, setCardNumber] = useState(''); // mock
-    const [cardExpiry, setCardExpiry] = useState(''); // mock
-    const [cardCvv, setCardCvv] = useState(''); // mock
+    const [cardNumber, setCardNumber] = useState('');
+    const [cardExpiry, setCardExpiry] = useState('');
+    const [cardCvv, setCardCvv] = useState('');
     const [installments, setInstallments] = useState(1);
+
+    // Live BIN detection
+    useEffect(() => {
+        const bin = cardNumber.replace(/\s/g, '').substring(0, 6);
+        if (bin.length >= 6) {
+            const identifyBrand = async () => {
+                try {
+                    if (!(window as any).MercadoPago) return;
+                    const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
+                    const paymentMethods = await mp.getPaymentMethods({ bin });
+                    if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
+                        const brand = paymentMethods.results[0];
+                        setDetectedBrand(brand.id);
+                        setBrandLogo(brand.secure_thumbnail);
+                    }
+                } catch (err) {
+                    console.error('BIN Detection Error:', err);
+                }
+            };
+            identifyBrand();
+        } else {
+            setDetectedBrand('');
+            setBrandLogo('');
+        }
+    }, [cardNumber]);
 
     // Formatters
     const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,16 +158,21 @@ export const Checkout = () => {
 
                 const cardNumberValue = cardNumber.replace(/\s/g, '');
 
-                // Identify card brand (payment_method_id) dynamically
-                let identifiedBrand = 'master'; // fallback
-                try {
-                    const paymentMethods = await mp.getPaymentMethods({ bin: cardNumberValue.substring(0, 6) });
-                    if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
-                        identifiedBrand = paymentMethods.results[0].id;
-                        console.log('Identified Card Brand:', identifiedBrand);
+                // Use detected brand or try one last time
+                let finalBrand = detectedBrand;
+                if (!finalBrand) {
+                    try {
+                        const paymentMethods = await mp.getPaymentMethods({ bin: cardNumberValue.substring(0, 6) });
+                        if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
+                            finalBrand = paymentMethods.results[0].id;
+                        }
+                    } catch (brandErr) {
+                        console.error('Final Brand Identification Error:', brandErr);
                     }
-                } catch (brandErr) {
-                    console.error('Brand Identification Error:', brandErr);
+                }
+
+                if (!finalBrand) {
+                    throw new Error('Não foi possível identificar a bandeira do cartão. Verifique o número.');
                 }
 
                 const cardData = {
@@ -160,7 +192,7 @@ export const Checkout = () => {
                 }
 
                 payload.token = cardToken.id;
-                payload.payment_method_id = identifiedBrand;
+                payload.payment_method_id = finalBrand;
                 payload.installments = installments;
             } catch (err: any) {
                 console.error('Tokenization Error:', err);
@@ -311,12 +343,26 @@ export const Checkout = () => {
 
                         {paymentMethod === 'credit_card' && (
                             <div className="card-form">
-                                <p className="text-light" style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
-                                    (Modo Simulação: Token de cartão gerado automaticamente para testes local)
-                                </p>
                                 <div className="form-group">
-                                    <label>Número do Cartão (Simulado)</label>
-                                    <input type="text" className="input" value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" />
+                                    <label>Número do Cartão</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={cardNumber}
+                                            onChange={handleCardNumberChange}
+                                            placeholder="0000 0000 0000 0000"
+                                            required
+                                        />
+                                        {brandLogo && (
+                                            <img
+                                                src={brandLogo}
+                                                alt={detectedBrand}
+                                                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', height: '20px' }}
+                                            />
+                                        )}
+                                    </div>
+                                    {detectedBrand && <small className="text-light">Bandeira detectada: <strong style={{ textTransform: 'uppercase' }}>{detectedBrand}</strong></small>}
                                 </div>
                                 <div style={{ display: 'flex', gap: '1rem' }}>
                                     <div className="form-group" style={{ flex: 1 }}>
