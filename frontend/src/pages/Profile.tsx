@@ -20,7 +20,7 @@ export const Profile = () => {
     useEffect(() => {
         if (user) {
             setFormData({ name: user.name, phone: user.phone || '', password: '' });
-            setPreviewUrl(user.profile_picture ? (user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:5000${user.profile_picture}`) : '');
+            setPreviewUrl(user.profile_picture || '');
         }
     }, [user]);
 
