@@ -124,7 +124,10 @@ export const Checkout = () => {
                 const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
 
                 const [expiryMonth, expiryYear] = cardExpiry.split('/');
-                const fullExpiryYear = `20${expiryYear}`;
+                let fullExpiryYear = expiryYear;
+                if (expiryYear && expiryYear.length === 2) {
+                    fullExpiryYear = `20${expiryYear}`;
+                }
 
                 const cardNumberValue = cardNumber.replace(/\s/g, '');
 
