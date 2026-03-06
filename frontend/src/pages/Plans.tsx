@@ -48,7 +48,7 @@ export const Plans = () => {
             <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3rem' }}>
                 <PlanCard
                     title="Destaque com Banner"
-                    price="50,00"
+                    price="1,00"
                     features={[
                         "Banner rotativo na home",
                         "Destaque no topo da lista",
@@ -60,7 +60,7 @@ export const Plans = () => {
                 />
                 <PlanCard
                     title="Mais Imagens"
-                    price="25,00"
+                    price="1,00"
                     features={[
                         "Até 10 fotos por anúncio",
                         "Selo de anúncio verificado",
