@@ -6,7 +6,7 @@ import { io } from '../index'; // import Socket server to emit if needed, though
 export const getConversations = async (req: AuthRequest, res: Response) => {
     try {
         const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         // Get distinct conversations for the user
         const conversations = await prisma.message.findMany({
@@ -44,7 +44,7 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
 
         res.json(Array.from(chatMap.values()));
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch conversations.' });
+        res.status(500).json({ error: 'Erro ao buscar as conversas.' });
     }
 };
 
@@ -54,7 +54,7 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
         const ad_id = req.params.ad_id as string;
         const user_id = req.user?.id;
 
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         const messages = await prisma.message.findMany({
             where: {
@@ -69,7 +69,7 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
 
         res.json(messages);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch messages.' });
+        res.status(500).json({ error: 'Erro ao buscar as mensagens.' });
     }
 };
 
@@ -78,7 +78,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const { receiver_id, ad_id, content } = req.body;
         const sender_id = req.user?.id;
 
-        if (!sender_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!sender_id) return res.status(401).json({ error: 'Não autorizado' });
 
         const message = await prisma.message.create({
             data: {
@@ -95,6 +95,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
         res.status(201).json(message);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to send message.' });
+        res.status(500).json({ error: 'Erro ao enviar a mensagem.' });
     }
 };

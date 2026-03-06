@@ -7,7 +7,7 @@ export const getCategories = async (req: Request, res: Response) => {
         const categories = await prisma.category.findMany();
         res.json(categories);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch categories.' });
+        res.status(500).json({ error: 'Erro ao buscar as categorias.' });
     }
 };
 
@@ -19,6 +19,6 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
         });
         res.status(201).json(category);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to create category.' });
+        res.status(500).json({ error: 'Erro ao criar a categoria.' });
     }
 };

@@ -8,7 +8,7 @@ const router = Router();
 router.get('/my-plans', authenticate, async (req: AuthRequest, res) => {
     try {
         const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         const transactions = await prisma.transaction.findMany({
             where: {
@@ -32,7 +32,7 @@ router.get('/my-plans', authenticate, async (req: AuthRequest, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch active plans' });
+        res.status(500).json({ error: 'Erro ao buscar planos ativos' });
     }
 });
 

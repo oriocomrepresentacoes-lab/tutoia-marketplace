@@ -8,10 +8,10 @@ const MP_API_URL = 'https://api.mercadopago.com/v1/payments';
 export const createPayment = async (req: AuthRequest, res: Response) => {
     try {
         const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         const user = await prisma.user.findUnique({ where: { id: user_id } });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
         const {
             type, // 'BANNER' | 'AD_IMAGES'
@@ -82,7 +82,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         if (!isResponseOk) {
             console.error('Mercado Pago Error:', mpData);
-            return res.status(400).json({ error: 'Payment failed at gateway', details: mpData });
+            return res.status(400).json({ error: 'Falha no pagamento no gateway', details: mpData });
         }
 
         // Update transaction with MP ID
@@ -105,7 +105,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Internal server error while creating payment' });
+        res.status(500).json({ error: 'Erro interno do servidor ao criar o pagamento' });
     }
 };
 

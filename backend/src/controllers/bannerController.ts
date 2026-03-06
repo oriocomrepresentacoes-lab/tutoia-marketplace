@@ -20,7 +20,7 @@ export const getActiveBanners = async (req: Request, res: Response) => {
 
         res.json(banners);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch banners.' });
+        res.status(500).json({ error: 'Erro ao buscar os banners.' });
     }
 };
 
@@ -33,12 +33,12 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         const user_id = req.user?.id;
         let image = '';
 
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         if (req.file) {
             image = req.file.path;
         } else {
-            return res.status(400).json({ error: 'Image is required for banner.' });
+            return res.status(400).json({ error: 'A imagem é obrigatória para o banner.' });
         }
 
         // Verify if user has an active banner transaction

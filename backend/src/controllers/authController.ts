@@ -11,7 +11,7 @@ export const register = async (req: Request, res: Response) => {
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered.' });
+            return res.status(400).json({ error: 'Este e-mail já está cadastrado.' });
         }
 
         const password_hash = await bcrypt.hash(password, 10);
@@ -26,9 +26,9 @@ export const register = async (req: Request, res: Response) => {
             }
         });
 
-        res.status(201).json({ message: 'User created successfully', user: { id: user.id, name: user.name, email: user.email } });
+        res.status(201).json({ message: 'Usuário criado com sucesso', user: { id: user.id, name: user.name, email: user.email } });
     } catch (error) {
-        res.status(500).json({ error: 'Registration failed.' });
+        res.status(500).json({ error: 'Erro ao realizar o cadastro.' });
     }
 };
 
@@ -38,12 +38,12 @@ export const login = async (req: Request, res: Response) => {
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password.' });
+            return res.status(400).json({ error: 'E-mail ou senha inválidos.' });
         }
 
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
-            return res.status(400).json({ error: 'Invalid email or password.' });
+            return res.status(400).json({ error: 'E-mail ou senha inválidos.' });
         }
 
         const token = jwt.sign(
@@ -54,6 +54,6 @@ export const login = async (req: Request, res: Response) => {
 
         res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, profile_picture: user.profile_picture } });
     } catch (error) {
-        res.status(500).json({ error: 'Login failed.' });
+        res.status(500).json({ error: 'Erro ao realizar o login.' });
     }
 };

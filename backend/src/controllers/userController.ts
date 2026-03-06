@@ -6,7 +6,7 @@ import { AuthRequest } from '../middlewares/auth';
 export const updateProfile = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
-        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (!userId) return res.status(401).json({ error: 'Não autorizado' });
 
         const { name, phone, password } = req.body;
 
@@ -29,26 +29,26 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
             select: { id: true, name: true, email: true, phone: true, role: true, profile_picture: true }
         });
 
-        res.json({ message: 'Profile updated successfully', user: updatedUser });
+        res.json({ message: 'Perfil atualizado com sucesso', user: updatedUser });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to update profile.' });
+        res.status(500).json({ error: 'Erro ao atualizar o perfil.' });
     }
 };
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
-        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (!userId) return res.status(401).json({ error: 'Não autorizado' });
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { id: true, name: true, email: true, phone: true, role: true, profile_picture: true }
         });
 
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
         res.json(user);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        res.status(500).json({ error: 'Erro ao buscar o perfil' });
     }
 };

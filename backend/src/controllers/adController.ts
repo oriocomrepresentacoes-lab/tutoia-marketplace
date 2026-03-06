@@ -7,7 +7,7 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         const { title, description, price, type, city, category_id } = req.body;
         const user_id = req.user?.id;
 
-        if (!user_id) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         let maxImages = 4;
 
@@ -62,7 +62,7 @@ export const createAd = async (req: AuthRequest, res: Response) => {
 
         res.status(201).json(ad);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to create ad.' });
+        res.status(500).json({ error: 'Erro ao criar o anúncio.' });
     }
 };
 
@@ -140,7 +140,7 @@ export const getAds = async (req: Request, res: Response) => {
 
         res.json(formattedAds);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch ads.' });
+        res.status(500).json({ error: 'Erro ao buscar anúncios.' });
     }
 };
 
@@ -152,14 +152,14 @@ export const getAdById = async (req: Request, res: Response) => {
             include: { user: { select: { name: true, phone: true, profile_picture: true } }, category: true },
         });
 
-        if (!ad) return res.status(404).json({ error: 'Ad not found.' });
+        if (!ad) return res.status(404).json({ error: 'Anúncio não encontrado.' });
 
         // increment view count
         await prisma.ad.update({ where: { id }, data: { views: { increment: 1 } } });
 
         res.json({ ...ad, images: JSON.parse(ad.images) });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch ad.' });
+        res.status(500).json({ error: 'Erro ao buscar o anúncio.' });
     }
 };
 
@@ -170,15 +170,15 @@ export const deleteAd = async (req: AuthRequest, res: Response) => {
         const role = req.user?.role;
 
         const ad = await prisma.ad.findUnique({ where: { id } });
-        if (!ad) return res.status(404).json({ error: 'Ad not found' });
+        if (!ad) return res.status(404).json({ error: 'Anúncio não encontrado' });
 
         if (ad.user_id !== user_id && role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Unauthorized' });
+            return res.status(403).json({ error: 'Não autorizado' });
         }
 
         await prisma.ad.delete({ where: { id } });
-        res.json({ message: 'Ad deleted successfully' });
+        res.json({ message: 'Anúncio excluído com sucesso' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to delete ad' });
+        res.status(500).json({ error: 'Erro ao excluir o anúncio' });
     }
 };
