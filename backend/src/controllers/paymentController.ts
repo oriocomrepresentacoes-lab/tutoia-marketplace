@@ -81,8 +81,14 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         const isResponseOk = response.ok;
 
         if (!isResponseOk) {
-            console.error('Mercado Pago Error:', mpData);
-            return res.status(400).json({ error: 'Falha no pagamento no gateway', details: mpData });
+            console.error('--- MERCADO PAGO GATEWAY ERROR ---');
+            console.error('Status Code:', response.status);
+            console.error('Error Data:', JSON.stringify(mpData, null, 2));
+            console.error('--- END ERROR ---');
+            return res.status(400).json({
+                error: 'Falha no pagamento no gateway',
+                details: mpData
+            });
         }
 
         // Update transaction with MP ID
