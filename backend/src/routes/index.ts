@@ -18,6 +18,7 @@ router.use('/banners', bannerRoutes);
 router.use('/messages', messageRoutes);
 router.use('/admin', adminRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/payment', paymentRoutes); // Alias to avoid plural/singular confusion in webhook URL
 router.use('/user-plans', planRoutes);
 router.use('/users', userRoutes);
 
