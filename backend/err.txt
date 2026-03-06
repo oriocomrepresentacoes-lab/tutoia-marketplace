@@ -1,0 +1,18 @@
+src/controllers/adController.ts(80,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/adController.ts(87,43): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/adminController.ts(33,43): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/adminController.ts(45,45): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/bannerController.ts(58,47): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/bannerController.ts(68,47): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/messageController.ts(15,17): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.
+src/controllers/messageController.ts(17,43): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.
+src/controllers/messageController.ts(18,23): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Message"> | undefined'.

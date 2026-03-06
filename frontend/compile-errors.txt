@@ -1,0 +1,2 @@
+﻿src/pages/Dashboard.tsx(3,18): error TS6133: 'Edit' is declared but its value is never read.
+src/pages/Explore.tsx(2,27): error TS6133: 'Link' is declared but its value is never read.

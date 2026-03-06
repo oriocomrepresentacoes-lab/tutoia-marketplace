@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = "postgresql://postgres.asaesarragbfpjetznpl:A%2BfTzBSqny65ZcL@aws-1-us-east-2.pooler.supabase.com:5432/postgres?pgbouncer=true&connection_limit=1"
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  password_hash  String
+  phone          String?
+  city           String?
+  profile_picture String?
+  role           String    @default("USER") // USER, ADMIN, ADVERTISER
+  active         Boolean   @default(true) // For disabling/banning users
+  created_at     DateTime  @default(now())
+
+  ads            Ad[]
+  sent_messages     Message[] @relation("SentMessages")
+  received_messages Message[] @relation("ReceivedMessages")
+  transactions   Transaction[]
+  banners        Banner[]
+
+  @@map("users")
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String
+  icon  String?
+
+  ads   Ad[]
+
+  @@map("categories")
+}
+
+model Ad {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  type        String   // PRODUCT or SERVICE
+  images      String   // JSON stringified array of URLs
+  city        String
+  status      String   @default("ACTIVE") // ACTIVE, SOLD, INACTIVE
+  views       Int      @default(0)
+  created_at  DateTime @default(now())
+
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  category_id String
+  category    Category @relation(fields: [category_id], references: [id], onDelete: Restrict)
+
+  messages    Message[]
+
+  @@map("anuncios")
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  content     String
+  read        Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  sender_id   String
+  sender      User     @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  receiver_id String
+  receiver    User     @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
+
+  ad_id       String
+  ad          Ad       @relation(fields: [ad_id], references: [id], onDelete: Cascade)
+
+  @@map("mensagens")
+}
+
+model Banner {
+  id          String   @id @default(uuid())
+  title       String
+  image       String
+  link        String?
+  position    String   // home_topo, home_meio, lateral, categoria, rodape
+  start_date  DateTime?
+  end_date    DateTime?
+  active      Boolean  @default(true)
+  clicks      Int      @default(0)
+  views       Int      @default(0)
+  created_at  DateTime @default(now())
+
+  user_id     String?
+  user        User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("banners")
+}
+
+model Transaction {
+  id                 String   @id @default(uuid())
+  user_id            String
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  type               String   // BANNER, AD_IMAGES
+  status             String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  payment_id         String?  // ID do mercado pago
+  payment_method     String?  // credit_card, pix
+  transaction_amount Float
+  ad_id              String?  // Opcional: Se a transação for de "Mais imagens" ligada a um anúncio específico
+  expires_at         DateTime? // Data de expiração 20 dias após a aprovação
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  @@map("transactions")
+}
