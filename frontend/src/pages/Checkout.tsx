@@ -126,8 +126,22 @@ export const Checkout = () => {
                 const [expiryMonth, expiryYear] = cardExpiry.split('/');
                 const fullExpiryYear = `20${expiryYear}`;
 
+                const cardNumberValue = cardNumber.replace(/\s/g, '');
+
+                // Identify card brand (payment_method_id) dynamically
+                let identifiedBrand = 'master'; // fallback
+                try {
+                    const paymentMethods = await mp.getPaymentMethods({ bin: cardNumberValue.substring(0, 6) });
+                    if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
+                        identifiedBrand = paymentMethods.results[0].id;
+                        console.log('Identified Card Brand:', identifiedBrand);
+                    }
+                } catch (brandErr) {
+                    console.error('Brand Identification Error:', brandErr);
+                }
+
                 const cardData = {
-                    cardNumber: cardNumber.replace(/\s/g, ''),
+                    cardNumber: cardNumberValue,
                     cardholderName: `${firstName} ${lastName}`,
                     cardExpirationMonth: expiryMonth,
                     cardExpirationYear: fullExpiryYear,
@@ -143,7 +157,7 @@ export const Checkout = () => {
                 }
 
                 payload.token = cardToken.id;
-                payload.payment_method_id = 'master'; // brand - could be dynamic but fixed for test
+                payload.payment_method_id = identifiedBrand;
                 payload.installments = installments;
             } catch (err: any) {
                 console.error('Tokenization Error:', err);

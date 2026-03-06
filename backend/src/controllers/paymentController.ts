@@ -66,6 +66,11 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
+        console.log('--- SENDING TO MERCADO PAGO ---');
+        console.log('URL:', MP_API_URL);
+        console.log('Idempotency-Key:', idempotencyKey);
+        console.log('Payload:', JSON.stringify(payload, null, 2));
+
         // Send to Mercado Pago
         const response = await fetch(MP_API_URL, {
             method: 'POST',
@@ -78,6 +83,9 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         });
 
         const mpData = await response.json();
+        console.log('--- MERCADO PAGO RESPONSE ---');
+        console.log('Status:', response.status);
+        console.log('Data:', JSON.stringify(mpData, null, 2));
         const isResponseOk = response.ok;
 
         if (!isResponseOk) {
