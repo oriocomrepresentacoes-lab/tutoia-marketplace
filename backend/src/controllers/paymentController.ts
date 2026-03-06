@@ -24,8 +24,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             payer_cpf // For PIX
         } = req.body;
 
-        // Pricing logic (Mock values)
-        const transaction_amount = type === 'BANNER' ? 50.00 : 25.00;
+        // Pricing logic (Lowered for production testing)
+        const transaction_amount = type === 'BANNER' ? 0.10 : 0.10; // Original: type === 'BANNER' ? 50.00 : 25.00;
         const description = type === 'BANNER' ? 'Adesão de Banner - Tutoia Marketplace' : 'Adesão de +Imagens - Tutoia Marketplace';
 
         // Create transaction in DB
