@@ -66,36 +66,19 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        let mpData: any;
-        let isResponseOk = true;
+        // Send to Mercado Pago
+        const response = await fetch(MP_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'X-Idempotency-Key': idempotencyKey
+            },
+            body: JSON.stringify(payload)
+        });
 
-        if (token === 'tok_test_12345' || payment_method_id === 'pix') {
-            // Mocking for development UI tests
-            mpData = {
-                id: 'mock_12345',
-                status: payment_method_id === 'pix' ? 'pending' : 'approved',
-                point_of_interaction: payment_method_id === 'pix' ? {
-                    transaction_data: {
-                        qr_code: '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5913Tutoia Market6008BRASILIA62070503***63041A2B',
-                        qr_code_base64: '' // We will render it via URL on the frontend if empty
-                    }
-                } : {}
-            };
-        } else {
-            // Send to Mercado Pago
-            const response = await fetch(MP_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                    'Content-Type': 'application/json',
-                    'X-Idempotency-Key': idempotencyKey
-                },
-                body: JSON.stringify(payload)
-            });
-
-            mpData = await response.json();
-            isResponseOk = response.ok;
-        }
+        const mpData = await response.json();
+        const isResponseOk = response.ok;
 
         if (!isResponseOk) {
             console.error('Mercado Pago Error:', mpData);
@@ -141,25 +124,6 @@ export const paymentWebhook = async (req: Request, res: Response) => {
         }
 
         if (paymentId) {
-            // Mock payment bypass for local testing
-            if (paymentId === 'mock_12345') {
-                const transaction = await prisma.transaction.findFirst({
-                    where: { payment_id: 'mock_12345' },
-                    orderBy: { created_at: 'desc' }
-                });
-
-                if (transaction && transaction.status !== 'APPROVED') {
-                    await prisma.transaction.update({
-                        where: { id: transaction.id },
-                        data: {
-                            status: 'APPROVED',
-                            expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)
-                        }
-                    });
-                }
-                return res.status(200).send('OK');
-            }
-
             // Fetch exact payment status from MP API to avoid spoofing
             const response = await fetch(`${MP_API_URL}/${paymentId}`, {
                 headers: {
