@@ -88,10 +88,44 @@ export const Checkout = () => {
             payload.payer_last_name = lastName;
             payload.payer_cpf = cpf.replace(/\D/g, ''); // API exigence: numeric only
         } else {
-            // Mock credit card token for tests
-            payload.token = 'tok_test_12345'; // O mercado pago requer um token real gerado pelo SDK deles (MercadoPago.js). Estamos simulando.
-            payload.payment_method_id = 'master'; // brand
-            payload.installments = installments;
+            // Credit card REAL tokenization
+            try {
+                if (!(window as any).MercadoPago) {
+                    alert('Erro ao carregar o SDK do Mercado Pago. Recarregue a página.');
+                    setLoading(false);
+                    return;
+                }
+
+                const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
+
+                const [expiryMonth, expiryYear] = cardExpiry.split('/');
+                const fullExpiryYear = `20${expiryYear}`;
+
+                const cardData = {
+                    cardNumber: cardNumber.replace(/\s/g, ''),
+                    cardholderName: `${firstName} ${lastName}`,
+                    cardExpirationMonth: expiryMonth,
+                    cardExpirationYear: fullExpiryYear,
+                    securityCode: cardCvv,
+                    identificationType: 'CPF',
+                    identificationNumber: cpf.replace(/\D/g, ''),
+                };
+
+                const cardToken = await mp.createCardToken(cardData);
+
+                if (!cardToken || !cardToken.id) {
+                    throw new Error('Não foi possível gerar o token do cartão. Verifique os dados.');
+                }
+
+                payload.token = cardToken.id;
+                payload.payment_method_id = 'master'; // brand - could be dynamic but fixed for test
+                payload.installments = installments;
+            } catch (err: any) {
+                console.error('Tokenization Error:', err);
+                alert('Erro na validação do cartão: ' + err.message);
+                setLoading(false);
+                return;
+            }
         }
 
         try {
@@ -103,11 +137,11 @@ export const Checkout = () => {
             if (data) {
                 if (paymentMethod === 'pix' && data.qr_code_base64) {
                     setPixData(data);
-                } else if (data.status === 'approved') {
-                    alert('Pagamento aprovado com sucesso!');
+                } else if (data.status === 'approved' || data.status === 'in_process') {
+                    alert(data.status === 'approved' ? 'Pagamento aprovado com sucesso!' : 'Pagamento em processamento. Verifique em instantes.');
                     navigate('/dashboard');
                 } else {
-                    alert('Pagamento em processamento ou pendente. Verifique o status depois.');
+                    alert('Pagamento pendente ou recusado. Verifique o status depois.');
                     navigate('/dashboard');
                 }
             }
