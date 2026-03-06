@@ -112,7 +112,10 @@ export const Checkout = () => {
                 }
             }
         } catch (error: any) {
-            alert('Erro ao processar pagamento: ' + error.message);
+            console.error('Checkout Error:', error);
+            console.error('Error Details:', error.data);
+            const detailMsg = error.data?.details?.message || error.data?.details?.cause?.[0]?.description || '';
+            alert('Erro ao processar pagamento: ' + error.message + (detailMsg ? ` (${detailMsg})` : ''));
         } finally {
             setLoading(false);
         }

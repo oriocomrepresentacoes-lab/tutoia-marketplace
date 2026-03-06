@@ -21,7 +21,9 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'A requisição à API falhou');
+        const error: any = new Error(errorData.error || 'A requisição à API falhou');
+        error.data = errorData;
+        throw error;
     }
 
     // Handle empty responses
