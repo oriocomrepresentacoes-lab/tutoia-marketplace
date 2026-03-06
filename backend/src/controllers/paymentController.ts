@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
 
-const MP_ACCESS_TOKEN = 'TEST-8717720018985870-081800-c90646584c30ef51e25ccd2acf83eed0-225625396';
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || 'TEST-8717720018985870-081800-c90646584c30ef51e25ccd2acf83eed0-225625396';
 const MP_API_URL = 'https://api.mercadopago.com/v1/payments';
 
 export const createPayment = async (req: AuthRequest, res: Response) => {
