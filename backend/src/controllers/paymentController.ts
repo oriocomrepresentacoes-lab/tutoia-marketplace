@@ -153,8 +153,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                         where: { id: externalReference }
                     });
 
-                    if (transaction && transaction.status !== 'APPROVED') {
-                        if (mpData.status === 'approved') {
+                    if (transaction) {
+                        if (mpData.status === 'approved' && transaction.status !== 'APPROVED') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
                                 data: {
@@ -163,7 +163,19 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                                     expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)
                                 }
                             });
-                        } else if (mpData.status === 'rejected' || mpData.status === 'cancelled') {
+
+                            // Real-time update via Socket.io
+                            const { io } = require('../index');
+                            if (io) {
+                                io.to(transaction.user_id).emit('payment_approved', {
+                                    transaction_id: externalReference,
+                                    type: transaction.type,
+                                    message: transaction.type === 'BANNER'
+                                        ? 'Seu pagamento do Banner foi aprovado! Agora você pode criar seu banner.'
+                                        : 'Seu pagamento de Mais Imagens foi aprovado! Agora você pode postar anúncios com até 10 fotos.'
+                                });
+                            }
+                        } else if ((mpData.status === 'rejected' || mpData.status === 'cancelled') && transaction.status === 'PENDING') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
                                 data: {

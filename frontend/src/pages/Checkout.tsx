@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
-import './Checkout.css'; // Let's make a simple css
+import { io as socketIO } from 'socket.io-client';
+import './Checkout.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const Checkout = () => {
     const [searchParams] = useSearchParams();
@@ -13,6 +16,28 @@ export const Checkout = () => {
     const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
     const [loading, setLoading] = useState(false);
     const [pixData, setPixData] = useState<any>(null);
+    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+    // Socket.io for real-time confirmation
+    useEffect(() => {
+        if (!user) return;
+
+        const socket = socketIO(API_URL);
+
+        socket.on('connect', () => {
+            socket.emit('join', user.id);
+        });
+
+        socket.on('payment_approved', (data) => {
+            console.log('Real-time payment approved:', data);
+            setPaymentConfirmed(true);
+            setPixData(null); // Close QR code if open
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user]);
 
     // Form fields
     const [firstName, setFirstName] = useState('');
@@ -155,10 +180,44 @@ export const Checkout = () => {
         }
     };
 
+    useEffect(() => {
+        if (paymentConfirmed) {
+            const timer = setTimeout(() => {
+                navigate(planId === 'BANNER' ? '/admin' : '/dashboard');
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [paymentConfirmed, navigate, planId]);
+
     const copyToClipboard = () => {
         navigator.clipboard.writeText(pixData.qr_code);
         alert('Código PIX copiado com sucesso!');
     };
+
+    if (paymentConfirmed) {
+        return (
+            <div className="container mt-4 text-center pix-success-screen" style={{ padding: '4rem 2rem' }}>
+                <div style={{ background: 'var(--success)', color: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', fontSize: '2rem' }}>
+                    ✓
+                </div>
+                <h2 style={{ color: 'var(--success)', marginBottom: '1rem' }}>Pagamento Confirmado!</h2>
+                <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+                    O seu plano **{planName}** já está ativo e pronto para uso.
+                </p>
+                <div className="box-card" style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left', padding: '1.5rem' }}>
+                    <p><strong>Recurso Liberado:</strong> {planId === 'BANNER' ? 'Criação de Banner' : '10 Fotos em Anúncio'}</p>
+                    <p><strong>Validade:</strong> 20 dias</p>
+                </div>
+                <div className="mt-4">
+                    <p className="text-light">Redirecionando em instantes...</p>
+                    <br />
+                    <button className="btn btn-primary" onClick={() => navigate(planId === 'BANNER' ? '/admin' : '/dashboard')}>
+                        Ir para o Painel Agora
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (pixData) {
         const qrImgSrc = pixData.qr_code_base64

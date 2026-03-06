@@ -27,6 +27,14 @@ export const io = new Server(server, {
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
+
+    socket.on('join', (userId: string) => {
+        if (userId) {
+            socket.join(userId);
+            console.log(`User ${userId} joined their private room.`);
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
     });
@@ -49,4 +57,4 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT} `);
 });
- 
+
