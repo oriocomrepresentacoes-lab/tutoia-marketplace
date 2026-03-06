@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/auth';
-import { getUsers, toggleUserStatus, toggleBannerStatus, getAllBanners, deleteBanner } from '../controllers/adminController';
+import { getUsers, toggleUserStatus, toggleBannerStatus, getAllBanners, deleteBanner, getAdminAds } from '../controllers/adminController';
 
 const router = Router();
 
@@ -13,5 +13,7 @@ router.patch('/users/:id/status', toggleUserStatus);
 router.get('/banners', getAllBanners);
 router.patch('/banners/:id/status', toggleBannerStatus);
 router.delete('/banners/:id', deleteBanner);
+
+router.get('/ads', getAdminAds);
 
 export default router;

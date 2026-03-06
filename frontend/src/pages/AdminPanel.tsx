@@ -11,6 +11,7 @@ export const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState<any[]>([]);
     const [banners, setBanners] = useState<any[]>([]);
+    const [ads, setAds] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,9 +28,12 @@ export const AdminPanel = () => {
             if (activeTab === 'users') {
                 const data = await fetchApi('/admin/users');
                 if (data) setUsers(data);
-            } else {
+            } else if (activeTab === 'banners') {
                 const data = await fetchApi('/admin/banners');
                 if (data) setBanners(data);
+            } else if (activeTab === 'ads') {
+                const data = await fetchApi('/admin/ads');
+                if (data) setAds(data);
             }
         } catch (error) {
             console.error(error);
@@ -97,7 +101,26 @@ export const AdminPanel = () => {
         }
     };
 
-    if (loading && users.length === 0 && banners.length === 0) {
+    const deleteAdItem = async (id: string) => {
+        if (!confirm('Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este anúncio? (Banir anúncio falso/golpe)')) return;
+
+        // Optimistic update
+        setAds(prev => prev.filter(ad => ad.id !== id));
+
+        try {
+            await fetchApi(`/ads/${id}`, {
+                method: 'DELETE'
+            });
+            // Synchronization
+            // loadData();
+        } catch (error: any) {
+            console.error('Delete ad error:', error);
+            alert(`Erro ao excluir o anúncio: ${error?.message || 'Erro desconhecido'}`);
+            loadData();
+        }
+    };
+
+    if (loading && users.length === 0 && banners.length === 0 && ads.length === 0) {
         return <div className="container mt-4 loading-spinner">Carregando painel admin...</div>;
     }
 
@@ -125,6 +148,12 @@ export const AdminPanel = () => {
                     onClick={() => setActiveTab('banners')}
                 >
                     <Image size={20} /> Controle de Banners
+                </button>
+                <button
+                    className={`admin-tab ${activeTab === 'ads' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ads')}
+                >
+                    <AlertTriangle size={20} /> Moderação de Anúncios
                 </button>
             </div>
 
@@ -233,6 +262,49 @@ export const AdminPanel = () => {
                                     </tr>
                                 ))}
                                 {banners.length === 0 && <tr><td colSpan={5} className="text-center">Nenhum banner</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {activeTab === 'ads' && (
+                    <div className="table-responsive">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Capa</th>
+                                    <th>Anúncio</th>
+                                    <th>Anunciante</th>
+                                    <th>Preço</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {ads.map(ad => (
+                                    <tr key={ad.id}>
+                                        <td>
+                                            <div className="admin-banner-preview" style={{ backgroundImage: `url(${ad.images[0]?.startsWith('http') ? ad.images[0] : `http://localhost:5000${ad.images[0]}`})`, width: '60px', height: '60px' }}></div>
+                                        </td>
+                                        <td>
+                                            <div className="font-medium">{ad.title}</div>
+                                            <div className="text-sm text-light">{ad.category?.name}</div>
+                                        </td>
+                                        <td>
+                                            {ad.user?.name}
+                                            <div className="text-sm text-light">{ad.user?.email}</div>
+                                        </td>
+                                        <td>R$ {ad.price.toLocaleString('pt-BR')}</td>
+                                        <td>
+                                            <button
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => deleteAdItem(ad.id)}
+                                            >
+                                                <Trash2 size={16} /> Remover
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {ads.length === 0 && <tr><td colSpan={5} className="text-center">Nenhum anúncio encontrado</td></tr>}
                             </tbody>
                         </table>
                     </div>

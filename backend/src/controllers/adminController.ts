@@ -114,3 +114,28 @@ export const getAllBanners = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Erro ao buscar banners' });
     }
 };
+
+// Get all ads for Admin panel
+export const getAdminAds = async (req: AuthRequest, res: Response) => {
+    try {
+        if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+
+        const ads = await prisma.ad.findMany({
+            include: {
+                user: { select: { name: true, email: true } },
+                category: { select: { name: true } }
+            },
+            orderBy: { created_at: 'desc' }
+        });
+
+        // Format ads to parse images JSON
+        const formattedAds = ads.map(ad => ({
+            ...ad,
+            images: JSON.parse(ad.images)
+        }));
+
+        res.json(formattedAds);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar anúncios' });
+    }
+};
