@@ -24,9 +24,10 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             payment_method_id, // 'pix' or card flag
             token, // Card token, if applicable
             installments, // Card installments, if applicable
-            payer_first_name, // For PIX
-            payer_last_name, // For PIX
-            payer_cpf // For PIX
+            payer_first_name, // For PIX/Card
+            payer_last_name, // For PIX/Card
+            payer_cpf, // For PIX/Card
+            issuer_id // For Card
         } = req.body;
 
         // Pricing logic (Lowered for final production testing)
@@ -138,12 +139,40 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
             payload.token = finalToken;
             payload.payment_method_id = finalPaymentMethodId;
+            payload.issuer_id = issuer_id || req.body.issuer_id;
             payload.installments = installments || 1;
+
+            // Compliance & Anti-fraud (Obrigatório em produção para aprovação)
+            payload.additional_info = {
+                items: [
+                    {
+                        id: transaction.id,
+                        title: description,
+                        description: description,
+                        quantity: 1,
+                        unit_price: Number(transaction_amount)
+                    }
+                ],
+                payer: {
+                    first_name: payer_first_name || user.name.split(' ')[0],
+                    last_name: payer_last_name || user.name.split(' ').slice(1).join(' ')
+                }
+            };
+
+            // Identificação CPF (Sempre recomendada em Cartão Produção)
+            if (payer_cpf) {
+                payload.payer.first_name = payer_first_name || user.name.split(' ')[0];
+                payload.payer.last_name = payer_last_name || user.name.split(' ').slice(1).join(' ');
+                payload.payer.identification = {
+                    type: 'CPF',
+                    number: payer_cpf.replace(/\D/g, '')
+                };
+            }
         }
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO SDK (V1.5.0) ---');
+        console.log('--- SENDING TO MERCADO PAGO SDK (V1.5.1) ---');
         console.log('Payload Body:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
 
         try {
