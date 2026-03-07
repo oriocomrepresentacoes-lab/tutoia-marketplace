@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
-const MP_API_URL = 'https://api.mercadopago.com/v1/payments';
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
+const client = new MercadoPagoConfig({ accessToken: MP_ACCESS_TOKEN, options: { timeout: 5000 } });
+const payment = new Payment(client);
 
-console.log('--- SYSTEM BOOT ---');
-console.log('MP_ACCESS_TOKEN status:', MP_ACCESS_TOKEN ? 'PRESENT (starts with ' + MP_ACCESS_TOKEN.substring(0, 10) + '...)' : 'MISSING');
+console.log('--- SYSTEM BOOT (SDK V1.5.0) ---');
+console.log('MP_ACCESS_TOKEN status:', MP_ACCESS_TOKEN ? 'PRESENT' : 'MISSING');
 
 export const createPayment = async (req: AuthRequest, res: Response) => {
     try {
@@ -141,53 +143,42 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.4.0) ---');
-        console.log('Payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
-        console.log('Payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
-        console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
-        console.log('Final Payment Method:', payload.payment_method_id);
-        console.log('Issuer ID:', payload.issuer_id);
-        console.log('Description:', description);
-        console.log('Full sanitized payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
+        console.log('--- SENDING TO MERCADO PAGO SDK (V1.5.0) ---');
+        console.log('Payload Body:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
 
-        const response = await fetch(MP_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json',
-                'X-Idempotency-Key': idempotencyKey
-            },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const result = await payment.create({
+                body: payload,
+                requestOptions: { idempotencyKey }
+            });
 
-        const mpData = await response.json();
-        console.log('--- MERCADO PAGO RESPONSE ---', response.status);
+            console.log('--- MERCADO PAGO SDK RESPONSE ---', result.status);
 
-        if (!response.ok) {
-            console.log('CRITICAL ERROR DETAIL:', JSON.stringify(mpData, null, 2));
+            // Update transaction with MP ID
+            await prisma.transaction.update({
+                where: { id: transaction.id },
+                data: {
+                    payment_id: String(result.id),
+                    status: result.status === 'approved' ? 'APPROVED' : 'PENDING',
+                    expires_at: result.status === 'approved' ? new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) : null
+                }
+            });
+
+            return res.status(201).json({
+                transaction_id: transaction.id,
+                status: result.status,
+                qr_code: result.point_of_interaction?.transaction_data?.qr_code,
+                qr_code_base64: result.point_of_interaction?.transaction_data?.qr_code_base64,
+                ticket_url: result.point_of_interaction?.transaction_data?.ticket_url,
+            });
+
+        } catch (sdkError: any) {
+            console.log('CRITICAL SDK ERROR DETAIL:', JSON.stringify(sdkError, null, 2));
             return res.status(400).json({
-                error: 'Falha no pagamento no gateway',
-                details: mpData
+                error: 'Falha no pagamento no gateway (SDK)',
+                details: sdkError
             });
         }
-
-        // Update transaction with MP ID
-        await prisma.transaction.update({
-            where: { id: transaction.id },
-            data: {
-                payment_id: String(mpData.id),
-                status: mpData.status === 'approved' ? 'APPROVED' : 'PENDING',
-                expires_at: mpData.status === 'approved' ? new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) : null
-            }
-        });
-
-        res.status(201).json({
-            transaction_id: transaction.id,
-            status: mpData.status,
-            qr_code: mpData.point_of_interaction?.transaction_data?.qr_code,
-            qr_code_base64: mpData.point_of_interaction?.transaction_data?.qr_code_base64,
-            ticket_url: mpData.point_of_interaction?.transaction_data?.ticket_url,
-        });
 
     } catch (error) {
         console.error('Create Payment Error:', error);
@@ -205,15 +196,9 @@ export const paymentWebhook = async (req: Request, res: Response) => {
         }
 
         if (paymentId) {
-            const response = await fetch(`${MP_API_URL}/${paymentId}`, {
-                headers: {
-                    'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
-                }
-            });
-
-            if (response.ok) {
-                const mpData: any = await response.json();
-                const externalReference = mpData.external_reference;
+            try {
+                const result = await payment.get({ id: String(paymentId) });
+                const externalReference = result.external_reference;
 
                 if (externalReference) {
                     const transaction = await prisma.transaction.findUnique({
@@ -221,7 +206,7 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                     });
 
                     if (transaction) {
-                        if (mpData.status === 'approved' && transaction.status !== 'APPROVED') {
+                        if (result.status === 'approved' && transaction.status !== 'APPROVED') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
                                 data: {
@@ -241,7 +226,7 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                                         : 'Seu pagamento de Mais Imagens foi aprovado!'
                                 });
                             }
-                        } else if ((mpData.status === 'rejected' || mpData.status === 'cancelled') && transaction.status === 'PENDING') {
+                        } else if ((result.status === 'rejected' || result.status === 'cancelled') && transaction.status === 'PENDING') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
                                 data: {
@@ -252,6 +237,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                         }
                     }
                 }
+            } catch (err) {
+                console.error('Webhook SDK Error:', err);
             }
         }
         res.status(200).send('OK');
