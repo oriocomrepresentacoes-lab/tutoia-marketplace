@@ -148,9 +148,9 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.2.9) ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.3.1) ---');
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
-        console.log('Normalized Payment Method:', payload.payment_method_id);
+        console.log('Final Payment Method:', payload.payment_method_id);
         console.log('Description:', description);
         console.log('Full sanitized payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
 
