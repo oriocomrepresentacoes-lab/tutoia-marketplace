@@ -147,7 +147,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                         title: description,
                         description: description,
                         quantity: 1,
-                        unit_price: Number(planPrice)
+                        unit_price: Number(transaction_amount)
                     }
                 ],
                 payer: {
