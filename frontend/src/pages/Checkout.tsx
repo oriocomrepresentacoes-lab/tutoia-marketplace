@@ -337,20 +337,22 @@ export const Checkout = () => {
                         <strong>R$ {planPrice.toFixed(2).replace('.', ',')}</strong>
                     </div>
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
-                        <span style={{
-                            background: '#8b5cf6', // PURPLE for V1.2.4 distinction
-                            color: 'white',
-                            padding: '4px 10px',
-                            borderRadius: '20px',
-                            fontSize: '0.7rem',
-                            fontWeight: 'bold',
-                            boxShadow: '0 2px 10px rgba(139, 92, 246, 0.3)'
-                        }}>
-                            MODO PRODUÇÃO - V1.2.4
-                        </span>
-                        <p style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '5px' }}>
-                            PK: APP_USR-21862437... | Use CTRL + F5
-                        </p>
+                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                            <span style={{
+                                background: '#10b981', // GREEN for V1.3.0
+                                color: 'white',
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
+                            }}>
+                                VERSÃO V1.3.0 - FIX MASTERCARD
+                            </span>
+                            <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
+                                Site Sincronizado | Use CTRL + F5
+                            </p>
+                        </div>
                     </div>
                 </div>
 
