@@ -136,8 +136,25 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
             payload.token = finalToken;
             payload.payment_method_id = finalPaymentMethodId;
-            payload.issuer_id = req.body.issuer_id; // Added in V1.3.4
+            payload.issuer_id = req.body.issuer_id || undefined;
             payload.installments = installments || 1;
+
+            // Info adicional para antifraude (Altamente recomendado/mandatório em produção)
+            payload.additional_info = {
+                items: [
+                    {
+                        id: transaction.id,
+                        title: description,
+                        description: description,
+                        quantity: 1,
+                        unit_price: Number(planPrice)
+                    }
+                ],
+                payer: {
+                    first_name: payer_first_name || user.name.split(' ')[0],
+                    last_name: payer_last_name || user.name.split(' ').slice(1).join(' ')
+                }
+            };
         }
 
         // Identificação mandatória (Produção Brasil)

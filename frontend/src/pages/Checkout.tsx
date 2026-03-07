@@ -359,7 +359,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.5 - DEEP DEBUG LOGS
+                                VERSÃO V1.3.6 - COMPLIANCE AUDIT
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
                                 Site Sincronizado | Use CTRL + F5
