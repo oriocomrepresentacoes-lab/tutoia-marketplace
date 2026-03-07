@@ -112,9 +112,15 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                             }
                         } else {
                             console.error('Backend Tokenization Failed:', tokenData);
+                            // Se a tokenização falhou no backend, avisar o usuário do motivo real
+                            return res.status(400).json({
+                                error: 'Falha ao tokenizar cartão no servidor',
+                                details: tokenData
+                            });
                         }
                     } catch (err) {
                         console.error('Backend Tokenization Error:', err);
+                        return res.status(500).json({ error: 'Erro de conexão com o gateway de tokenização' });
                     }
                 }
             }
@@ -127,6 +133,9 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
         console.log('--- SENDING TO MERCADO PAGO ---');
+        console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
+        console.log('Payment Method:', payload.payment_method_id);
+
         const response = await fetch(MP_API_URL, {
             method: 'POST',
             headers: {
