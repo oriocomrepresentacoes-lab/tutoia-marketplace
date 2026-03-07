@@ -204,13 +204,16 @@ export const Checkout = () => {
                 console.log('Card Token Generated Successfully:', cardToken.id);
                 payload.token = cardToken.id;
 
-                // Normalização: master -> mastercard
-                let normalizedBrand = finalBrand;
-                if (normalizedBrand === 'master') {
-                    normalizedBrand = 'mastercard';
-                }
+                // Revertido: mastercard causa erro diff_param_bins. Usar brand original do SDK.
+                payload.payment_method_id = finalBrand;
+                payload.installments = installments;
 
-                payload.payment_method_id = normalizedBrand;
+                // Identificação mandatória (Brasil Produção)
+                payload.payer_first_name = firstName;
+                payload.payer_last_name = lastName;
+                payload.payer_cpf = cpf.replace(/\D/g, '');
+
+                payload.payment_method_id = finalBrand;
                 payload.installments = installments;
 
                 // Envia dados brutos como fallback (para o backend tokenizar se necessário)
@@ -339,7 +342,7 @@ export const Checkout = () => {
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
                         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                             <span style={{
-                                background: '#10b981', // GREEN for V1.3.2
+                                background: '#10b981', // GREEN for V1.3.3
                                 color: 'white',
                                 padding: '6px 14px',
                                 borderRadius: '20px',
@@ -347,7 +350,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.2 - FIX BRAND & CPF
+                                VERSÃO V1.3.3 - FINAL FIX BRAND & CPF
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
                                 Site Sincronizado | Use CTRL + F5
@@ -357,27 +360,26 @@ export const Checkout = () => {
                 </div>
 
                 <div className="box-card payment-methods">
-                    <h2>Método de Pagamento</h2>
-                    <form onSubmit={handleCheckout}>
-                        <div className="payer-details" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.5rem' }}>
-                            <h3>Dados do Pagador</h3>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Nome</label>
-                                    <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Nome" />
-                                </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Sobrenome</label>
-                                    <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Sobrenome" />
-                                </div>
+                    <h2>Dados do Pagador (Obrigatório)</h2>
+                    <div className="payer-info-shared" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label>Nome</label>
+                                <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Seu nome" />
                             </div>
-                            <div className="form-group">
-                                <label>CPF</label>
-                                <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label>Sobrenome</label>
+                                <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Seu sobrenome" />
                             </div>
                         </div>
+                        <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                            <label>CPF</label>
+                            <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
+                        </div>
+                    </div>
 
-                        <h2>Método de Pagamento</h2>
+                    <h2>Método de Pagamento</h2>
+                    <form onSubmit={handleCheckout}>
                         <div className="payment-options">
                             <label className={`payment-option ${paymentMethod === 'pix' ? 'selected' : ''}`}>
                                 <input type="radio" name="payment" value="pix" checked={paymentMethod === 'pix'} onChange={() => setPaymentMethod('pix')} />
