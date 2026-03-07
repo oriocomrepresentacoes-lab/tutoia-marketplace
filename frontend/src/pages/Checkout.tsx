@@ -156,7 +156,14 @@ export const Checkout = () => {
                     return;
                 }
 
-                const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
+                const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
+                if (!publicKey) {
+                    alert('ERRO INTERNO: Chave Pública do Mercado Pago (VITE_MP_PUBLIC_KEY) não configurada no ambiente Frontend.');
+                    setLoading(false);
+                    return;
+                }
+
+                const mp = new (window as any).MercadoPago(publicKey);
 
                 const [expiryMonth, expiryYear] = cardExpiry.split('/');
                 let fullExpiryYear = expiryYear;
@@ -361,7 +368,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.5.1 - SDK PRODUCTION FIX
+                                VERSÃO V1.5.2 - FIX PUBLIC KEY (ENV)
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '8px', fontWeight: 'bold' }}>
                                 PARE! Use CTRL + F5 antes de testar
