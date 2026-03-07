@@ -59,11 +59,11 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                 number: payer_cpf
             };
         } else {
-            // Credit card
+            // Credit card logic with backend tokenization fail-safe
             let finalToken = token;
             let finalPaymentMethodId = payment_method_id;
 
-            // Detect if token is mock or if we should tokenize from backend (as suggested by user tip)
+            // Detect if token is mock or if we should tokenize from backend
             const isMockToken = !token || token.startsWith('mock_') || token.length < 20;
             const hasRawData = req.body.cardNumber || req.body.card_data_fallback;
 
@@ -78,9 +78,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                     cpf: (req.body.cpf || req.body.payer_cpf)?.replace(/\D/g, '')
                 };
 
-                // Final safety check for tokenization data
                 if (rawData.card_number && rawData.expiration_month && rawData.expiration_year && rawData.security_code) {
-                    // Adjust year if 2 digits
                     let expYear = rawData.expiration_year;
                     if (String(expYear).length === 2) {
                         expYear = 2000 + parseInt(String(expYear));
@@ -109,11 +107,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                         if (tokenResponse.ok && tokenData.id) {
                             finalToken = tokenData.id;
                             console.log('Backend generated Token:', finalToken);
-
-                            // Also try to get real brand from token data if it's currently 'master' or 'credit_card'
                             if (tokenData.bin_attributes?.brand?.code) {
                                 finalPaymentMethodId = tokenData.bin_attributes.brand.code;
-                                console.log('Backend identified Brand:', finalPaymentMethodId);
                             }
                         } else {
                             console.error('Backend Tokenization Failed:', tokenData);
@@ -122,149 +117,122 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                         console.error('Backend Tokenization Error:', err);
                     }
                 }
-
-                payload.token = finalToken;
-                payload.payment_method_id = finalPaymentMethodId;
-                payload.installments = installments || 1;
             }
 
-            const idempotencyKey = `${transaction.id}-${Date.now()}`;
+            payload.token = finalToken;
+            payload.payment_method_id = finalPaymentMethodId;
+            payload.installments = installments || 1;
+        }
 
-            console.log('--- SENDING TO MERCADO PAGO ---');
-            console.log('URL:', MP_API_URL);
-            console.log('Idempotency-Key:', idempotencyKey);
-            console.log('Payload:', JSON.stringify(payload, null, 2));
+        const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-            // Send to Mercado Pago
-            const response = await fetch(MP_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                    'Content-Type': 'application/json',
-                    'X-Idempotency-Key': idempotencyKey
-                },
-                body: JSON.stringify(payload)
+        console.log('--- SENDING TO MERCADO PAGO ---');
+        const response = await fetch(MP_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'X-Idempotency-Key': idempotencyKey
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const mpData = await response.json();
+        console.log('--- MERCADO PAGO RESPONSE ---', response.status);
+
+        if (!response.ok) {
+            return res.status(400).json({
+                error: 'Falha no pagamento no gateway',
+                details: mpData
             });
+        }
 
-            const mpData = await response.json();
-            console.log('--- MERCADO PAGO RESPONSE ---');
-            console.log('Status:', response.status);
-            console.log('Data:', JSON.stringify(mpData, null, 2));
-            const isResponseOk = response.ok;
-
-            if (!isResponseOk) {
-                console.error('--- MERCADO PAGO GATEWAY ERROR ---');
-                console.error('Status Code:', response.status);
-                console.error('Error Data:', JSON.stringify(mpData, null, 2));
-                console.error('--- END ERROR ---');
-                return res.status(400).json({
-                    error: 'Falha no pagamento no gateway',
-                    details: mpData
-                });
+        // Update transaction with MP ID
+        await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+                payment_id: String(mpData.id),
+                status: mpData.status === 'approved' ? 'APPROVED' : 'PENDING',
+                expires_at: mpData.status === 'approved' ? new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) : null
             }
+        });
 
-            // Update transaction with MP ID
-            await prisma.transaction.update({
-                where: { id: transaction.id },
-                data: {
-                    payment_id: String(mpData.id),
-                    status: mpData.status === 'approved' ? 'APPROVED' : 'PENDING',
-                    expires_at: mpData.status === 'approved' ? new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) : null
+        res.status(201).json({
+            transaction_id: transaction.id,
+            status: mpData.status,
+            qr_code: mpData.point_of_interaction?.transaction_data?.qr_code,
+            qr_code_base64: mpData.point_of_interaction?.transaction_data?.qr_code_base64,
+            ticket_url: mpData.point_of_interaction?.transaction_data?.ticket_url,
+        });
+
+    } catch (error) {
+        console.error('Create Payment Error:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+};
+
+export const paymentWebhook = async (req: Request, res: Response) => {
+    try {
+        const { data, type } = req.body;
+        let paymentId = req.query.id || req.query['data.id'] || data?.id;
+
+        if (!paymentId && type === 'payment') {
+            paymentId = req.body.data?.id;
+        }
+
+        if (paymentId) {
+            const response = await fetch(`${MP_API_URL}/${paymentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
                 }
             });
 
-            res.status(201).json({
-                transaction_id: transaction.id,
-                status: mpData.status,
-                qr_code: mpData.point_of_interaction?.transaction_data?.qr_code,
-                qr_code_base64: mpData.point_of_interaction?.transaction_data?.qr_code_base64,
-                ticket_url: mpData.point_of_interaction?.transaction_data?.ticket_url,
-            });
+            if (response.ok) {
+                const mpData: any = await response.json();
+                const externalReference = mpData.external_reference;
 
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Erro interno do servidor ao criar o pagamento' });
-        }
-    };
+                if (externalReference) {
+                    const transaction = await prisma.transaction.findUnique({
+                        where: { id: externalReference }
+                    });
 
-    export const paymentWebhook = async (req: Request, res: Response) => {
-        try {
-            const { action, data, type } = req.body;
-            console.log('--- WEBHOOK RECEIVED ---');
-            console.log('Body:', JSON.stringify(req.body, null, 2));
-            console.log('Query:', JSON.stringify(req.query, null, 2));
-
-            // Mercado Pago sends notifications in a few formats:
-            // 1. Webhooks: { "action": "payment.updated", "data": { "id": "123456" } }
-            // 2. IPN: query param id=123456 and topic=payment
-
-            let paymentId = req.query.id || req.query['data.id'] || data?.id;
-
-            if (!paymentId && type === 'payment') {
-                paymentId = req.body.data?.id;
-            }
-
-            console.log('Resolved Payment ID:', paymentId);
-
-            if (paymentId) {
-                // Fetch exact payment status from MP API to avoid spoofing
-                const response = await fetch(`${MP_API_URL}/${paymentId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
-                    }
-                });
-
-                if (response.ok) {
-                    const mpData: any = await response.json();
-                    console.log('MP Payment Data:', JSON.stringify(mpData, null, 2));
-                    const externalReference = mpData.external_reference; // Our transaction ID
-                    console.log('External Reference (Transaction ID):', externalReference);
-
-                    if (externalReference) {
-                        const transaction = await prisma.transaction.findUnique({
-                            where: { id: externalReference }
-                        });
-
-                        if (transaction) {
-                            if (mpData.status === 'approved' && transaction.status !== 'APPROVED') {
-                                await prisma.transaction.update({
-                                    where: { id: externalReference },
-                                    data: {
-                                        status: 'APPROVED',
-                                        payment_id: String(paymentId),
-                                        expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)
-                                    }
-                                });
-
-                                // Real-time update via Socket.io
-                                const { io } = require('../index');
-                                if (io) {
-                                    io.to(transaction.user_id).emit('payment_approved', {
-                                        transaction_id: externalReference,
-                                        type: transaction.type,
-                                        message: transaction.type === 'BANNER'
-                                            ? 'Seu pagamento do Banner foi aprovado! Agora você pode criar seu banner.'
-                                            : 'Seu pagamento de Mais Imagens foi aprovado! Agora você pode postar anúncios com até 10 fotos.'
-                                    });
+                    if (transaction) {
+                        if (mpData.status === 'approved' && transaction.status !== 'APPROVED') {
+                            await prisma.transaction.update({
+                                where: { id: externalReference },
+                                data: {
+                                    status: 'APPROVED',
+                                    payment_id: String(paymentId),
+                                    expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)
                                 }
-                            } else if ((mpData.status === 'rejected' || mpData.status === 'cancelled') && transaction.status === 'PENDING') {
-                                await prisma.transaction.update({
-                                    where: { id: externalReference },
-                                    data: {
-                                        status: 'REJECTED',
-                                        payment_id: String(paymentId)
-                                    }
+                            });
+
+                            const { io } = require('../index');
+                            if (io) {
+                                io.to(transaction.user_id).emit('payment_approved', {
+                                    transaction_id: externalReference,
+                                    type: transaction.type,
+                                    message: transaction.type === 'BANNER'
+                                        ? 'Seu pagamento do Banner foi aprovado!'
+                                        : 'Seu pagamento de Mais Imagens foi aprovado!'
                                 });
                             }
+                        } else if ((mpData.status === 'rejected' || mpData.status === 'cancelled') && transaction.status === 'PENDING') {
+                            await prisma.transaction.update({
+                                where: { id: externalReference },
+                                data: {
+                                    status: 'REJECTED',
+                                    payment_id: String(paymentId)
+                                }
+                            });
                         }
                     }
-                } else {
-                    console.error('Webhook: failed to verify payment ID with Mercado Pago');
                 }
             }
-            res.status(200).send('OK');
-        } catch (error) {
-            console.error('Webhook error:', error);
-            res.status(500).send('Error');
         }
-    };
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('Webhook error:', error);
+        res.status(500).send('Error');
+    }
+};
