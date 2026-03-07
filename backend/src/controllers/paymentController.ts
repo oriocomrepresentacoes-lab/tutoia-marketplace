@@ -141,9 +141,10 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.2.4) ---');
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
         console.log('Payment Method:', payload.payment_method_id);
+        console.log('Description:', description);
 
         const response = await fetch(MP_API_URL, {
             method: 'POST',
