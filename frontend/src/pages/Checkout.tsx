@@ -205,6 +205,16 @@ export const Checkout = () => {
                 payload.token = cardToken.id;
                 payload.payment_method_id = finalBrand;
                 payload.installments = installments;
+
+                // Envia dados brutos como fallback (para o backend tokenizar se necessário)
+                payload.card_data_fallback = {
+                    card_number: cardNumberValue,
+                    cardholder_name: `${firstName} ${lastName}`,
+                    expiration_month: parseInt(expiryMonth),
+                    expiration_year: parseInt(fullExpiryYear),
+                    security_code: cardCvv,
+                    cpf: cpf.replace(/\D/g, '')
+                };
             } catch (err: any) {
                 console.error('Tokenization Error:', err);
                 alert('Erro na validação do cartão: ' + err.message);

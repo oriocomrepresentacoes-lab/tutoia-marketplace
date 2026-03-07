@@ -60,7 +60,68 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             };
         } else {
             // Credit card
-            payload.token = token;
+            let finalToken = token;
+            let finalPaymentMethodId = payment_method_id;
+
+            // Detect if token is mock or if we should tokenize from backend (as suggested by user tip)
+            const isMockToken = !token || token.startsWith('mock_') || token.length < 20;
+            const hasRawData = req.body.cardNumber || req.body.card_data_fallback;
+
+            if (isMockToken && hasRawData) {
+                console.log('--- BACKEND TOKENIZATION TRIGGERED ---');
+                const rawData = req.body.card_data_fallback || {
+                    card_number: req.body.cardNumber?.replace(/\s/g, ''),
+                    cardholder_name: `${req.body.firstName} ${req.body.lastName}`,
+                    expiration_month: parseInt(req.body.cardExpiry?.split('/')[0]),
+                    expiration_year: parseInt(req.body.cardExpiry?.split('/')[1]),
+                    security_code: req.body.cardCvv,
+                    cpf: req.body.cpf?.replace(/\D/g, '')
+                };
+
+                // Adjust year if 2 digits
+                if (String(rawData.expiration_year).length === 2) {
+                    rawData.expiration_year = 2000 + parseInt(rawData.expiration_year);
+                }
+
+                try {
+                    const tokenResponse = await fetch('https://api.mercadopago.com/v1/card_tokens', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            card_number: rawData.card_number,
+                            cardholder: {
+                                name: rawData.cardholder_name,
+                                identification: { type: 'CPF', number: rawData.cpf }
+                            },
+                            expiration_month: rawData.expiration_month,
+                            expiration_year: rawData.expiration_year,
+                            security_code: rawData.security_code
+                        })
+                    });
+
+                    const tokenData: any = await tokenResponse.json();
+                    if (tokenResponse.ok && tokenData.id) {
+                        finalToken = tokenData.id;
+                        console.log('Backend generated Token:', finalToken);
+
+                        // Also try to get real brand from token data if it's currently 'master' or 'credit_card'
+                        if (tokenData.bin_attributes?.brand?.code) {
+                            finalPaymentMethodId = tokenData.bin_attributes.brand.code;
+                            console.log('Backend identified Brand:', finalPaymentMethodId);
+                        }
+                    } else {
+                        console.error('Backend Tokenization Failed:', tokenData);
+                    }
+                } catch (err) {
+                    console.error('Backend Tokenization Error:', err);
+                }
+            }
+
+            payload.token = finalToken;
+            payload.payment_method_id = finalPaymentMethodId;
             payload.installments = installments || 1;
         }
 
