@@ -317,9 +317,9 @@ export const Checkout = () => {
 
     return (
         <div className="container mt-4 checkout-page">
-            <div style={{ background: '#2563eb', color: 'white', padding: '2rem', textAlign: 'center', borderRadius: '10px', marginBottom: '2rem', border: '5px solid white' }}>
-                <h1 style={{ fontSize: '3rem', fontWeight: 'bold' }}>FORÇANDO DEPLOY V1.2.6</h1>
-                <p>O código novo ESTÁ CHEGANDO! Aguarde o build terminar na Vercel.</p>
+            <div style={{ background: '#10b981', color: 'white', padding: '2rem', textAlign: 'center', borderRadius: '10px', marginBottom: '2rem', border: '5px solid white' }}>
+                <h1 style={{ fontSize: '3rem', fontWeight: 'bold' }}>VERIFICAÇÃO FINAL V1.2.7</h1>
+                <p>Se você vê este BANNER VERDE, o site finalmente atualizou!</p>
             </div>
             <div className="checkout-grid">
                 <div className="box-card order-summary">
