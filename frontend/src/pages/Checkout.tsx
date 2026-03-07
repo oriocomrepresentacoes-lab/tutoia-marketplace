@@ -317,10 +317,6 @@ export const Checkout = () => {
 
     return (
         <div className="container mt-4 checkout-page">
-            <div style={{ background: '#10b981', color: 'white', padding: '2rem', textAlign: 'center', borderRadius: '10px', marginBottom: '2rem', border: '5px solid white' }}>
-                <h1 style={{ fontSize: '3rem', fontWeight: 'bold' }}>VERIFICAÇÃO FINAL V1.2.7</h1>
-                <p>Se você vê este BANNER VERDE, o site finalmente atualizou!</p>
-            </div>
             <div className="checkout-grid">
                 <div className="box-card order-summary">
                     <h2>Resumo do Pedido</h2>
