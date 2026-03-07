@@ -339,7 +339,7 @@ export const Checkout = () => {
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
                         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                             <span style={{
-                                background: '#10b981', // GREEN for V1.3.0
+                                background: '#10b981', // GREEN for V1.3.2
                                 color: 'white',
                                 padding: '6px 14px',
                                 borderRadius: '20px',
@@ -347,7 +347,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.1 - FIX FINAL
+                                VERSÃO V1.3.2 - FIX BRAND & CPF
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
                                 Site Sincronizado | Use CTRL + F5
@@ -359,6 +359,25 @@ export const Checkout = () => {
                 <div className="box-card payment-methods">
                     <h2>Método de Pagamento</h2>
                     <form onSubmit={handleCheckout}>
+                        <div className="payer-details" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.5rem' }}>
+                            <h3>Dados do Pagador</h3>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="form-group" style={{ flex: 1 }}>
+                                    <label>Nome</label>
+                                    <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Nome" />
+                                </div>
+                                <div className="form-group" style={{ flex: 1 }}>
+                                    <label>Sobrenome</label>
+                                    <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Sobrenome" />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>CPF</label>
+                                <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
+                            </div>
+                        </div>
+
+                        <h2>Método de Pagamento</h2>
                         <div className="payment-options">
                             <label className={`payment-option ${paymentMethod === 'pix' ? 'selected' : ''}`}>
                                 <input type="radio" name="payment" value="pix" checked={paymentMethod === 'pix'} onChange={() => setPaymentMethod('pix')} />
@@ -369,23 +388,6 @@ export const Checkout = () => {
                                 Cartão de Crédito
                             </label>
                         </div>
-
-                        {paymentMethod === 'pix' && (
-                            <div className="pix-form">
-                                <div className="form-group">
-                                    <label>Nome</label>
-                                    <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>Sobrenome</label>
-                                    <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>CPF</label>
-                                    <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
-                                </div>
-                            </div>
-                        )}
 
                         {paymentMethod === 'credit_card' && (
                             <div className="card-form">
