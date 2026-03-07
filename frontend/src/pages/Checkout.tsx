@@ -361,7 +361,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.9 - ANTI-FRAUDA & FULL LOGS
+                                VERSÃO V1.4.0 - SIMPLIFIED PAYLOAD
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '8px', fontWeight: 'bold' }}>
                                 PARE! Use CTRL + F5 antes de testar

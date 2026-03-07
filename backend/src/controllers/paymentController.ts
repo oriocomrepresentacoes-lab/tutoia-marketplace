@@ -136,44 +136,13 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
             payload.token = finalToken;
             payload.payment_method_id = finalPaymentMethodId;
-            payload.issuer_id = req.body.issuer_id || undefined;
             payload.installments = installments || 1;
-
-            // Info adicional para antifraude (Altamente recomendado/mandatório em produção)
-            payload.additional_info = {
-                items: [
-                    {
-                        id: transaction.id,
-                        title: description,
-                        description: description,
-                        quantity: 1,
-                        unit_price: Number(transaction_amount)
-                    }
-                ],
-                payer: {
-                    first_name: payer_first_name || user.name.split(' ')[0],
-                    last_name: payer_last_name || user.name.split(' ').slice(1).join(' '),
-                    phone: {
-                        area_code: "11",
-                        number: "999999999"
-                    }
-                }
-            };
-        }
-
-        // Identificação mandatória (Produção Brasil)
-        if (payer_cpf) {
-            payload.payer.first_name = payer_first_name || user.name.split(' ')[0];
-            payload.payer.last_name = payer_last_name || user.name.split(' ').slice(1).join(' ');
-            payload.payer.identification = {
-                type: 'CPF',
-                number: payer_cpf.replace(/\D/g, '')
-            };
         }
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.3.9) ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.4.0) ---');
+        console.log('Payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
         console.log('Payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
         console.log('Final Payment Method:', payload.payment_method_id);
