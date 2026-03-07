@@ -52,13 +52,21 @@ export const Checkout = () => {
 
     // Live BIN detection
     useEffect(() => {
-        const bin = cardNumber.replace(/\s/g, '').substring(0, 6);
-        if (bin.length >= 6) {
+        const fullCard = cardNumber.replace(/\s/g, '');
+        const bin = fullCard.substring(0, 8); // Support 8-digit BIN
+        const bin6 = fullCard.substring(0, 6);
+
+        if (bin6.length >= 6) {
             const identifyBrand = async () => {
                 try {
                     if (!(window as any).MercadoPago) return;
                     const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
-                    const paymentMethods = await mp.getPaymentMethods({ bin });
+                    // Try 8 digits first, fallback to 6
+                    let paymentMethods = await mp.getPaymentMethods({ bin });
+                    if (!paymentMethods.results || paymentMethods.results.length === 0) {
+                        paymentMethods = await mp.getPaymentMethods({ bin: bin6 });
+                    }
+
                     if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
                         const brand = paymentMethods.results[0];
                         setDetectedBrand(brand.id);
@@ -311,8 +319,21 @@ export const Checkout = () => {
                         <span>Total a pagar:</span>
                         <strong>R$ {planPrice.toFixed(2).replace('.', ',')}</strong>
                     </div>
-                    <div style={{ textAlign: 'right', marginTop: '1rem', opacity: 0.5, fontSize: '0.7rem' }}>
-                        Versão do Sistema: 1.2.0-PROD
+                    <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+                        <span style={{
+                            background: '#ef4444',
+                            color: 'white',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                            boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)'
+                        }}>
+                            MODO PRODUÇÃO - V1.2.1
+                        </span>
+                        <p style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '5px' }}>
+                            Se você ainda vê "Modo Simulação", aperte CTRL + F5
+                        </p>
                     </div>
                 </div>
 
