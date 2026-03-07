@@ -152,7 +152,11 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
                 ],
                 payer: {
                     first_name: payer_first_name || user.name.split(' ')[0],
-                    last_name: payer_last_name || user.name.split(' ').slice(1).join(' ')
+                    last_name: payer_last_name || user.name.split(' ').slice(1).join(' '),
+                    phone: {
+                        area_code: "11",
+                        number: "999999999"
+                    }
                 }
             };
         }
@@ -169,7 +173,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.3.8) ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.3.9) ---');
+        console.log('Payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
         console.log('Final Payment Method:', payload.payment_method_id);
         console.log('Issuer ID:', payload.issuer_id);
@@ -190,6 +195,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         console.log('--- MERCADO PAGO RESPONSE ---', response.status);
 
         if (!response.ok) {
+            console.log('CRITICAL ERROR DETAIL:', JSON.stringify(mpData, null, 2));
             return res.status(400).json({
                 error: 'Falha no pagamento no gateway',
                 details: mpData
