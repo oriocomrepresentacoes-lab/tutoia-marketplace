@@ -5,6 +5,9 @@ import { AuthRequest } from '../middlewares/auth';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 const MP_API_URL = 'https://api.mercadopago.com/v1/payments';
 
+console.log('--- SYSTEM BOOT ---');
+console.log('MP_ACCESS_TOKEN status:', MP_ACCESS_TOKEN ? 'PRESENT (starts with ' + MP_ACCESS_TOKEN.substring(0, 10) + '...)' : 'MISSING');
+
 export const createPayment = async (req: AuthRequest, res: Response) => {
     try {
         const user_id = req.user?.id;
@@ -64,8 +67,14 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             let finalPaymentMethodId = payment_method_id;
 
             // Detect if token is mock or if we should tokenize from backend
-            const isMockToken = !token || token.startsWith('mock_') || token.length < 20;
-            const hasRawData = req.body.cardNumber || req.body.card_data_fallback;
+            const isMockToken = !token || token.startsWith('mock_') || token.startsWith('tok_test') || token.length < 20;
+            const hasRawData = !!(req.body.cardNumber || req.body.card_data_fallback);
+
+            console.log('--- TOKEN ANALYSIS ---');
+            console.log('Token:', token);
+            console.log('isMockToken:', isMockToken);
+            console.log('hasRawData:', hasRawData);
+            console.log('Available keys in body:', Object.keys(req.body));
 
             if (isMockToken && hasRawData) {
                 console.log('--- BACKEND TOKENIZATION TRIGGERED ---');

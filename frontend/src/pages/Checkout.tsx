@@ -331,18 +331,18 @@ export const Checkout = () => {
                     </div>
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
                         <span style={{
-                            background: '#ef4444',
+                            background: '#f59e0b', // ORANGE for V1.2.3 distinction
                             color: 'white',
                             padding: '4px 10px',
                             borderRadius: '20px',
                             fontSize: '0.7rem',
                             fontWeight: 'bold',
-                            boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)'
+                            boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
                         }}>
-                            MODO PRODUÇÃO - V1.2.2
+                            MODO PRODUÇÃO - V1.2.3
                         </span>
                         <p style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '5px' }}>
-                            Se você ainda vê "Modo Simulação", aperte CTRL + F5
+                            Aperte CTRL + F5 se não vir o selo LARANJA
                         </p>
                     </div>
                 </div>
