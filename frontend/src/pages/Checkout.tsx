@@ -235,8 +235,10 @@ export const Checkout = () => {
                     cpf: cpf.replace(/\D/g, '')
                 };
             } catch (err: any) {
-                console.error('Tokenization Error:', err);
-                alert('Erro na validação do cartão: ' + err.message);
+                console.error('Checkout Error:', err);
+                const errorReason = err.response?.data?.reason || err.message;
+                const errorDetails = err.response?.data?.details ? JSON.stringify(err.response.data.details) : '';
+                alert(`Erro ao processar pagamento: ${errorReason} ${errorDetails}`);
                 setLoading(false);
                 return;
             }
@@ -359,10 +361,10 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.7 - BUILD FIX
+                                VERSÃO V1.3.8 - FINAL ERROR TRACING
                             </span>
-                            <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
-                                Site Sincronizado | Use CTRL + F5
+                            <p style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '8px', fontWeight: 'bold' }}>
+                                PARE! Use CTRL + F5 antes de testar
                             </p>
                         </div>
                     </div>
