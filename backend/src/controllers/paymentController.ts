@@ -135,16 +135,24 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             }
 
             payload.token = finalToken;
-            payload.payment_method_id = finalPaymentMethodId;
+
+            // Normalize payment_method_id (Mercado Pago expects 'mastercard' instead of 'master')
+            let mpPaymentMethodId = finalPaymentMethodId;
+            if (mpPaymentMethodId === 'master') {
+                mpPaymentMethodId = 'mastercard';
+            }
+
+            payload.payment_method_id = mpPaymentMethodId;
             payload.installments = installments || 1;
         }
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.2.4) ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.2.9) ---');
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
-        console.log('Payment Method:', payload.payment_method_id);
+        console.log('Normalized Payment Method:', payload.payment_method_id);
         console.log('Description:', description);
+        console.log('Full sanitized payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
 
         const response = await fetch(MP_API_URL, {
             method: 'POST',

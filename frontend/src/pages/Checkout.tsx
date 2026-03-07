@@ -203,7 +203,14 @@ export const Checkout = () => {
 
                 console.log('Card Token Generated Successfully:', cardToken.id);
                 payload.token = cardToken.id;
-                payload.payment_method_id = finalBrand;
+
+                // Normalização: master -> mastercard
+                let normalizedBrand = finalBrand;
+                if (normalizedBrand === 'master') {
+                    normalizedBrand = 'mastercard';
+                }
+
+                payload.payment_method_id = normalizedBrand;
                 payload.installments = installments;
 
                 // Envia dados brutos como fallback (para o backend tokenizar se necessário)
