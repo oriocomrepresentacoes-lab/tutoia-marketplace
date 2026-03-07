@@ -204,17 +204,26 @@ export const Checkout = () => {
                 console.log('Card Token Generated Successfully:', cardToken.id);
                 payload.token = cardToken.id;
 
-                // Revertido: mastercard causa erro diff_param_bins. Usar brand original do SDK.
+                // Definitive brand fix: Use original brand from BIN
                 payload.payment_method_id = finalBrand;
                 payload.installments = installments;
 
-                // Identificação mandatória (Brasil Produção)
+                // Mandatory identification (Brasil Produção)
                 payload.payer_first_name = firstName;
                 payload.payer_last_name = lastName;
                 payload.payer_cpf = cpf.replace(/\D/g, '');
 
-                payload.payment_method_id = finalBrand;
-                payload.installments = installments;
+                // Fetch Issuer ID (Crucial for 400 not_result_by_params)
+                try {
+                    console.log('Fetching Issuer ID for:', finalBrand);
+                    const issuers = await mp.getIssuers({ paymentMethodId: finalBrand, bin: cardNumberValue.substring(0, 6) });
+                    if (issuers && issuers.length > 0) {
+                        payload.issuer_id = issuers[0].id;
+                        console.log('Issuer ID identified:', payload.issuer_id);
+                    }
+                } catch (issuerErr) {
+                    console.error('Issuer Identification Error (Non-critical):', issuerErr);
+                }
 
                 // Envia dados brutos como fallback (para o backend tokenizar se necessário)
                 payload.card_data_fallback = {
@@ -350,7 +359,7 @@ export const Checkout = () => {
                                 fontWeight: 'bold',
                                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                             }}>
-                                VERSÃO V1.3.3 - FINAL FIX BRAND & CPF
+                                VERSÃO V1.3.4 - FINAL FIX ISSUER
                             </span>
                             <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
                                 Site Sincronizado | Use CTRL + F5

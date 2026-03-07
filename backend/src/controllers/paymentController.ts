@@ -136,6 +136,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
             payload.token = finalToken;
             payload.payment_method_id = finalPaymentMethodId;
+            payload.issuer_id = req.body.issuer_id; // Added in V1.3.4
             payload.installments = installments || 1;
         }
 
@@ -151,9 +152,10 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO (V1.3.3) ---');
+        console.log('--- SENDING TO MERCADO PAGO (V1.3.4) ---');
         console.log('Token used:', payload.token ? payload.token.substring(0, 15) + '...' : 'NULL');
         console.log('Final Payment Method:', payload.payment_method_id);
+        console.log('Issuer ID:', payload.issuer_id);
         console.log('Description:', description);
         console.log('Full sanitized payload:', JSON.stringify({ ...payload, token: 'REDACTED' }, null, 2));
 
