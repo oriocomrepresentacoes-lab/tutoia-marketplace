@@ -159,7 +159,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                                 }
                             });
 
-                            const { io } = require('../index');
+                            // Emit real-time notification to the frontend
+                            const io = req.app.get('io');
                             if (io) {
                                 io.to(transaction.user_id).emit('payment_approved', {
                                     transaction_id: externalReference,
@@ -168,7 +169,11 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                                         ? 'Seu pagamento do Banner foi aprovado!'
                                         : 'Seu pagamento de Mais Imagens foi aprovado!'
                                 });
+                                console.log(`WebSocket event 'payment_approved' emitted to room ${transaction.user_id}`);
+                            } else {
+                                console.error('CRITICAL: Socket.io instance not found via req.app.get("io") during webhook emit.');
                             }
+
                         } else if ((result.status === 'rejected' || result.status === 'cancelled') && transaction.status === 'PENDING') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
@@ -178,6 +183,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                                 }
                             });
                         }
+                    } else {
+                        console.log('External Reference matched no transaction logic skip.');
                     }
                 }
             } catch (err) {
