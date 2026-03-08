@@ -13,12 +13,9 @@ export const Checkout = () => {
     const { user } = useAuthStore();
     const planId = searchParams.get('plan');
 
-    const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
     const [loading, setLoading] = useState(false);
     const [pixData, setPixData] = useState<any>(null);
     const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-    const [detectedBrand, setDetectedBrand] = useState<string>('');
-    const [brandLogo, setBrandLogo] = useState<string>('');
 
     // Socket.io for real-time confirmation
     useEffect(() => {
@@ -45,43 +42,6 @@ export const Checkout = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [cpf, setCpf] = useState('');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCvv, setCardCvv] = useState('');
-    const [installments, setInstallments] = useState(1);
-
-    // Live BIN detection
-    useEffect(() => {
-        const fullCard = cardNumber.replace(/\s/g, '');
-        const bin = fullCard.substring(0, 8); // Support 8-digit BIN
-        const bin6 = fullCard.substring(0, 6);
-
-        if (bin6.length >= 6) {
-            const identifyBrand = async () => {
-                try {
-                    if (!(window as any).MercadoPago) return;
-                    const mp = new (window as any).MercadoPago('APP_USR-21862437-3c94-4795-99e1-aa23c7aebc84');
-                    // Try 8 digits first, fallback to 6
-                    let paymentMethods = await mp.getPaymentMethods({ bin });
-                    if (!paymentMethods.results || paymentMethods.results.length === 0) {
-                        paymentMethods = await mp.getPaymentMethods({ bin: bin6 });
-                    }
-
-                    if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
-                        const brand = paymentMethods.results[0];
-                        setDetectedBrand(brand.id);
-                        setBrandLogo(brand.secure_thumbnail);
-                    }
-                } catch (err) {
-                    console.error('BIN Detection Error:', err);
-                }
-            };
-            identifyBrand();
-        } else {
-            setDetectedBrand('');
-            setBrandLogo('');
-        }
-    }, [cardNumber]);
 
     // Formatters
     const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,26 +51,6 @@ export const Checkout = () => {
         val = val.replace(/(\d{3})(\d)/, '$1.$2');
         val = val.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
         setCpf(val);
-    };
-
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 16) val = val.substring(0, 16);
-        val = val.replace(/(\d{4})(?=\d)/g, '$1 ');
-        setCardNumber(val);
-    };
-
-    const handleCardExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 4) val = val.substring(0, 4);
-        val = val.replace(/(\d{2})(\d{1,2})/, '$1/$2');
-        setCardExpiry(val);
-    };
-
-    const handleCardCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 4) val = val.substring(0, 4);
-        setCardCvv(val);
     };
 
     if (!user) {
@@ -127,129 +67,25 @@ export const Checkout = () => {
     }
 
     const planName = planId === 'BANNER' ? 'Destaque com Banner' : 'Mais Imagens';
-    const planPrice = 1.00; // Preço de teste. Original: planId === 'BANNER' ? 50.0 : 25.0;
+    const planPrice = planId === 'BANNER' ? 50.00 : 25.00;
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
+        if (!firstName || !lastName || !cpf) {
+            alert('Preencha os dados (Nome, Sobrenome e CPF)');
+            setLoading(false);
+            return;
+        }
+
         const payload: any = {
             type: planId,
-            payment_method_id: paymentMethod,
+            payment_method_id: 'pix',
+            payer_first_name: firstName,
+            payer_last_name: lastName,
+            payer_cpf: cpf.replace(/\D/g, '') // API exigence: numeric only
         };
-
-        if (paymentMethod === 'pix') {
-            if (!firstName || !lastName || !cpf) {
-                alert('Preencha os dados do PIX');
-                setLoading(false);
-                return;
-            }
-            payload.payer_first_name = firstName;
-            payload.payer_last_name = lastName;
-            payload.payer_cpf = cpf.replace(/\D/g, ''); // API exigence: numeric only
-        } else {
-            // Credit card REAL tokenization
-            try {
-                if (!(window as any).MercadoPago) {
-                    alert('Erro ao carregar o SDK do Mercado Pago. Recarregue a página.');
-                    setLoading(false);
-                    return;
-                }
-
-                const publicKey = import.meta.env.VITE_MP_PUBLIC_KEY;
-                if (!publicKey) {
-                    alert('ERRO INTERNO: Chave Pública do Mercado Pago (VITE_MP_PUBLIC_KEY) não configurada no ambiente Frontend.');
-                    setLoading(false);
-                    return;
-                }
-
-                const mp = new (window as any).MercadoPago(publicKey);
-
-                const [expiryMonth, expiryYear] = cardExpiry.split('/');
-                let fullExpiryYear = expiryYear;
-                if (expiryYear && expiryYear.length === 2) {
-                    fullExpiryYear = `20${expiryYear}`;
-                }
-
-                const cardNumberValue = cardNumber.replace(/\s/g, '');
-
-                // Use detected brand or try one last time
-                let finalBrand = detectedBrand;
-                if (!finalBrand) {
-                    try {
-                        const paymentMethods = await mp.getPaymentMethods({ bin: cardNumberValue.substring(0, 6) });
-                        if (paymentMethods && paymentMethods.results && paymentMethods.results.length > 0) {
-                            finalBrand = paymentMethods.results[0].id;
-                        }
-                    } catch (brandErr) {
-                        console.error('Final Brand Identification Error:', brandErr);
-                    }
-                }
-
-                if (!finalBrand) {
-                    throw new Error('Não foi possível identificar a bandeira do cartão. Verifique o número.');
-                }
-
-                const cardData = {
-                    cardNumber: cardNumberValue,
-                    cardholderName: `${firstName} ${lastName}`,
-                    cardExpirationMonth: expiryMonth,
-                    cardExpirationYear: fullExpiryYear,
-                    securityCode: cardCvv,
-                    identificationType: 'CPF',
-                    identificationNumber: cpf.replace(/\D/g, ''),
-                };
-
-                console.log('Generating Card Token with Data:', { ...cardData, cardNumber: '****' });
-                const cardToken = await mp.createCardToken(cardData);
-
-                if (!cardToken || !cardToken.id) {
-                    console.error('Mercado Pago Token Error:', cardToken);
-                    throw new Error('O Mercado Pago não conseguiu validar seu cartão. Verifique os números e o CVV.');
-                }
-
-                console.log('Card Token Generated Successfully:', cardToken.id);
-                payload.token = cardToken.id;
-
-                // Definitive brand fix: Use original brand from BIN
-                payload.payment_method_id = finalBrand;
-                payload.installments = installments;
-
-                // Mandatory identification (Brasil Produção)
-                payload.payer_first_name = firstName;
-                payload.payer_last_name = lastName;
-                payload.payer_cpf = cpf.replace(/\D/g, '');
-
-                // Fetch Issuer ID (Crucial for 400 not_result_by_params)
-                try {
-                    console.log('Fetching Issuer ID for:', finalBrand);
-                    const issuers = await mp.getIssuers({ paymentMethodId: finalBrand, bin: cardNumberValue.substring(0, 6) });
-                    if (issuers && issuers.length > 0) {
-                        payload.issuer_id = issuers[0].id;
-                        console.log('Issuer ID identified:', payload.issuer_id);
-                    }
-                } catch (issuerErr) {
-                    console.error('Issuer Identification Error (Non-critical):', issuerErr);
-                }
-
-                // Envia dados brutos como fallback (para o backend tokenizar se necessário)
-                payload.card_data_fallback = {
-                    card_number: cardNumberValue,
-                    cardholder_name: `${firstName} ${lastName}`,
-                    expiration_month: parseInt(expiryMonth),
-                    expiration_year: parseInt(fullExpiryYear),
-                    security_code: cardCvv,
-                    cpf: cpf.replace(/\D/g, '')
-                };
-            } catch (err: any) {
-                console.error('Checkout Error:', err);
-                const errorReason = err.response?.data?.reason || err.message;
-                const errorDetails = err.response?.data?.details ? JSON.stringify(err.response.data.details) : '';
-                alert(`Erro ao processar pagamento: ${errorReason} ${errorDetails}`);
-                setLoading(false);
-                return;
-            }
-        }
 
         try {
             const data = await fetchApi('/payments/checkout', {
@@ -257,22 +93,15 @@ export const Checkout = () => {
                 body: JSON.stringify(payload),
             });
 
-            if (data) {
-                if (paymentMethod === 'pix' && data.qr_code_base64) {
-                    setPixData(data);
-                } else if (data.status === 'approved' || data.status === 'in_process') {
-                    alert(data.status === 'approved' ? 'Pagamento aprovado com sucesso!' : 'Pagamento em processamento. Verifique em instantes.');
-                    navigate('/dashboard');
-                } else {
-                    alert('Pagamento pendente ou recusado. Verifique o status depois.');
-                    navigate('/dashboard');
-                }
+            if (data && data.qr_code_base64) {
+                setPixData(data);
+            } else {
+                alert('Erro ao gerar código PIX. Tente novamente.');
             }
         } catch (error: any) {
             console.error('Checkout Error:', error);
-            console.error('Error Details:', error.data);
             const detailMsg = error.data?.details?.message || error.data?.details?.cause?.[0]?.description || '';
-            alert('Erro ao processar pagamento: ' + error.message + (detailMsg ? ` (${detailMsg})` : ''));
+            alert('Erro ao processar PIX: ' + error.message + (detailMsg ? ` (${detailMsg})` : ''));
         } finally {
             setLoading(false);
         }
@@ -282,7 +111,7 @@ export const Checkout = () => {
         if (paymentConfirmed) {
             const timer = setTimeout(() => {
                 navigate(planId === 'BANNER' ? '/admin' : '/dashboard');
-            }, 6000);
+            }, 5000);
             return () => clearTimeout(timer);
         }
     }, [paymentConfirmed, navigate, planId]);
@@ -338,7 +167,9 @@ export const Checkout = () => {
                         Copiar Código
                     </button>
                 </div>
-                <button className="btn-checkout" onClick={() => navigate('/dashboard')}>Confirmar e Ir para o Dashboard</button>
+                <p className="text-light" style={{ marginTop: '1rem', color: '#10b981', fontWeight: 'bold' }}>
+                    ⏳ Aguardando confirmação... Esta página atualizará automaticamente assim que o pagamento for recebido.
+                </p>
             </div>
         );
     }
@@ -360,100 +191,50 @@ export const Checkout = () => {
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
                         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                             <span style={{
-                                background: '#10b981', // GREEN for V1.3.3
+                                background: '#3b82f6',
                                 color: 'white',
                                 padding: '6px 14px',
                                 borderRadius: '20px',
                                 fontSize: '0.8rem',
                                 fontWeight: 'bold',
-                                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
+                                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)'
                             }}>
-                                VERSÃO V1.5.3 - MIN AMOUNT FIX (5 BRL)
+                                VERSÃO V2.0.0 - PIX ONLY
                             </span>
-                            <p style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '8px', fontWeight: 'bold' }}>
-                                PARE! Use CTRL + F5 antes de testar
-                            </p>
                         </div>
                     </div>
                 </div>
 
                 <div className="box-card payment-methods">
                     <h2>Dados do Pagador (Obrigatório)</h2>
-                    <div className="payer-info-shared" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1.5rem' }}>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <div className="form-group" style={{ flex: 1 }}>
-                                <label>Nome</label>
-                                <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Seu nome" />
-                            </div>
-                            <div className="form-group" style={{ flex: 1 }}>
-                                <label>Sobrenome</label>
-                                <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Seu sobrenome" />
-                            </div>
-                        </div>
-                        <div className="form-group" style={{ marginTop: '0.5rem' }}>
-                            <label>CPF</label>
-                            <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
-                        </div>
-                    </div>
-
-                    <h2>Método de Pagamento</h2>
                     <form onSubmit={handleCheckout}>
-                        <div className="payment-options">
-                            <label className={`payment-option ${paymentMethod === 'pix' ? 'selected' : ''}`}>
-                                <input type="radio" name="payment" value="pix" checked={paymentMethod === 'pix'} onChange={() => setPaymentMethod('pix')} />
-                                PIX
-                            </label>
-                            <label className={`payment-option ${paymentMethod === 'credit_card' ? 'selected' : ''}`}>
-                                <input type="radio" name="payment" value="credit_card" checked={paymentMethod === 'credit_card'} onChange={() => setPaymentMethod('credit_card')} />
-                                Cartão de Crédito
-                            </label>
-                        </div>
-
-                        {paymentMethod === 'credit_card' && (
-                            <div className="card-form">
-                                <div className="form-group">
-                                    <label>Número do Cartão</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            className="input"
-                                            value={cardNumber}
-                                            onChange={handleCardNumberChange}
-                                            placeholder="0000 0000 0000 0000"
-                                            required
-                                        />
-                                        {brandLogo && (
-                                            <img
-                                                src={brandLogo}
-                                                alt={detectedBrand}
-                                                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', height: '20px' }}
-                                            />
-                                        )}
-                                    </div>
-                                    {detectedBrand && <small className="text-light">Bandeira detectada: <strong style={{ textTransform: 'uppercase' }}>{detectedBrand}</strong></small>}
+                        <div className="payer-info-shared" style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="form-group" style={{ flex: 1 }}>
+                                    <label>Nome</label>
+                                    <input type="text" className="input" value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Seu nome" />
                                 </div>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label>Validade</label>
-                                        <input type="text" className="input" value={cardExpiry} onChange={handleCardExpiryChange} placeholder="MM/AA" />
-                                    </div>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label>CVV</label>
-                                        <input type="text" className="input" value={cardCvv} onChange={handleCardCvvChange} placeholder="123" />
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label>Parcelas</label>
-                                    <select className="input" value={installments} onChange={e => setInstallments(Number(e.target.value))}>
-                                        <option value={1}>1x de R$ {planPrice.toFixed(2)}</option>
-                                        <option value={2}>2x de R$ {(planPrice / 2).toFixed(2)}</option>
-                                    </select>
+                                <div className="form-group" style={{ flex: 1 }}>
+                                    <label>Sobrenome</label>
+                                    <input type="text" className="input" value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Seu sobrenome" />
                                 </div>
                             </div>
-                        )}
+                            <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                                <label>CPF</label>
+                                <input type="text" className="input" value={cpf} onChange={handleCpfChange} placeholder="000.000.000-00" required />
+                            </div>
+                        </div>
+
+                        <h2>Método de Pagamento</h2>
+                        <div className="payment-options">
+                            <label className="payment-option selected" style={{ borderColor: '#10b981', background: 'rgba(16, 185, 129, 0.05)' }}>
+                                <input type="radio" name="payment" value="pix" checked readOnly />
+                                PIX (Aprovação Imediata)
+                            </label>
+                        </div>
 
                         <button type="submit" className="btn-checkout" disabled={loading}>
-                            {loading ? 'Processando Pagamento...' : 'Pagar e Assinar o Plano'}
+                            {loading ? 'Gerando PIX...' : 'Gerar Código PIX'}
                         </button>
                     </form>
                 </div>
