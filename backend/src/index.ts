@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for Render deployment (Load Balancer)
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

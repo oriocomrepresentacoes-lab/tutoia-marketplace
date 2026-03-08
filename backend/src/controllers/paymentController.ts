@@ -46,12 +46,23 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             }
         });
 
+        // Auto-detect backend URL for webhooks
+        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+        const host = req.headers.host;
+        const notification_url = process.env.VITE_API_URL
+            ? `${process.env.VITE_API_URL}/api/payments/webhook`
+            : `${protocol}://${host}/api/payments/webhook`;
+
+        console.log('--- GENERATING PIX ---');
+        console.log('Notification URL set to:', notification_url);
+
         // Build Payload strictly for PIX
         const payload: any = {
             transaction_amount,
             description,
             payment_method_id: 'pix',
             external_reference: transaction.id,
+            notification_url,
             payer: {
                 email: user.email,
                 first_name: payer_first_name,
@@ -110,6 +121,11 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
 export const paymentWebhook = async (req: Request, res: Response) => {
     try {
+        console.log('--- WEBHOOK INCOMING REQUEST ---');
+        console.log('Headers:', req.headers);
+        console.log('Query:', req.query);
+        console.log('Body:', req.body);
+
         const { data, type } = req.body;
         let paymentId = req.query.id || req.query['data.id'] || data?.id;
 
@@ -117,10 +133,13 @@ export const paymentWebhook = async (req: Request, res: Response) => {
             paymentId = req.body.data?.id;
         }
 
+        console.log('Parsed Payment ID:', paymentId);
+
         if (paymentId) {
             try {
                 const result = await payment.get({ id: String(paymentId) });
                 const externalReference = result.external_reference;
+                console.log('MP Payment Data:', { id: result.id, status: result.status, external_reference: externalReference });
 
                 if (externalReference) {
                     const transaction = await prisma.transaction.findUnique({
@@ -128,6 +147,8 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                     });
 
                     if (transaction) {
+                        console.log('DB Transaction Found:', transaction.id, 'Current Status:', transaction.status);
+
                         if (result.status === 'approved' && transaction.status !== 'APPROVED') {
                             await prisma.transaction.update({
                                 where: { id: externalReference },
