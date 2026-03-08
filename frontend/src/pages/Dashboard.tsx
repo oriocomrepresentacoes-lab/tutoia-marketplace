@@ -1,10 +1,11 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, ExternalLink, MapPin, Upload } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, MapPin, UploadCloud, Link as LinkIcon, Type, ImageIcon, CheckCircle } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
 import './Dashboard.css';
+import './BannerForm.css';
 
 export const Dashboard = () => {
     const { user } = useAuthStore();
@@ -16,7 +17,11 @@ export const Dashboard = () => {
 
     const [bannerTitle, setBannerTitle] = useState('');
     const [bannerLink, setBannerLink] = useState('');
+    const [linkType, setLinkType] = useState('internal');
     const [bannerImage, setBannerImage] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadingBanner, setUploadingBanner] = useState(false);
 
     useEffect(() => {
@@ -58,6 +63,39 @@ export const Dashboard = () => {
         }
     };
 
+    const handleFile = (selectedFile: File) => {
+        if (!selectedFile.type.startsWith('image/')) {
+            alert('Por favor, selecione apenas arquivos de imagem.');
+            return;
+        }
+        setBannerImage(selectedFile);
+        setPreview(URL.createObjectURL(selectedFile));
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    };
+
     const handleBannerSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!bannerImage) {
@@ -93,7 +131,7 @@ export const Dashboard = () => {
 
     const activeBannerPlan = myPlans.find(t => t.type === 'BANNER' && t.status === 'APPROVED');
     const isAdmin = user?.role === 'ADMIN';
-    const canUploadBanner = isAdmin || (activeBannerPlan && !hasBanner);
+    const canUploadBanner = isAdmin || activeBannerPlan;
 
     return (
         <div className="dashboard-page container">
@@ -129,42 +167,132 @@ export const Dashboard = () => {
                 </div>
             </div>
 
+            {hasBanner && (
+                <div className="box-card mb-4" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid var(--success)' }}>
+                    <h3 style={{ color: 'var(--success)', margin: 0 }}>✔ Seu Banner promocional está ativo na página principal!</h3>
+                </div>
+            )}
+
             {canUploadBanner && (
                 <div className="box-card mb-4" style={{ backgroundColor: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)' }}>
                     <h2 className="section-title">
-                        {isAdmin ? 'Envio Administrativo de Banners' : 'Você possui um Plano de Banner Ativo!'}
+                        {isAdmin ? 'Envio Administrativo de Banners' : 'Gerenciar Banner Destaque'}
                     </h2>
                     <p className="mb-4">
                         {isAdmin
                             ? 'Como administrador, você tem envio livre de banners sem checagem de pagamento.'
-                            : 'Envie agora a imagem que deseja exibir na página principal para milhares de visitantes.'}
+                            : hasBanner ? 'Você possui um banner ativo! Use o formulário abaixo se desejar trocar a arte do seu banner.' : 'Você possui um Plano de Banner Ativo! Envie agora a imagem que deseja exibir na página principal para milhares de visitantes.'}
                     </p>
 
-                    <form onSubmit={handleBannerSubmit} style={{ maxWidth: '600px' }}>
-                        <div className="form-group mb-3">
-                            <label>Título / Referência</label>
-                            <input type="text" className="input" value={bannerTitle} onChange={e => setBannerTitle(e.target.value)} required />
+                    <form onSubmit={handleBannerSubmit} style={{ maxWidth: '680px' }}>
+                        <div className="modern-input-group" style={{ marginBottom: '1.5rem' }}>
+                            <Type className="icon" size={20} />
+                            <input
+                                type="text"
+                                value={bannerTitle}
+                                onChange={(e) => setBannerTitle(e.target.value)}
+                                placeholder="Título Interno (Ex: Promoção de Fim de Ano)"
+                                required
+                                className="input"
+                            />
                         </div>
-                        <div className="form-group mb-3">
-                            <label>Link de Destino (Opcional, ex: https://seu-site.com ou Link do Anúncio)</label>
-                            <input type="url" className="input" value={bannerLink} onChange={e => setBannerLink(e.target.value)} />
+
+                        <div style={{ marginBottom: '1.5rem', background: 'var(--surface)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <label style={{ display: 'block', fontWeight: 600, marginBottom: '1rem', color: 'var(--text)' }}>
+                                <LinkIcon size={18} style={{ verticalAlign: '-3px', marginRight: '0.5rem' }} />
+                                Para onde o banner deve enviar o cliente?
+                            </label>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="linkType" checked={linkType === 'internal'} onChange={() => { setLinkType('internal'); setBannerLink(''); }} />
+                                    Meu Anúncio (Interno)
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="linkType" checked={linkType === 'external'} onChange={() => { setLinkType('external'); setBannerLink(''); }} />
+                                    Link Externo (Site/WhatsApp)
+                                </label>
+                            </div>
+
+                            {linkType === 'internal' ? (
+                                <select
+                                    className="input"
+                                    value={bannerLink}
+                                    onChange={(e) => setBannerLink(e.target.value)}
+                                    style={{ width: '100%' }}
+                                    required
+                                >
+                                    <option value="" disabled>Selecione um dos seus anúncios ativos...</option>
+                                    {myAds.length === 0 && <option value="" disabled>Você não tem anúncios ativos.</option>}
+                                    {myAds.map((ad: any) => (
+                                        <option key={ad.id} value={`/anuncio/${ad.id}`}>
+                                            {ad.title} - R$ {ad.price.toFixed(2)}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="url"
+                                    className="input"
+                                    value={bannerLink}
+                                    onChange={(e) => setBannerLink(e.target.value)}
+                                    placeholder="Ex: https://wa.me/5586999999999 ou seupipa.com"
+                                    style={{ width: '100%' }}
+                                    required
+                                />
+                            )}
                         </div>
+
                         <div className="form-group mb-4">
-                            <label>Imagem do Banner (Recomendado: 1200x400px)</label>
-                            <input type="file" className="input" accept="image/*" onChange={e => setBannerImage(e.target.files?.[0] || null)} required />
+                            {!preview ? (
+                                <div
+                                    className={`upload-dropzone ${isDragging ? 'drag-over' : ''}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{ cursor: 'pointer', textAlign: 'center', border: '2px dashed var(--primary)', padding: '2rem', borderRadius: '12px' }}
+                                >
+                                    <UploadCloud size={48} className="upload-icon mx-auto" style={{ color: 'var(--primary)', marginBottom: '1rem' }} />
+                                    <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
+                                    <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>) - JPG, PNG ou WEBP</p>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden-file-input"
+                                        style={{ display: 'none' }}
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="preview-container" style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+                                    <img src={preview} alt="Preview Banner" className="preview-image" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                    <div className="preview-overlay" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem', background: 'rgba(0,0,0,0.7)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.85rem' }}><CheckCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Imagem Preparada</span>
+                                        <div
+                                            className="btn btn-sm btn-outline-light"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => {
+                                                setPreview(null);
+                                                setBannerImage(null);
+                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                            }}
+                                        >
+                                            Trocar Arte
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <button type="submit" className="btn btn-primary d-flex align-center gap-2" disabled={uploadingBanner}>
-                            <Upload size={20} /> {uploadingBanner ? 'Enviando...' : 'Enviar Banner'}
+
+                        <button type="submit" className="btn btn-primary d-flex align-center gap-2" disabled={uploadingBanner} style={{ width: '100%', justifyContent: 'center', height: '3rem', fontSize: '1.1rem' }}>
+                            <ImageIcon size={20} /> {uploadingBanner ? 'Enviando...' : 'Enviar Banner'}
                         </button>
                     </form>
                 </div>
             )}
 
-            {hasBanner && (
-                <div className="box-card mb-4">
-                    <h3 style={{ color: 'var(--success)' }}>✔ Seu Banner promocional está ativo na página principal!</h3>
-                </div>
-            )}
 
             <div className="dashboard-listings box-card">
                 <h2 className="section-title">Meus Anúncios</h2>
