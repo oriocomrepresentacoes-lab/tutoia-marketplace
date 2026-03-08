@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { fetchApi } from '../utils/api';
+import { fetchApi, SOCKET_URL } from '../utils/api';
 import { io as socketIO } from 'socket.io-client';
 import './Checkout.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const Checkout = () => {
     const [searchParams] = useSearchParams();
@@ -21,7 +19,7 @@ export const Checkout = () => {
     useEffect(() => {
         if (!user) return;
 
-        const socket = socketIO(API_URL);
+        const socket = socketIO(SOCKET_URL);
 
         socket.on('connect', () => {
             socket.emit('join', user.id);
