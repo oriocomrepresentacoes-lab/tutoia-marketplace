@@ -75,7 +75,7 @@ export const Checkout = () => {
     }
 
     const planName = planId === 'BANNER' ? 'Destaque com Banner' : 'Mais Imagens';
-    const planPrice = 1.00; // Original: planId === 'BANNER' ? 50.00 : 25.00;
+    const planPrice = planId === 'BANNER' ? 50.00 : 25.00;
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -197,20 +197,6 @@ export const Checkout = () => {
                         <strong>R$ {planPrice.toFixed(2).replace('.', ',')}</strong>
                     </div>
                     <div style={{ textAlign: 'right', marginTop: '1rem' }}>
-                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                            <span style={{
-                                background: '#8b5cf6', // Purple for testing
-                                color: 'white',
-                                padding: '6px 14px',
-                                borderRadius: '20px',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold',
-                                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)'
-                            }}>
-                                VERSÃO V2.0.1 - TEST BRL 1.00
-                            </span>
-
-                        </div>
                     </div>
                 </div>
 
