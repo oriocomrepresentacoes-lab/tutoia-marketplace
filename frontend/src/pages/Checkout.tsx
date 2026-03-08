@@ -22,11 +22,21 @@ export const Checkout = () => {
         const socket = socketIO(SOCKET_URL);
 
         socket.on('connect', () => {
+            console.log('✅ Socket connected to:', SOCKET_URL, 'ID:', socket.id);
+            console.log('Emit joining room for user:', user.id);
             socket.emit('join', user.id);
         });
 
+        socket.on('connect_error', (error) => {
+            console.error('❌ Socket connection error:', error.message);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('⚠️ Socket disconnected:', reason);
+        });
+
         socket.on('payment_approved', (data) => {
-            console.log('Real-time payment approved:', data);
+            console.log('🎉 Real-time payment approved:', data);
             setPaymentConfirmed(true);
             setPixData(null); // Close QR code if open
         });
