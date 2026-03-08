@@ -76,7 +76,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
 
         const idempotencyKey = `${transaction.id}-${Date.now()}`;
 
-        console.log('--- SENDING TO MERCADO PAGO SDK (V2.0.0 PIX ONLY) ---');
+        console.log('--- SENDING TO MERCADO PAGO SDK (V2.0.1 PIX ONLY WEBHOOK FIXED) ---');
         console.log('Payload Body:', JSON.stringify(payload, null, 2));
 
         try {
