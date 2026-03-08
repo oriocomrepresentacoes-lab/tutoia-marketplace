@@ -30,8 +30,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             issuer_id // For Card
         } = req.body;
 
-        // Pricing logic (Lowered for final production testing)
-        const transaction_amount = type === 'BANNER' ? 1.00 : 1.00; // Final prices: type === 'BANNER' ? 50.00 : 25.00;
+        // Pricing logic (Changed to 5.00 to avoid MP minimum amount restrictions)
+        const transaction_amount = type === 'BANNER' ? 5.00 : 5.00; // Final prices: type === 'BANNER' ? 50.00 : 25.00;
         const description = type === 'BANNER' ? 'Adesão de Banner - TutShop' : 'Adesão de +Imagens - TutShop';
 
         // Create transaction in DB
