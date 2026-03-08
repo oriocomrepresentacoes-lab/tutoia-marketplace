@@ -30,8 +30,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Dados do pagador (Nome, Sobrenome, CPF) são obrigatórios para PIX.' });
         }
 
-        // Pricing logic (Restored original values)
-        const transaction_amount = type === 'BANNER' ? 50.00 : 25.00;
+        // Pricing logic (Restored back to 1.00 for testing purposes)
+        const transaction_amount = type === 'BANNER' ? 1.00 : 1.00; // Original: 50.00 / 25.00
         const description = type === 'BANNER' ? 'Adesão de Banner - TutShop' : 'Adesão de +Imagens - TutShop';
 
         // Create transaction in DB
