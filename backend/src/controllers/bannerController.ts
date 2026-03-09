@@ -29,12 +29,33 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         console.log('--- Incoming Banner Request ---');
         console.log('Body:', req.body);
         console.log('File:', req.file);
-        const { title, link, position, start_date, end_date } = req.body;
+        const { title, link, position, start_date, end_date, id: explicitId } = req.body;
         const user_id = req.user?.id;
         let image = '';
 
         if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
+        const user = await prisma.user.findUnique({ where: { id: user_id } });
+        const isAdmin = user?.role === 'ADMIN';
+
+        // 1. Prioriade: Se for Admin e enviou um ID explícito, estamos SUBSTITUINDO um banner
+        if (isAdmin && explicitId) {
+            const existing = await prisma.banner.findUnique({ where: { id: explicitId } });
+            if (!existing) return res.status(404).json({ error: 'Banner não encontrado para substituição.' });
+
+            const updatedBanner = await prisma.banner.update({
+                where: { id: explicitId },
+                data: {
+                    title: title || existing.title,
+                    link: link || existing.link,
+                    image: req.file ? req.file.path : existing.image,
+                    position: position || existing.position,
+                }
+            });
+            return res.json(updatedBanner);
+        }
+
+        // 2. Fluxo Normal: Criação ou atualização automática de usuário comum
         if (req.file) {
             image = req.file.path;
         } else {
@@ -52,15 +73,11 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             orderBy: { created_at: 'desc' }
         });
 
-        const user = await prisma.user.findUnique({ where: { id: user_id } });
-        const isAdmin = user?.role === 'ADMIN';
-
         if (!isAdmin && !activeTransaction) {
             return res.status(403).json({ error: 'Você não possui uma assinatura de Destaque com Banner ativa.' });
         }
 
-        // Check if they already have an active banner to UPDATE instead of creating a new one
-        // Admins can create multiple banners, so we only override for regular users.
+        // Check if they already have an active banner to UPDATE instead of creating a new one (Regular Users)
         const existingBanner = await prisma.banner.findFirst({
             where: {
                 user_id,

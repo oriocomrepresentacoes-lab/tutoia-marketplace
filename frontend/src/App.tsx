@@ -31,6 +31,7 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/ad/new" element={<CreateAd />} />
             <Route path="/ad/new-banner" element={<BannerForm />} />
+            <Route path="/ad/edit-banner/:id" element={<BannerForm />} />
           </Routes>
         </main>
         <Footer />

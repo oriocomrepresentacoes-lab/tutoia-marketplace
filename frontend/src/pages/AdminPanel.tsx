@@ -244,20 +244,28 @@ export const AdminPanel = () => {
                                             )}
                                         </td>
                                         <td>
-                                            <button
-                                                className={`btn ${b.active ? 'btn-outline-danger' : 'btn-outline-success'} btn-sm`}
-                                                onClick={() => toggleBannerStatus(b.id, b.active)}
-                                            >
-                                                {b.active ? 'Derrubar Banner' : 'Reativar'}
-                                            </button>
-                                            <button
-                                                className="btn btn-outline-danger btn-sm mt-1"
-                                                style={{ marginLeft: '8px' }}
-                                                onClick={() => deleteBannerItem(b.id)}
-                                                title="Excluir Permanente"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                <button
+                                                    className={`btn ${b.active ? 'btn-outline-danger' : 'btn-outline-success'} btn-sm`}
+                                                    onClick={() => toggleBannerStatus(b.id, b.active)}
+                                                >
+                                                    {b.active ? 'Derrubar' : 'Reativar'}
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline-primary btn-sm"
+                                                    onClick={() => navigate(`/ad/edit-banner/${b.id}`)}
+                                                    title="Editar/Substituir"
+                                                >
+                                                    <Shield size={16} /> Substituir
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    onClick={() => deleteBannerItem(b.id)}
+                                                    title="Excluir Permanente"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
 import { UploadCloud, Link as LinkIcon, Type, Image as ImageIcon, Shield, Star, CheckCircle } from 'lucide-react';
@@ -9,6 +9,7 @@ import './BannerForm.css';
 export const BannerForm = () => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
+    const { id: editId } = useParams();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [title, setTitle] = useState('');
@@ -24,6 +25,8 @@ export const BannerForm = () => {
     const [hasActiveBanner, setHasActiveBanner] = useState(false);
     const [verifyingRights, setVerifyingRights] = useState(true);
 
+    const isEditing = !!editId;
+
     // Redirect se não logado
     if (!user) {
         navigate('/login');
@@ -37,7 +40,7 @@ export const BannerForm = () => {
                 if (plansData) {
                     const hasRights = user.role === 'ADMIN' || plansData.transactions.some((t: any) => t.type === 'BANNER');
                     setHasBannerRights(hasRights);
-                    // Administradores sempre criam novos banners, não atualizam.
+                    // Administradores sempre criam novos banners, não atualizam via fluxo normal.
                     setHasActiveBanner(user.role !== 'ADMIN' && plansData.hasBanner);
                 }
             } catch (err) {
@@ -56,9 +59,33 @@ export const BannerForm = () => {
             }
         };
 
+        const loadBannerToEdit = async () => {
+            if (!editId) return;
+            setLoading(true);
+            try {
+                const banners = await fetchApi('/admin/banners');
+                const banner = banners?.find((b: any) => b.id === editId);
+                if (banner) {
+                    setTitle(banner.title);
+                    setLink(banner.link || '');
+                    setPreview(banner.image.startsWith('http') ? banner.image : `http://localhost:5000${banner.image}`);
+                    if (banner.link?.startsWith('/anuncio/')) {
+                        setLinkType('internal');
+                    } else if (banner.link) {
+                        setLinkType('external');
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao carregar banner para edição", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         verifyRights();
         fetchMyAds();
-    }, [user.role]);
+        if (isEditing) loadBannerToEdit();
+    }, [user.role, editId]);
 
     const handleFile = (selectedFile: File) => {
         if (!selectedFile.type.startsWith('image/')) {
@@ -95,7 +122,7 @@ export const BannerForm = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) {
+        if (!file && !isEditing) {
             alert('Por favor, selecione uma imagem para o banner.');
             return;
         }
@@ -106,14 +133,15 @@ export const BannerForm = () => {
             formData.append('title', title);
             formData.append('link', link);
             formData.append('position', 'home_topo');
-            formData.append('image', file);
+            if (file) formData.append('image', file);
+            if (editId) formData.append('id', editId);
 
             await fetchApi('/banners', {
                 method: 'POST',
                 body: formData
             });
 
-            alert('Banner enviado com sucesso!');
+            alert(isEditing ? 'Banner substituído com sucesso!' : 'Banner enviado com sucesso!');
             if (user.role === 'ADMIN') {
                 navigate('/admin');
             } else {
@@ -133,8 +161,8 @@ export const BannerForm = () => {
             <div className="banner-form-card">
 
                 <div className="banner-form-header">
-                    <h2>Adicionar Destaque</h2>
-                    <p>Suba uma arte para aparecer no carrossel da Página Inicial.</p>
+                    <h2>{isEditing ? 'Substituir Banner' : 'Adicionar Destaque'}</h2>
+                    <p>{isEditing ? 'Altere as informações do banner selecionado abaixo.' : 'Suba uma arte para aparecer no carrossel da Página Inicial.'}</p>
                 </div>
 
                 {user.role === 'ADMIN' ? (
@@ -263,7 +291,7 @@ export const BannerForm = () => {
                                 Cancelar
                             </button>
                             <button type="submit" className="btn btn-primary submit-banner-btn" disabled={loading} style={{ width: 'auto', padding: '0 2rem', margin: 0, height: '3rem' }}>
-                                {loading ? 'Processando envio...' : <><ImageIcon size={18} /> {hasActiveBanner ? 'Atualizar Banner' : 'Publicar Banner'}</>}
+                                {loading ? 'Processando envio...' : <><ImageIcon size={18} /> {isEditing ? 'Salvar Alterações' : hasActiveBanner ? 'Atualizar Banner' : 'Publicar Banner'}</>}
                             </button>
                         </div>
                     </form>
