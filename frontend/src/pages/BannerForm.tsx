@@ -119,8 +119,9 @@ export const BannerForm = () => {
                 navigate('/dashboard');
             }
         } catch (error: any) {
-            console.error(error);
-            alert(error.message || 'Erro de conexão ao enviar o banner.');
+            console.error('Submission Error:', error);
+            const detailMsg = error.data ? JSON.stringify(error.data) : error.message;
+            alert(`Erro ao enviar: ${detailMsg}`);
         } finally {
             setLoading(false);
         }
