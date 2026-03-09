@@ -178,14 +178,14 @@ export const Dashboard = () => {
                     <h2 className="section-title">
                         {isAdmin ? 'Envio Administrativo de Banners' : 'Gerenciar Banner Destaque'}
                     </h2>
-                    <p className="mb-4">
+                    <p className="mb-4" style={{ marginBottom: '2.5rem', lineHeight: '1.5' }}>
                         {isAdmin
                             ? 'Como administrador, você tem envio livre de banners sem checagem de pagamento.'
                             : hasBanner ? 'Você possui um banner ativo! Use o formulário abaixo se desejar trocar a arte do seu banner.' : 'Você possui um Plano de Banner Ativo! Envie agora a imagem que deseja exibir na página principal para milhares de visitantes.'}
                     </p>
 
                     <form onSubmit={handleBannerSubmit} style={{ maxWidth: '680px' }}>
-                        <div className="modern-input-group" style={{ marginBottom: '1.5rem' }}>
+                        <div className="modern-input-group" style={{ marginBottom: '2rem' }}>
                             <Type className="icon" size={20} />
                             <input
                                 type="text"
@@ -243,7 +243,7 @@ export const Dashboard = () => {
                             )}
                         </div>
 
-                        <div className="form-group mb-4">
+                        <div className="form-group" style={{ marginBottom: '2.5rem' }}>
                             {!preview ? (
                                 <div
                                     className={`upload-dropzone ${isDragging ? 'drag-over' : ''}`}
