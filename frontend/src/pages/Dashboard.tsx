@@ -12,7 +12,7 @@ export const Dashboard = () => {
     const navigate = useNavigate();
     const [myAds, setMyAds] = useState([]);
     const [myPlans, setMyPlans] = useState<any[]>([]);
-    const [hasBanner, setHasBanner] = useState(false);
+    const [myBanners, setMyBanners] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [bannerTitle, setBannerTitle] = useState('');
@@ -36,16 +36,17 @@ export const Dashboard = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [adsData, plansData] = await Promise.all([
+            const [adsData, plansData, bannersData] = await Promise.all([
                 fetchApi(`/ads?user_id=${user?.id}`),
-                fetchApi('/user-plans/my-plans')
+                fetchApi('/user-plans/my-plans'),
+                fetchApi('/banners/my-banners')
             ]);
 
             if (adsData) setMyAds(adsData);
             if (plansData) {
                 setMyPlans(plansData.transactions || []);
-                setHasBanner(plansData.hasBanner);
             }
+            if (bannersData) setMyBanners(bannersData);
         } catch (error) {
             console.error(error);
         } finally {
@@ -60,6 +61,16 @@ export const Dashboard = () => {
             loadData();
         } catch (error) {
             alert('Erro ao excluir o anúncio');
+        }
+    };
+
+    const handleDeleteBanner = async (bannerId: string) => {
+        if (!confirm('Tem certeza que deseja excluir este banner?')) return;
+        try {
+            await fetchApi(`/banners/${bannerId}`, { method: 'DELETE' });
+            loadData();
+        } catch (error: any) {
+            alert(error.message || 'Erro ao excluir banner');
         }
     };
 
@@ -119,6 +130,8 @@ export const Dashboard = () => {
             setBannerTitle('');
             setBannerLink('');
             setBannerImage(null);
+            setPreview(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
             loadData();
         } catch (error: any) {
             alert(error.message || 'Erro ao enviar banner');
@@ -167,24 +180,26 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            {hasBanner && (
-                <div className="box-card mb-4" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid var(--success)' }}>
-                    <h3 style={{ color: 'var(--success)', margin: 0 }}>✔ Seu Banner promocional está ativo na página principal!</h3>
+            {isAdmin && (
+                <div className="box-card mb-4" style={{ backgroundColor: 'rgba(147, 51, 234, 0.05)', border: '1px solid #9333ea' }}>
+                    <h2 className="section-title" style={{ color: '#9333ea' }}>Painel Administrativo</h2>
+                    <p>Você tem acesso total para criar e gerenciar banners sem restrições de pagamento.</p>
                 </div>
             )}
 
             {canUploadBanner && (
                 <div className="box-card mb-4" style={{ backgroundColor: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)' }}>
                     <h2 className="section-title">
-                        {isAdmin ? 'Envio Administrativo de Banners' : 'Gerenciar Banner Destaque'}
+                        {isAdmin ? 'Enviar Novo Banner' : 'Adicionar Banner Destaque'}
                     </h2>
                     <p className="mb-4" style={{ marginBottom: '2.5rem', lineHeight: '1.5' }}>
                         {isAdmin
-                            ? 'Como administrador, você tem envio livre de banners sem checagem de pagamento.'
-                            : hasBanner ? 'Você possui um banner ativo! Use o formulário abaixo se desejar trocar a arte do seu banner.' : 'Você possui um Plano de Banner Ativo! Envie agora a imagem que deseja exibir na página principal para milhares de visitantes.'}
+                            ? 'Como administrador, seus banners são publicados imediatamente.'
+                            : 'Você possui uma assinatura ativa! Envie quantos banners desejar para serem exibidos rotativamente na página principal.'}
                     </p>
 
                     <form onSubmit={handleBannerSubmit} style={{ maxWidth: '680px' }}>
+                        {/* ... (Form inputs same as before) */}
                         <div className="modern-input-group" style={{ marginBottom: '2rem' }}>
                             <Type className="icon" size={20} />
                             <input
@@ -236,7 +251,7 @@ export const Dashboard = () => {
                                     className="input"
                                     value={bannerLink}
                                     onChange={(e) => setBannerLink(e.target.value)}
-                                    placeholder="Ex: https://wa.me/5586999999999 ou seupipa.com"
+                                    placeholder="Ex: https://wa.me/5586999999999"
                                     style={{ width: '100%' }}
                                     required
                                 />
@@ -255,7 +270,7 @@ export const Dashboard = () => {
                                 >
                                     <UploadCloud size={48} className="upload-icon mx-auto" style={{ color: 'var(--primary)', marginBottom: '1rem' }} />
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
-                                    <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>) - JPG, PNG ou WEBP</p>
+                                    <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>)</p>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -290,6 +305,26 @@ export const Dashboard = () => {
                             <ImageIcon size={20} /> {uploadingBanner ? 'Enviando...' : 'Enviar Banner'}
                         </button>
                     </form>
+
+                    {myBanners.length > 0 && (
+                        <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem' }}>Meus Banners Ativos ({myBanners.length})</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                {myBanners.map((banner) => (
+                                    <div key={banner.id} className="box-card" style={{ padding: '1rem', position: 'relative' }}>
+                                        <img src={getOptimizedImageUrl(banner.image, 400)} alt={banner.title} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '0.75rem' }} />
+                                        <h4 style={{ fontSize: '0.95rem', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{banner.title}</h4>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                                            <span>{banner.clicks || 0} cliques</span>
+                                            <button onClick={() => handleDeleteBanner(banner.id)} className="text-danger" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -22,7 +22,7 @@ export const BannerForm = () => {
     const [isDragging, setIsDragging] = useState(false);
 
     const [hasBannerRights, setHasBannerRights] = useState(false);
-    const [hasActiveBanner, setHasActiveBanner] = useState(false);
+    const [hasBannerRights, setHasBannerRights] = useState(false);
     const [verifyingRights, setVerifyingRights] = useState(true);
 
     const isEditing = !!editId;
@@ -40,8 +40,6 @@ export const BannerForm = () => {
                 if (plansData) {
                     const hasRights = user.role === 'ADMIN' || plansData.transactions.some((t: any) => t.type === 'BANNER');
                     setHasBannerRights(hasRights);
-                    // Administradores sempre criam novos banners, não atualizam via fluxo normal.
-                    setHasActiveBanner(user.role !== 'ADMIN' && plansData.hasBanner);
                 }
             } catch (err) {
                 console.error("Erro ao checar planos", err);
@@ -176,7 +174,7 @@ export const BannerForm = () => {
                     <div className="privilege-alert privilege-user">
                         <Star size={24} style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div>
-                            <strong>Vantagem do Plano:</strong> Você possui o plano Destaque ativo por 20 dias e já pode {hasActiveBanner ? 'atualizar sua arte' : 'enviar a sua arte finalizada'} para todos verem!
+                            <strong>Vantagem do Plano:</strong> Você possui o plano Destaque ativo! Envie quantos banners desejar para aparecerem rotativamente para todos.
                         </div>
                     </div>
                 ) : null}
@@ -291,7 +289,7 @@ export const BannerForm = () => {
                                 Cancelar
                             </button>
                             <button type="submit" className="btn btn-primary submit-banner-btn" disabled={loading} style={{ width: 'auto', padding: '0 2rem', margin: 0, height: '3rem' }}>
-                                {loading ? 'Processando envio...' : <><ImageIcon size={18} /> {isEditing ? 'Salvar Alterações' : hasActiveBanner ? 'Atualizar Banner' : 'Publicar Banner'}</>}
+                                {loading ? 'Processando envio...' : <><ImageIcon size={18} /> {isEditing ? 'Salvar Alterações' : 'Publicar Novo Banner'}</>}
                             </button>
                         </div>
                     </form>

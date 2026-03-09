@@ -4,31 +4,75 @@ import { AuthRequest } from '../middlewares/auth';
 
 export const getActiveBanners = async (req: Request, res: Response) => {
     try {
+        const now = new Date();
+
+        // 1. Auto-cleanup: Delete physically from DB if end_date < now
+        // This keeps the database lean as requested.
+        await prisma.banner.deleteMany({
+            where: {
+                end_date: { lt: now }
+            }
+        });
+
         const banners = await prisma.banner.findMany({
             where: {
                 active: true,
                 OR: [
                     { end_date: null },
-                    { end_date: { gte: new Date() } }
+                    { end_date: { gte: now } }
                 ]
             }
         });
 
-        // We don't increment views here directly for all to avoid massive DB writes,
-        // usually we'd do it per component render or batch it. 
-        // The requirement says "Controle de visualizações", we'll create a special endpoint for tracking.
+        res.json(banners);
+    } catch (error) {
+        console.error('Error fetching active banners:', error);
+        res.status(500).json({ error: 'Erro ao buscar os banners.' });
+    }
+};
+
+export const getMyBanners = async (req: AuthRequest, res: Response) => {
+    try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
+
+        const banners = await prisma.banner.findMany({
+            where: { user_id },
+            orderBy: { created_at: 'desc' }
+        });
 
         res.json(banners);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao buscar os banners.' });
+        res.status(500).json({ error: 'Erro ao buscar seus banners.' });
+    }
+};
+
+export const deleteBanner = async (req: AuthRequest, res: Response) => {
+    try {
+        const user_id = req.user?.id;
+        const id = req.params.id as string;
+
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
+
+        const banner = await prisma.banner.findUnique({ where: { id } });
+
+        if (!banner) return res.status(404).json({ error: 'Banner não encontrado.' });
+
+        // Permitir se for o dono OU se for ADMIN
+        if (banner.user_id !== user_id && req.user?.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Você não tem permissão para excluir este banner.' });
+        }
+
+        await prisma.banner.delete({ where: { id } });
+
+        res.json({ message: 'Banner excluído com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir banner.' });
     }
 };
 
 export const createBanner = async (req: AuthRequest, res: Response) => {
     try {
-        console.log('--- Incoming Banner Request ---');
-        console.log('Body:', req.body);
-        console.log('File:', req.file);
         const { title, link, position, start_date, end_date, id: explicitId } = req.body;
         const user_id = req.user?.id;
         let image = '';
@@ -38,10 +82,15 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         const user = await prisma.user.findUnique({ where: { id: user_id } });
         const isAdmin = user?.role === 'ADMIN';
 
-        // 1. Prioriade: Se for Admin e enviou um ID explícito, estamos SUBSTITUINDO um banner
-        if (isAdmin && explicitId) {
+        // 1. Prioriade: Se for Admin e enviou um ID explícito, ou se usuário quer trocar a arte de um banner específico
+        if (explicitId) {
             const existing = await prisma.banner.findUnique({ where: { id: explicitId } });
             if (!existing) return res.status(404).json({ error: 'Banner não encontrado para substituição.' });
+
+            // Verificar permissão
+            if (!isAdmin && existing.user_id !== user_id) {
+                return res.status(403).json({ error: 'Sem permissão para alterar este banner.' });
+            }
 
             const updatedBanner = await prisma.banner.update({
                 where: { id: explicitId },
@@ -55,7 +104,7 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             return res.json(updatedBanner);
         }
 
-        // 2. Fluxo Normal: Criação ou atualização automática de usuário comum
+        // 2. Fluxo Normal: Criação de novo (com plano ativo)
         if (req.file) {
             image = req.file.path;
         } else {
@@ -70,51 +119,29 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                 status: 'APPROVED',
                 expires_at: { gte: new Date() }
             },
-            orderBy: { created_at: 'desc' }
+            orderBy: { expires_at: 'desc' } // Pegar o que vence mais tarde
         });
 
         if (!isAdmin && !activeTransaction) {
             return res.status(403).json({ error: 'Você não possui uma assinatura de Destaque com Banner ativa.' });
         }
 
-        // Check if they already have an active banner to UPDATE instead of creating a new one (Regular Users)
-        const existingBanner = await prisma.banner.findFirst({
-            where: {
-                user_id,
-                end_date: { gte: new Date() }
-            }
-        });
-
         const calculatedEndDate = isAdmin && end_date
             ? new Date(end_date)
             : activeTransaction?.expires_at || new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
 
-        let banner;
-        if (existingBanner && !isAdmin) {
-            // Upsert / Update existing banner for regular users
-            banner = await prisma.banner.update({
-                where: { id: existingBanner.id },
-                data: {
-                    title,
-                    link,
-                    image,
-                    position: position || 'home_topo',
-                }
-            });
-        } else {
-            // Create new (Always for Admin, or if user doesn't have one)
-            banner = await prisma.banner.create({
-                data: {
-                    title,
-                    link,
-                    image,
-                    position: position || 'home_topo',
-                    start_date: start_date ? new Date(start_date) : new Date(),
-                    end_date: calculatedEndDate,
-                    user_id
-                }
-            });
-        }
+        // No novo modelo, sempre criamos um NOVO registro se chegar aqui sem explicitId
+        const banner = await prisma.banner.create({
+            data: {
+                title,
+                link,
+                image,
+                position: position || 'home_topo',
+                start_date: start_date ? new Date(start_date) : new Date(),
+                end_date: calculatedEndDate,
+                user_id
+            }
+        });
 
         res.status(201).json(banner);
     } catch (error: any) {

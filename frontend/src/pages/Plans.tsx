@@ -49,7 +49,7 @@ export const Plans = () => {
                     title="Destaque com Banner"
                     price="50,00"
                     features={[
-                        "Banner rotativo na home",
+                        "Banners rotativos ilimitados",
                         "Destaque no topo da lista",
                         "Link direto para seu anúncio",
                         "Válido por 20 dias"
