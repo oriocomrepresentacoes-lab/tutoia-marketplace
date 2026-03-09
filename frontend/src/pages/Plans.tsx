@@ -67,7 +67,7 @@ export const Plans = () => {
                         "Válido por 20 dias"
                     ]}
                     onClick={() => navigate('/checkout?plan=AD_IMAGES')}
-                    primary={false}
+                    primary={true}
                 />
             </div>
         </div>
