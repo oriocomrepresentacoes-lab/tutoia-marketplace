@@ -162,7 +162,7 @@ export const BannerForm = () => {
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        <div className="modern-input-group">
+                        <div className="modern-input-group" style={{ marginBottom: '2rem' }}>
                             <Type className="icon" size={20} />
                             <input
                                 type="text"
@@ -170,6 +170,7 @@ export const BannerForm = () => {
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Título Interno (Ex: Promoção de Fim de Ano)"
                                 required
+                                className="input"
                             />
                         </div>
 
@@ -255,11 +256,11 @@ export const BannerForm = () => {
                             )}
                         </div>
 
-                        <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                            <button type="button" className="btn btn-outline-secondary" style={{ borderRadius: '0.75rem', height: '3rem' }} onClick={() => navigate(-1)} disabled={loading}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+                            <button type="button" className="btn btn-outline-secondary" style={{ borderRadius: '0.75rem', height: '3rem', padding: '0 2rem' }} onClick={() => navigate(-1)} disabled={loading}>
                                 Cancelar
                             </button>
-                            <button type="submit" className="btn btn-primary submit-banner-btn" disabled={loading} style={{ width: 'auto', padding: '0 2rem', margin: 0 }}>
+                            <button type="submit" className="btn btn-primary submit-banner-btn" disabled={loading} style={{ width: 'auto', padding: '0 2rem', margin: 0, height: '3rem' }}>
                                 {loading ? 'Processando envio...' : <><ImageIcon size={18} /> {hasActiveBanner ? 'Atualizar Banner' : 'Publicar Banner'}</>}
                             </button>
                         </div>
