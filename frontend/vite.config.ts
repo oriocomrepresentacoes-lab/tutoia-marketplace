@@ -17,13 +17,13 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/app-icon-192-v2.png',
+            src: '/app-icon-v3.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/app-icon-512-v2.png',
+            src: '/app-icon-v3.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
