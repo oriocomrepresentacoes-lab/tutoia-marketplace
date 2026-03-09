@@ -22,7 +22,6 @@ export const BannerForm = () => {
     const [isDragging, setIsDragging] = useState(false);
 
     const [hasBannerRights, setHasBannerRights] = useState(false);
-    const [hasBannerRights, setHasBannerRights] = useState(false);
     const [verifyingRights, setVerifyingRights] = useState(true);
 
     const isEditing = !!editId;
