@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './BannerWidget.css';
 
 interface Banner {
@@ -16,6 +15,11 @@ export const BannerWidget = ({ position }: { position: string }) => {
     const [banners, setBanners] = useState<Banner[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const timeoutRef = useRef<any>(null);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Required distance for a swipe to be registered
+    const minSwipeDistance = 50;
 
     useEffect(() => {
         let isMounted = true;
@@ -77,6 +81,28 @@ export const BannerWidget = ({ position }: { position: string }) => {
         setCurrentIndex(prev => (prev === 0 ? banners.length - 1 : prev - 1));
     };
 
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            nextSlide();
+        } else if (isRightSwipe) {
+            prevSlide();
+        }
+    };
+
     const handleBannerClick = (banner: Banner) => {
         if ((banner as any).isDemo) {
             window.location.href = '/plans';
@@ -93,7 +119,12 @@ export const BannerWidget = ({ position }: { position: string }) => {
     const getImageUrl = (img: string) => getOptimizedImageUrl(img, 1200);
 
     return (
-        <div className={`banner-slider banner-${position}`}>
+        <div
+            className={`banner-slider banner-${position}`}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
             <div
                 className="banner-track"
                 style={{ transform: `translateX(${-currentIndex * 100}%)` }}
@@ -114,24 +145,15 @@ export const BannerWidget = ({ position }: { position: string }) => {
             </div>
 
             {banners.length > 1 && (
-                <>
-                    <button className="slider-btn prev-btn" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
-                        <ChevronLeft size={24} />
-                    </button>
-                    <button className="slider-btn next-btn" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
-                        <ChevronRight size={24} />
-                    </button>
-
-                    <div className="slider-dots">
-                        {banners.map((_, idx) => (
-                            <div
-                                key={idx}
-                                className={`slider-dot ${currentIndex === idx ? 'active' : ''}`}
-                                onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                            />
-                        ))}
-                    </div>
-                </>
+                <div className="slider-dots">
+                    {banners.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`slider-dot ${currentIndex === idx ? 'active' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );
