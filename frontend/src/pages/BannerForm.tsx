@@ -37,7 +37,8 @@ export const BannerForm = () => {
                 if (plansData) {
                     const hasRights = user.role === 'ADMIN' || plansData.transactions.some((t: any) => t.type === 'BANNER');
                     setHasBannerRights(hasRights);
-                    setHasActiveBanner(plansData.hasBanner);
+                    // Administradores sempre criam novos banners, não atualizam.
+                    setHasActiveBanner(user.role !== 'ADMIN' && plansData.hasBanner);
                 }
             } catch (err) {
                 console.error("Erro ao checar planos", err);

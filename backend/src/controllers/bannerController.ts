@@ -60,6 +60,7 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         }
 
         // Check if they already have an active banner to UPDATE instead of creating a new one
+        // Admins can create multiple banners, so we only override for regular users.
         const existingBanner = await prisma.banner.findFirst({
             where: {
                 user_id,
@@ -72,8 +73,8 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             : activeTransaction?.expires_at || new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
 
         let banner;
-        if (existingBanner) {
-            // Upsert / Update existing banner
+        if (existingBanner && !isAdmin) {
+            // Upsert / Update existing banner for regular users
             banner = await prisma.banner.update({
                 where: { id: existingBanner.id },
                 data: {
@@ -84,7 +85,7 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                 }
             });
         } else {
-            // Create new
+            // Create new (Always for Admin, or if user doesn't have one)
             banner = await prisma.banner.create({
                 data: {
                     title,
