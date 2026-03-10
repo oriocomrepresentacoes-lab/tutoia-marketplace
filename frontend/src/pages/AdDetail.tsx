@@ -13,6 +13,7 @@ export const AdDetail = () => {
     const { user } = useAuthStore();
     const [ad, setAd] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [activeImage, setActiveImage] = useState(0);
 
     useEffect(() => {
         fetchApi(`/ads/${id}`).then(data => {
@@ -53,14 +54,21 @@ export const AdDetail = () => {
                 <div className="ad-main">
                     <div className="ad-gallery">
                         {ad.images && ad.images.length > 0 ? (
-                            <img src={getOptimizedImageUrl(ad.images[0], 800)} alt={ad.title} className="ad-hero-img" />
+                            <img src={getOptimizedImageUrl(ad.images[activeImage], 800)} alt={ad.title} className="ad-hero-img" />
                         ) : (
                             <div className="ad-placeholder-img">Sem imagem</div>
                         )}
                         {ad.images && ad.images.length > 1 && (
                             <div className="ad-thumbnails">
                                 {ad.images.map((img: string, idx: number) => (
-                                    <img key={idx} src={getOptimizedImageUrl(img, 200)} alt="Thumbnail" />
+                                    <img
+                                        key={idx}
+                                        src={getOptimizedImageUrl(img, 200)}
+                                        alt={`Thumbnail ${idx + 1}`}
+                                        className={activeImage === idx ? 'active' : ''}
+                                        onClick={() => setActiveImage(idx)}
+                                        style={{ cursor: 'pointer', border: activeImage === idx ? '2px solid var(--primary)' : '2px solid transparent' }}
+                                    />
                                 ))}
                             </div>
                         )}

@@ -56,15 +56,32 @@ export const CreateAd = () => {
         setImages(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value === '') {
+            setPrice('');
+            return;
+        }
+        const numericValue = parseInt(value) / 100;
+        const formatted = new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(numericValue);
+        setPrice(formatted);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setLoading(true);
 
+        // Convert "20.000,00" to 20000.00
+        const numericPrice = parseFloat(price.replace(/\./g, '').replace(',', '.'));
+
         const formData = new FormData();
         formData.append('title', title);
         formData.append('description', description);
-        formData.append('price', price);
+        formData.append('price', String(numericPrice));
         formData.append('type', type);
         formData.append('city', city);
         formData.append('category_id', categoryId);
@@ -115,24 +132,25 @@ export const CreateAd = () => {
 
                 <form onSubmit={handleSubmit} className="ad-form">
                     <div className="image-upload-section">
-                        <label className="upload-label">
+                        <label className="image-upload-label">
                             <Upload size={32} />
                             <span>Adicione fotos (Máx {maxImages})</span>
                             <input
                                 type="file"
-                                multiple
                                 accept="image/*"
+                                multiple
                                 onChange={handleImageChange}
+                                disabled={images.length >= maxImages}
                                 hidden
                             />
                         </label>
 
                         {images.length > 0 && (
-                            <div className="image-preview-container">
-                                {images.map((img, idx) => (
-                                    <div key={idx} className="image-preview">
-                                        <img src={URL.createObjectURL(img)} alt="Preview" />
-                                        <button type="button" onClick={() => removeImage(idx)} className="remove-img-btn">
+                            <div className="image-preview-grid">
+                                {images.map((file, index) => (
+                                    <div key={index} className="preview-item">
+                                        <img src={URL.createObjectURL(file)} alt={`Preview ${index}`} />
+                                        <button type="button" className="remove-btn" onClick={() => removeImage(index)}>
                                             <X size={16} />
                                         </button>
                                     </div>
@@ -166,31 +184,42 @@ export const CreateAd = () => {
 
                         <div className="form-group">
                             <label>Preço (R$)</label>
-                            <input type="number" step="0.01" className="input" value={price} onChange={e => setPrice(e.target.value)} required />
+                            <input
+                                type="text"
+                                className="input"
+                                value={price}
+                                onChange={handlePriceChange}
+                                placeholder="0,00"
+                                required
+                            />
                         </div>
 
                         <div className="form-group">
                             <label>Cidade</label>
-                            <select className="input" value={city} onChange={e => setCity(e.target.value)} required>
-                                <option value="Tutoia">Tutóia</option>
-                            </select>
+                            <input type="text" className="input" value={city} onChange={e => setCity(e.target.value)} required />
                         </div>
 
                         <div className="form-group span-2">
-                            <label>Descrição Detalhada</label>
+                            <label>Descrição</label>
                             <textarea
-                                className="input"
-                                rows={6}
+                                className="input textarea"
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
+                                rows={5}
                                 required
-                            />
+                            ></textarea>
                         </div>
                     </div>
 
-                    <button type="submit" className="btn btn-primary submit-btn" disabled={loading}>
-                        {loading ? 'Publicando...' : 'Publicar Anúncio'}
-                    </button>
+                    <div className="form-actions">
+                        <button
+                            type="submit"
+                            className="btn btn-primary btn-block"
+                            disabled={loading}
+                        >
+                            {loading ? 'Publicando...' : 'Publicar Anúncio'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
