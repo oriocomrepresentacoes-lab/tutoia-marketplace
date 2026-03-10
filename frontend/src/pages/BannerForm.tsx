@@ -246,34 +246,39 @@ export const BannerForm = () => {
                         </div>
 
                         <div className="form-group mb-4">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden-file-input"
+                                style={{ display: 'none' }}
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
                             {!preview ? (
                                 <div
                                     className={`upload-dropzone ${isDragging ? 'drag-over' : ''}`}
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <UploadCloud size={48} className="upload-icon mx-auto" />
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
                                     <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>) - JPG, PNG ou WEBP</p>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden-file-input"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                    />
                                 </div>
                             ) : (
-                                <div className="preview-container">
+                                <div className="preview-container" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }}>
                                     <img src={preview} alt="Preview Banner" className="preview-image" />
                                     <div className="preview-overlay">
                                         <span style={{ fontSize: '0.85rem' }}><CheckCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Imagem Preparada</span>
                                         <div
                                             className="change-file-btn"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 setPreview(null);
                                                 setFile(null);
+                                                if (fileInputRef.current) fileInputRef.current.value = '';
                                             }}
                                         >
                                             Trocar Arte
