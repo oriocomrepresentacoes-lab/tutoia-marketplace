@@ -29,9 +29,23 @@
     width: 100%;
     height: 100%;
     background-size: contain;
-    /* Prevents cropping */
+    /* Prevents cropping on desktop */
     background-position: center;
     background-repeat: no-repeat;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .banner-track {
+        aspect-ratio: 16 / 7;
+        /* Taller on mobile */
+        min-height: 160px;
+    }
+
+    .banner-image {
+        background-size: cover;
+        /* Fill area on mobile */
+    }
 }
 
 /* Slider Pagination */
