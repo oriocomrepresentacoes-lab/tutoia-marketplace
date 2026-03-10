@@ -37,7 +37,9 @@ export const AdCard = ({ ad }: AdCardProps) => {
             </div>
             <div className="listing-card-content">
                 <h3 className="listing-card-title">{ad.title}</h3>
-                <p className="listing-card-price">R$ {ad.price.toFixed(2)}</p>
+                <p className="listing-card-price">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ad.price)}
+                </p>
                 <div className="listing-card-footer">
                     <span className="listing-card-city">{ad.city}</span>
                     {ad.category && <span className="listing-card-category">{ad.category.name}</span>}
