@@ -58,7 +58,7 @@ export const CreateAd = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setError(null);
         setLoading(true);
 
         const formData = new FormData();
