@@ -14,7 +14,8 @@ export const BannerForm = () => {
 
     const [title, setTitle] = useState('');
     const [link, setLink] = useState('');
-    const [linkType, setLinkType] = useState('internal'); // 'internal' or 'external'
+    const [linkType, setLinkType] = useState('internal'); // 'internal', 'external' or 'whatsapp'
+    const [whatsappNumber, setWhatsappNumber] = useState('');
     const [myAds, setMyAds] = useState<any[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
@@ -78,10 +79,19 @@ export const BannerForm = () => {
                     setTitle(banner.title);
                     setLink(banner.link || '');
                     setPreview(banner.image.startsWith('http') ? banner.image : `http://localhost:5000${banner.image}`);
-                    if (banner.link?.startsWith('/anuncio/')) {
+                    const bannerLink = banner.link || '';
+                    if (bannerLink.startsWith('/anuncio/')) {
                         setLinkType('internal');
-                    } else if (banner.link) {
+                        setLink(bannerLink);
+                    } else if (bannerLink.includes('wa.me/')) {
+                        setLinkType('whatsapp');
+                        const phone = bannerLink.split('wa.me/')[1]?.replace(/\D/g, '');
+                        // Remove 55 if present to show only local number
+                        const localPhone = phone?.startsWith('55') ? phone.slice(2) : phone;
+                        setWhatsappNumber(localPhone || '');
+                    } else {
                         setLinkType('external');
+                        setLink(bannerLink);
                     }
                 }
             } catch (err) {
@@ -122,6 +132,18 @@ export const BannerForm = () => {
         setIsDragging(false);
     };
 
+    const formatPhone = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length <= 2) return numbers;
+        if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    };
+
+    const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatPhone(e.target.value);
+        setWhatsappNumber(formatted);
+    };
+
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
@@ -139,9 +161,18 @@ export const BannerForm = () => {
 
         setLoading(true);
         try {
+            let finalLink = link;
+            if (linkType === 'whatsapp') {
+                const cleanPhone = whatsappNumber.replace(/\D/g, '');
+                if (cleanPhone.length < 10) {
+                    throw new Error('Por favor, insira um número de WhatsApp válido.');
+                }
+                finalLink = `https://wa.me/55${cleanPhone}`;
+            }
+
             const formData = new FormData();
             formData.append('title', title);
-            formData.append('link', link);
+            formData.append('link', finalLink);
             formData.append('position', 'home_topo');
             if (file) formData.append('image', file);
             if (editId) formData.append('id', editId);
@@ -248,14 +279,18 @@ export const BannerForm = () => {
                                 Para onde o banner deve enviar o cliente?
                             </label>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                     <input type="radio" name="linkType" checked={linkType === 'internal'} onChange={() => { setLinkType('internal'); setLink(''); }} />
                                     Meu Anúncio (Interno)
                                 </label>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="linkType" checked={linkType === 'whatsapp'} onChange={() => { setLinkType('whatsapp'); }} />
+                                    WhatsApp
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                     <input type="radio" name="linkType" checked={linkType === 'external'} onChange={() => { setLinkType('external'); setLink(''); }} />
-                                    Link Externo (Site/WhatsApp)
+                                    Link Externo (Site)
                                 </label>
                             </div>
 
@@ -274,13 +309,25 @@ export const BannerForm = () => {
                                         </option>
                                     ))}
                                 </select>
+                            ) : linkType === 'whatsapp' ? (
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }}>+55</span>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={whatsappNumber}
+                                        onChange={handleWhatsappChange}
+                                        placeholder="(99) 99999-9999"
+                                        style={{ width: '100%', paddingLeft: '3.5rem' }}
+                                    />
+                                </div>
                             ) : (
                                 <input
                                     type="url"
                                     className="input"
                                     value={link}
                                     onChange={(e) => setLink(e.target.value)}
-                                    placeholder="Ex: https://wa.me/5586999999999 ou seupipa.com"
+                                    placeholder="Ex: https://seusite.com ou instagram.com/loja"
                                     style={{ width: '100%' }}
                                 />
                             )}
