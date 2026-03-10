@@ -48,6 +48,22 @@ export const AdDetail = () => {
             <div className="ad-header">
                 <Link to="/explore" className="back-link">&larr; Voltar para explorar</Link>
                 <div className="ad-category-badge">{ad.category.name}</div>
+                {ad.isFeatured && (
+                    <div className="featured-badge" style={{
+                        marginLeft: '0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        background: 'linear-gradient(135deg, #fef08a, #f59e0b)',
+                        color: '#78350f',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '1rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                    }}>
+                        <Star size={14} fill="currentColor" /> Destaque
+                    </div>
+                )}
             </div>
 
             <div className="ad-content">

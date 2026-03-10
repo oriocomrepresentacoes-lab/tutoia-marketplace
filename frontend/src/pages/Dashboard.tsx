@@ -197,9 +197,9 @@ export const Dashboard = () => {
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <h3>Meus Planos Ativos</h3>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
-                        {myPlans.length}
+                        {myPlans.filter(p => p.status === 'APPROVED').length}
                     </p>
-                    {myPlans.length === 0 && (
+                    {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (
                         <Link to="/plans" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Ver Planos</Link>
                     )}
                 </div>
