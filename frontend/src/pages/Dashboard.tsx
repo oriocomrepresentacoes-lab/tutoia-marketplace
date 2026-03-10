@@ -316,9 +316,19 @@ export const Dashboard = () => {
                                         <h4 style={{ fontSize: '0.95rem', marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{banner.title}</h4>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-light)' }}>
                                             <span>{banner.clicks || 0} cliques</span>
-                                            <button onClick={() => handleDeleteBanner(banner.id)} className="text-danger" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                    onClick={() => navigate(`/ad/edit-banner/${banner.id}`)}
+                                                    className="text-primary"
+                                                    title="Substituir Arte"
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                                                >
+                                                    <ImageIcon size={18} />
+                                                </button>
+                                                <button onClick={() => handleDeleteBanner(banner.id)} className="text-danger" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

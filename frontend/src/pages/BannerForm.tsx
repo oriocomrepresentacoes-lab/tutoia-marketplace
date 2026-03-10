@@ -20,6 +20,7 @@ export const BannerForm = () => {
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [myBanners, setMyBanners] = useState<any[]>([]);
 
     const [hasBannerRights, setHasBannerRights] = useState(false);
     const [verifyingRights, setVerifyingRights] = useState(true);
@@ -56,11 +57,22 @@ export const BannerForm = () => {
             }
         };
 
+        const fetchMyBanners = async () => {
+            if (isEditing) return;
+            try {
+                const banners = await fetchApi('/banners/my-banners');
+                if (banners) setMyBanners(banners);
+            } catch (err) {
+                console.error("Erro ao puxar banners do usuário", err);
+            }
+        };
+
         const loadBannerToEdit = async () => {
             if (!editId) return;
             setLoading(true);
             try {
-                const banners = await fetchApi('/admin/banners');
+                // Ao editar buscamos especificamente o banner. Como o user pode estar editando o seu ou admin editando qualquer um.
+                const banners = user.role === 'ADMIN' ? await fetchApi('/admin/banners') : await fetchApi('/banners/my-banners');
                 const banner = banners?.find((b: any) => b.id === editId);
                 if (banner) {
                     setTitle(banner.title);
@@ -81,6 +93,7 @@ export const BannerForm = () => {
 
         verifyRights();
         fetchMyAds();
+        fetchMyBanners();
         if (isEditing) loadBannerToEdit();
     }, [user.role, editId]);
 
@@ -186,6 +199,34 @@ export const BannerForm = () => {
                         <h3 style={{ marginBottom: '1rem' }}>Recurso Bloqueado</h3>
                         <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>O Destaque com Banner fica no topo da tela de todos os clientes por 20 dias ininterruptos, uma ótima forma de conseguir mais vendas.<br />Você precisa de uma assinatura ativa para usar essa ferramenta.</p>
                         <button className="btn btn-primary" onClick={() => navigate('/plans')} style={{ padding: '0.75rem 2rem' }}>Assinar Agora</button>
+                    </div>
+                ) : !isEditing && myBanners.length > 0 && user.role !== 'ADMIN' ? (
+                    <div className="banner-selector-view">
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', marginTop: '1rem' }}>Escolha qual banner deseja substituir:</h3>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            {myBanners.map(banner => (
+                                <div key={banner.id} className="box-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
+                                    <img src={banner.image.startsWith('http') ? banner.image : `http://localhost:5000${banner.image}`} alt={banner.title} style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <div style={{ flex: 1 }}>
+                                        <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>{banner.title}</h4>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Criado em: {new Date(banner.created_at).toLocaleDateString('pt-BR')}</p>
+                                    </div>
+                                    <button
+                                        className="btn btn-primary btn-sm"
+                                        onClick={() => navigate(`/ad/edit-banner/${banner.id}`)}
+                                        style={{ height: '2.5rem', padding: '0 1rem' }}
+                                    >
+                                        Substituir Este
+                                    </button>
+                                </div>
+                            ))}
+                            <div style={{ textAlign: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '1rem' }}>Ou se preferir, crie um novo usando do seu plano ilimitado pelo Dashboard.</p>
+                                <button className="btn btn-outline-secondary" onClick={() => navigate('/dashboard')}>
+                                    Voltar ao Dashboard
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
