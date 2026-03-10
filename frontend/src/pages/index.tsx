@@ -12,3 +12,4 @@ export * from './Plans';
 export * from './Checkout';
 export * from './BannerForm';
 export * from './PlansTest';
+export * from './ForgotPassword';

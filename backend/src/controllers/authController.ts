@@ -57,3 +57,44 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Erro ao realizar o login.' });
     }
 };
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, phone, newPassword } = req.body;
+
+        if (!email || !phone || !newPassword) {
+            return res.status(400).json({ error: 'E-mail, telefone e nova senha são obrigatórios.' });
+        }
+
+        // Limpar o telefone para comparação (apenas números)
+        const cleanPhone = phone.replace(/\D/g, '');
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Usuário não encontrado com este e-mail.' });
+        }
+
+        // Também limpar o telefone do banco para garantir a comparação
+        const userPhoneClean = user.phone?.replace(/\D/g, '') || '';
+
+        // Compara os últimos 9 dígitos ou o número completo para evitar erros de DDI (55)
+        const phoneMatch = userPhoneClean.endsWith(cleanPhone) || cleanPhone.endsWith(userPhoneClean);
+
+        if (!phoneMatch) {
+            return res.status(400).json({ error: 'Os dados informados não coincidem com nossos registros.' });
+        }
+
+        const password_hash = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { password_hash }
+        });
+
+        res.json({ message: 'Senha redefinida com sucesso!' });
+    } catch (error) {
+        console.error('Reset Password Error:', error);
+        res.status(500).json({ error: 'Erro ao redefinir a senha.' });
+    }
+};

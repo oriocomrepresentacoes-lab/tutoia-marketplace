@@ -65,6 +65,10 @@ export const Login = () => {
                         />
                     </div>
 
+                    <div style={{ textAlign: 'right', marginBottom: '1.5rem', marginTop: '-1rem' }}>
+                        <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>Esqueci minha senha</Link>
+                    </div>
+
                     <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
                         {loading ? 'Entrando...' : 'Entrar'}
                     </button>
