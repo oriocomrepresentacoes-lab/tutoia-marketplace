@@ -75,7 +75,8 @@ export const Checkout = () => {
     }
 
     const planName = planId === 'BANNER' ? 'Destaque com Banner' : 'Mais Imagens';
-    const planPrice = planId === 'BANNER' ? 50.00 : 25.00;
+    const isTestMode = searchParams.get('test') === 'true';
+    const planPrice = isTestMode ? 0.50 : (planId === 'BANNER' ? 50.00 : 25.00);
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -92,7 +93,8 @@ export const Checkout = () => {
             payment_method_id: 'pix',
             payer_first_name: firstName,
             payer_last_name: lastName,
-            payer_cpf: cpf.replace(/\D/g, '') // API exigence: numeric only
+            payer_cpf: cpf.replace(/\D/g, ''), // API exigence: numeric only
+            is_test: isTestMode
         };
 
         try {

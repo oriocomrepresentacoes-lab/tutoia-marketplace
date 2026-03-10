@@ -4,7 +4,7 @@ import { Footer } from './components/Footer';
 import {
   Home, Explore, AdDetail, CreateAd, Login, Register,
   Profile, Dashboard, AdminPanel, Messages,
-  Plans, Checkout
+  Plans, Checkout, PlansTest
 } from './pages';
 import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -29,6 +29,7 @@ function App() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/plans-test" element={<PlansTest />} />
             <Route path="/ad/new" element={<CreateAd />} />
             <Route path="/ad/new-banner" element={<BannerForm />} />
             <Route path="/ad/edit-banner/:id" element={<BannerForm />} />

@@ -23,7 +23,8 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
             ad_id, // For 'AD_IMAGES'
             payer_first_name,
             payer_last_name,
-            payer_cpf
+            payer_cpf,
+            is_test // Optional test flag
         } = req.body;
 
         if (!payer_first_name || !payer_last_name || !payer_cpf) {
@@ -31,7 +32,13 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         }
 
         // Pricing logic
-        const transaction_amount = type === 'BANNER' ? 50.00 : 25.00;
+        let transaction_amount = type === 'BANNER' ? 50.00 : 25.00;
+
+        // Override for test mode
+        if (is_test === true) {
+            transaction_amount = 0.50;
+        }
+
         const description = type === 'BANNER' ? 'Adesão de Banner - TutShop' : 'Adesão de +Imagens - TutShop';
 
         // Create transaction in DB
