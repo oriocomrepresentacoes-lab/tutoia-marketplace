@@ -12,6 +12,7 @@ interface AdCardProps {
         images: string[];
         category?: { name: string };
         isFeatured?: boolean;
+        isExpiredPremium?: boolean;
     };
 }
 
@@ -26,6 +27,11 @@ export const AdCard = ({ ad }: AdCardProps) => {
                 {ad.isFeatured && (
                     <div className="featured-badge">
                         <Star size={14} fill="currentColor" /> Destaque
+                    </div>
+                )}
+                {ad.isExpiredPremium && (
+                    <div className="expired-premium-badge">
+                        Premium Expirado
                     </div>
                 )}
             </div>

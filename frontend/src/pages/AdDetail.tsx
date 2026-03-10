@@ -76,7 +76,22 @@ export const AdDetail = () => {
 
                     <div className="ad-info-section box-card">
                         <h1 className="ad-title">{ad.title}</h1>
-                        <p className="ad-price">{formattedPrice}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <p className="ad-price">{formattedPrice}</p>
+                            {ad.isExpiredPremium && (
+                                <span style={{
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    color: '#ef4444',
+                                    padding: '0.25rem 0.75rem',
+                                    borderRadius: '1rem',
+                                    fontSize: '0.8rem',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    fontWeight: 'bold'
+                                }}>
+                                    Plano Premium Expirado
+                                </span>
+                            )}
+                        </div>
 
                         <div className="ad-meta">
                             <span className="meta-item"><MapPin size={16} /> {ad.city}</span>

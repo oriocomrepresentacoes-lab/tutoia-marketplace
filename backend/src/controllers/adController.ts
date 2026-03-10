@@ -49,9 +49,17 @@ export const createAd = async (req: AuthRequest, res: Response) => {
             },
         });
 
-        // In this model, the plan is a 20-day subscription. 
-        // It remains APPROVED until it naturally expires by date.
-        // This allows creating unlimited 10-image ads during the period.
+        // In this model, the plan is consumed for a single ad.
+        // It remains linked to this specific ad to provide highlight for 20 days.
+        if (hasActivePlan) {
+            await prisma.transaction.update({
+                where: { id: hasActivePlan.id },
+                data: {
+                    status: 'USED', // Burn the token for this usage
+                    ad_id: ad.id    // Tie the 20-day benefit to this ad
+                }
+            });
+        }
 
         res.status(201).json(ad);
     } catch (error) {
@@ -94,29 +102,47 @@ export const getAds = async (req: Request, res: Response) => {
             },
         });
 
-        // Find users with active "Mais Imagens" plans (20-day limit valid)
-        const usersWithPlans = await prisma.transaction.findMany({
+        // Find active highlight transactions linked to specific ads (20-day limit valid)
+        const activeHighlights = await prisma.transaction.findMany({
             where: {
                 type: 'AD_IMAGES',
-                status: { in: ['APPROVED', 'USED'] },
-                expires_at: { gte: new Date() }
+                status: 'USED',
+                expires_at: { gte: new Date() },
+                ad_id: { not: null }
             },
-            select: { user_id: true }
+            select: { ad_id: true }
         });
 
-        // Create a fast lookup Set for users with active plans
-        const featuredUserIds = new Set(usersWithPlans.map(t => t.user_id));
+        // Find ALL transactions of type AD_IMAGES tied to an ad, even expired ones
+        // This helps identify if an ad HAD a premium plan (10 images)
+        const allImageTransactions = await prisma.transaction.findMany({
+            where: {
+                type: 'AD_IMAGES',
+                ad_id: { not: null }
+            },
+            select: { ad_id: true, expires_at: true }
+        });
 
-        // map images JSON to array and attach isFeatured flag
+        // Create lookup Sets
+        const featuredAdIds = new Set(activeHighlights.map(t => t.ad_id));
+        const adWithPremiumHistory = new Set(allImageTransactions.map(t => t.ad_id));
+
+        // map images JSON to array and attach flags
         const formattedAds = ads.map(ad => {
-            const isFeatured = featuredUserIds.has(ad.user_id);
-            // Remove full user data from response to keep payload clean, just keep what's needed
+            const isFeatured = featuredAdIds.has(ad.id);
+            const hadPremium = adWithPremiumHistory.has(ad.id);
+            const imagesArray = JSON.parse(ad.images);
+
+            // It's an "Expired Premium" if it has > 4 images (or had a plan) but is not currently featured
+            const isExpiredPremium = !isFeatured && (imagesArray.length > 4 || hadPremium);
+
             const { user, ...adData } = ad;
 
             return {
                 ...adData,
-                images: JSON.parse(ad.images),
+                images: imagesArray,
                 isFeatured,
+                isExpiredPremium,
                 user
             };
         });
