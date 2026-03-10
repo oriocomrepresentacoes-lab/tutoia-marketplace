@@ -4,7 +4,7 @@ import { Footer } from './components/Footer';
 import {
   Home, Explore, AdDetail, CreateAd, Login, Register,
   Profile, Dashboard, AdminPanel, Messages,
-  Plans, Checkout, PlansTest
+  Plans, Checkout, PlansTest, ForgotPassword
 } from './pages';
 import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
