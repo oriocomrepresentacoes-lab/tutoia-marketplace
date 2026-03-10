@@ -132,7 +132,7 @@ export const CreateAd = () => {
 
                 <form onSubmit={handleSubmit} className="ad-form">
                     <div className="image-upload-section">
-                        <label className="image-upload-label">
+                        <label className="upload-label">
                             <Upload size={32} />
                             <span>Adicione fotos (Máx {maxImages})</span>
                             <input
@@ -146,11 +146,11 @@ export const CreateAd = () => {
                         </label>
 
                         {images.length > 0 && (
-                            <div className="image-preview-grid">
+                            <div className="image-preview-container">
                                 {images.map((file, index) => (
-                                    <div key={index} className="preview-item">
+                                    <div key={index} className="image-preview">
                                         <img src={URL.createObjectURL(file)} alt={`Preview ${index}`} />
-                                        <button type="button" className="remove-btn" onClick={() => removeImage(index)}>
+                                        <button type="button" className="remove-img-btn" onClick={() => removeImage(index)}>
                                             <X size={16} />
                                         </button>
                                     </div>
