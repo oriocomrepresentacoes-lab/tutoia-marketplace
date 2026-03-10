@@ -5,12 +5,13 @@ import { AuthRequest } from '../middlewares/auth';
 export const getActiveBanners = async (req: Request, res: Response) => {
     try {
         const now = new Date();
+        const safetyBuffer = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
 
-        // 1. Auto-cleanup: Delete physically from DB if end_date < now
-        // This keeps the database lean as requested.
+        // 1. Safe Auto-cleanup: Only delete if it expired more than 24h ago
+        // This avoids errors due to server/DB timezone differences.
         await prisma.banner.deleteMany({
             where: {
-                end_date: { lt: now }
+                end_date: { lt: safetyBuffer }
             }
         });
 

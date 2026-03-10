@@ -49,17 +49,9 @@ export const createAd = async (req: AuthRequest, res: Response) => {
             },
         });
 
-        // In this model, the plan is consumed for a single ad.
-        // It remains linked to this specific ad to provide highlight for 20 days.
-        if (hasActivePlan) {
-            await prisma.transaction.update({
-                where: { id: hasActivePlan.id },
-                data: {
-                    status: 'USED', // Burn the token for this usage
-                    ad_id: ad.id    // Tie the 20-day benefit to this ad
-                }
-            });
-        }
+        // In this model, the plan is a 20-day subscription. 
+        // It remains APPROVED until it naturally expires by date.
+        // This allows creating unlimited 10-image ads during the period.
 
         res.status(201).json(ad);
     } catch (error) {
@@ -102,22 +94,22 @@ export const getAds = async (req: Request, res: Response) => {
             },
         });
 
-        // Find active highlight transactions specific to ads (20-day limit valid)
-        const activeHighlights = await prisma.transaction.findMany({
+        // Find users with active "Mais Imagens" plans (20-day limit valid)
+        const usersWithPlans = await prisma.transaction.findMany({
             where: {
                 type: 'AD_IMAGES',
-                status: 'USED',
-                expires_at: { gte: new Date() },
-                ad_id: { not: null }
-            }
+                status: { in: ['APPROVED', 'USED'] },
+                expires_at: { gte: new Date() }
+            },
+            select: { user_id: true }
         });
 
-        // Create a fast lookup Set for featured ad ids
-        const featuredAdIds = new Set(activeHighlights.map(t => t.ad_id));
+        // Create a fast lookup Set for users with active plans
+        const featuredUserIds = new Set(usersWithPlans.map(t => t.user_id));
 
         // map images JSON to array and attach isFeatured flag
         const formattedAds = ads.map(ad => {
-            const isFeatured = featuredAdIds.has(ad.id);
+            const isFeatured = featuredUserIds.has(ad.user_id);
             // Remove full user data from response to keep payload clean, just keep what's needed
             const { user, ...adData } = ad;
 

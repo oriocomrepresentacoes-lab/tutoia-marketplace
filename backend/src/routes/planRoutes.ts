@@ -13,7 +13,7 @@ router.get('/my-plans', authenticate, async (req: AuthRequest, res) => {
         const transactions = await prisma.transaction.findMany({
             where: {
                 user_id,
-                status: 'APPROVED',
+                status: { in: ['APPROVED', 'USED'] },
                 expires_at: { gte: new Date() }
             },
             orderBy: { created_at: 'desc' }
