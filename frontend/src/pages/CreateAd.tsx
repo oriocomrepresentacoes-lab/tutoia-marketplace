@@ -98,7 +98,17 @@ export const CreateAd = () => {
                     </div>
                 )}
 
-                {error && <div className="error-message">{error}</div>}
+                {error && (
+                    <div className="error-message">
+                        {error}
+                        {/* Exibir detalhes técnicos caso existam para ajudar no diagnóstico */}
+                        {(err as any)?.data?.details && (
+                            <div style={{ fontSize: '0.75rem', marginTop: '4px', opacity: 0.8 }}>
+                                Detalhes: {(err as any).data.details}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="ad-form">
                     <div className="image-upload-section">

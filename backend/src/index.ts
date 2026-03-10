@@ -54,7 +54,13 @@ app.get('/', (req, res) => {
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack);
+    console.error('--- GLOBAL ERROR ---');
+    console.error('Message:', err.message);
+    console.error('Stack:', err.stack);
+    if (err.name === 'MulterError') {
+        console.error('Multer Error Code:', err.code);
+        return res.status(400).json({ error: `Erro no upload: ${err.message}`, details: err.code });
+    }
     res.status(500).json({ error: 'Something went wrong!', details: err.message });
 });
 
