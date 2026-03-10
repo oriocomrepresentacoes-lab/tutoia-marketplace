@@ -15,7 +15,7 @@ export const CreateAd = () => {
     const [categories, setCategories] = useState([]);
     const [images, setImages] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState<{ message: string; details?: string } | null>(null);
     const [maxImages, setMaxImages] = useState(4);
     const [hasImagePlan, setHasImagePlan] = useState(false);
 
@@ -78,7 +78,10 @@ export const CreateAd = () => {
             });
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.message || 'Erro ao criar anúncio');
+            setError({
+                message: err.message || 'Erro ao criar anúncio',
+                details: err.data?.details
+            });
         } finally {
             setLoading(false);
         }
@@ -100,11 +103,11 @@ export const CreateAd = () => {
 
                 {error && (
                     <div className="error-message">
-                        {error}
+                        {error.message}
                         {/* Exibir detalhes técnicos caso existam para ajudar no diagnóstico */}
-                        {(err as any)?.data?.details && (
+                        {error.details && (
                             <div style={{ fontSize: '0.75rem', marginTop: '4px', opacity: 0.8 }}>
-                                Detalhes: {(err as any).data.details}
+                                Detalhes: {error.details}
                             </div>
                         )}
                     </div>
