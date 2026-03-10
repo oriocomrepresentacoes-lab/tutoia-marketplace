@@ -17,7 +17,8 @@ export const Dashboard = () => {
 
     const [bannerTitle, setBannerTitle] = useState('');
     const [bannerLink, setBannerLink] = useState('');
-    const [linkType, setLinkType] = useState('internal');
+    const [linkType, setLinkType] = useState('internal'); // 'internal', 'external' or 'whatsapp'
+    const [whatsappNumber, setWhatsappNumber] = useState('');
     const [bannerImage, setBannerImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -99,6 +100,18 @@ export const Dashboard = () => {
         setIsDragging(false);
     };
 
+    const formatPhone = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length <= 2) return numbers;
+        if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    };
+
+    const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatPhone(e.target.value);
+        setWhatsappNumber(formatted);
+    };
+
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
@@ -115,21 +128,33 @@ export const Dashboard = () => {
         }
 
         setUploadingBanner(true);
-        const formData = new FormData();
-        formData.append('title', bannerTitle);
-        formData.append('link', bannerLink);
-        formData.append('image', bannerImage);
-        formData.append('position', 'home_topo');
-
         try {
+            let finalLink = bannerLink;
+            if (linkType === 'whatsapp') {
+                const cleanPhone = whatsappNumber.replace(/\D/g, '');
+                if (cleanPhone.length < 10) {
+                    throw new Error('Por favor, insira um número de WhatsApp válido.');
+                }
+                finalLink = `https://wa.me/55${cleanPhone}`;
+            }
+
+            const formData = new FormData();
+            formData.append('title', bannerTitle);
+            formData.append('link', finalLink);
+            formData.append('image', bannerImage);
+            formData.append('position', 'home_topo');
+
             await fetchApi('/banners', {
                 method: 'POST',
                 body: formData
             });
+
             alert('Banner enviado com sucesso! Ele já está sendo exibido na página principal.');
             setBannerTitle('');
             setBannerLink('');
+            setWhatsappNumber('');
             setBannerImage(null);
+            setLinkType('internal');
             setPreview(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
             loadData();
@@ -218,14 +243,18 @@ export const Dashboard = () => {
                                 Para onde o banner deve enviar o cliente?
                             </label>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                     <input type="radio" name="linkType" checked={linkType === 'internal'} onChange={() => { setLinkType('internal'); setBannerLink(''); }} />
                                     Meu Anúncio (Interno)
                                 </label>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="linkType" checked={linkType === 'whatsapp'} onChange={() => { setLinkType('whatsapp'); }} />
+                                    WhatsApp
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                     <input type="radio" name="linkType" checked={linkType === 'external'} onChange={() => { setLinkType('external'); setBannerLink(''); }} />
-                                    Link Externo (Site/WhatsApp)
+                                    Link Externo (Site)
                                 </label>
                             </div>
 
@@ -245,13 +274,26 @@ export const Dashboard = () => {
                                         </option>
                                     ))}
                                 </select>
+                            ) : linkType === 'whatsapp' ? (
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }}>+55</span>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={whatsappNumber}
+                                        onChange={handleWhatsappChange}
+                                        placeholder="(99) 99999-9999"
+                                        style={{ width: '100%', paddingLeft: '3.5rem' }}
+                                        required
+                                    />
+                                </div>
                             ) : (
                                 <input
                                     type="url"
                                     className="input"
                                     value={bannerLink}
                                     onChange={(e) => setBannerLink(e.target.value)}
-                                    placeholder="Ex: https://wa.me/5586999999999"
+                                    placeholder="Ex: https://seusite.com ou instagram.com/loja"
                                     style={{ width: '100%' }}
                                     required
                                 />
