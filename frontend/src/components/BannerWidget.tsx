@@ -136,10 +136,6 @@ export const BannerWidget = ({ position }: { position: string }) => {
                         onClick={() => handleBannerClick(banner)}
                     >
                         <div
-                            className="banner-blur-bg"
-                            style={{ backgroundImage: `url(${getImageUrl(banner.image)})` }}
-                        />
-                        <div
                             className="banner-image"
                             style={{ backgroundImage: `url(${getImageUrl(banner.image)})` }}
                             aria-label={banner.title}
