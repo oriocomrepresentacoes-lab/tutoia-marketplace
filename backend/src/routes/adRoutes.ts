@@ -7,7 +7,7 @@ const router = Router();
 
 router.get('/', getAds);
 router.get('/:id', getAdById);
-router.post('/', authenticate, upload.array('images', 5), createAd);
+router.post('/', authenticate, upload.array('images', 10), createAd);
 router.delete('/:id', authenticate, deleteAd);
 
 export default router;
