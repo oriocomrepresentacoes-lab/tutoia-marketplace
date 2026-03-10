@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, User, Calendar, Eye, ShieldCheck, Tag } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, User, Calendar, Eye, ShieldCheck, Tag, Star } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
