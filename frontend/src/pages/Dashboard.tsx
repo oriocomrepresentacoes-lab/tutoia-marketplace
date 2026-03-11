@@ -314,7 +314,7 @@ export const Dashboard = () => {
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
                                     <p className="upload-hint" style={{ color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.5rem' }}>
                                         <Info size={16} style={{ verticalAlign: '-3px', marginRight: '4px' }} />
-                                        Dimensões ideais: 1200 x 350 pixels
+                                        Dimensões ideais: 1200 x 500 pixels
                                     </p>
                                     <input
                                         type="file"
@@ -327,7 +327,7 @@ export const Dashboard = () => {
                                 </div>
                             ) : (
                                 <div className="preview-container" style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
-                                    <img src={preview} alt="Preview Banner" className="preview-image" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                    <img src={preview} alt="Preview Banner" className="preview-image" style={{ width: '100%', aspectRatio: '1200/500', objectFit: 'cover', display: 'block' }} />
                                     <div className="preview-overlay" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem', background: 'rgba(0,0,0,0.7)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontSize: '0.85rem' }}><CheckCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Imagem Preparada</span>
                                         <div

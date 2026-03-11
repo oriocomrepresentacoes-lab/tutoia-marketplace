@@ -355,12 +355,12 @@ export const BannerForm = () => {
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
                                     <p className="upload-hint" style={{ color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.5rem' }}>
                                         <Info size={16} style={{ verticalAlign: '-3px', marginRight: '4px' }} />
-                                        Dimensões ideais: 1200 x 350 pixels
+                                        Dimensões ideais: 1200 x 500 pixels
                                     </p>
                                 </div>
                             ) : (
-                                <div className="preview-container" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }}>
-                                    <img src={preview} alt="Preview Banner" className="preview-image" />
+                                <div className="preview-container" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer', aspectRatio: '1200/500', borderRadius: '12px', overflow: 'hidden' }}>
+                                    <img src={preview} alt="Preview Banner" className="preview-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     <div className="preview-overlay">
                                         <span style={{ fontSize: '0.85rem' }}><CheckCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Imagem Preparada</span>
                                         <div

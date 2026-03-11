@@ -13,9 +13,9 @@
     display: flex;
     transition: transform 0.5s ease-in-out;
     width: 100%;
-    aspect-ratio: 1200 / 350;
+    aspect-ratio: 1200 / 500;
     /* Responsive height keeping banner proportions */
-    max-height: 350px;
+    max-height: 500px;
 }
 
 .banner-slide {
@@ -28,8 +28,7 @@
 .banner-image {
     width: 100%;
     height: 100%;
-    background-size: contain;
-    /* Prevents cropping */
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
@@ -37,14 +36,7 @@
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     .banner-track {
-        aspect-ratio: 16 / 7;
-        /* Taller on mobile as requested */
-        min-height: 160px;
-    }
-
-    .banner-image {
-        background-size: cover;
-        /* Fill area on mobile */
+        min-height: 150px;
     }
 }
 
