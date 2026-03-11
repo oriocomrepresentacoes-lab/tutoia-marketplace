@@ -140,9 +140,33 @@ export const Messages = () => {
                 socket.off('disconnect', handleDisconnect);
                 socket.off('connect_error', handleError);
                 socket.off('new_message', handleNewMessage);
+                socket.off('pong_test');
             };
         }
     }, [user, token, location.state]);
+
+    const handleTestConnection = () => {
+        if (!socketRef.current || !socketRef.current.connected) {
+            alert('Socket não conectado. Tente recarregar ou clicar em Reconectar.');
+            return;
+        }
+        console.log('[Messages] Sending ping_test...');
+        const start = Date.now();
+
+        const onPong = (data: any) => {
+            const end = Date.now();
+            alert(`✅ Conexão OK!\nLatência: ${end - start}ms\nServidor: ${data.time}`);
+            socketRef.current?.off('pong_test', onPong);
+        };
+
+        socketRef.current.on('pong_test', onPong);
+        socketRef.current.emit('ping_test', { clientTime: new Date().toISOString() });
+
+        // Timeout in case server doesn't respond
+        setTimeout(() => {
+            socketRef.current?.off('pong_test', onPong);
+        }, 5000);
+    };
 
     const handleManualReconnect = () => {
         if (socketRef.current) {

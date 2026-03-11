@@ -35,6 +35,12 @@ app.set('io', io);
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
+    // Diagnostics
+    socket.on('ping_test', (data: any) => {
+        console.log('[Socket] Ping received from:', socket.id, data);
+        socket.emit('pong_test', { time: new Date().toISOString(), originalData: data });
+    });
+
     socket.on('join', (userId: any) => {
         const uid = String(userId).trim();
         if (uid && uid !== 'undefined' && uid !== 'null') {
