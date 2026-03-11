@@ -11,7 +11,8 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Trust proxy for Render deployment (Load Balancer)
+console.log('--- SYSTEM BOOT (v1.0.8-sync-fix) ---');
+console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
 app.use(cors());
