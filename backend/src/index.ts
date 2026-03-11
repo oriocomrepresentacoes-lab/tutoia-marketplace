@@ -33,13 +33,15 @@ app.set('io', io);
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('join', (userId: string) => {
-        if (userId) {
-            socket.join(`user_${userId}`);
-            console.log(`[Socket] User ${userId} joined room user_${userId}`);
-            // Let's also check room status
-            const rooms = io.sockets.adapter.rooms;
-            console.log(`[Socket] Room user_${userId} size:`, rooms.get(`user_${userId}`)?.size || 0);
+    socket.on('join', (userId: any) => {
+        const uid = String(userId).trim();
+        if (uid && uid !== 'undefined' && uid !== 'null') {
+            socket.join(`user_${uid}`);
+            console.log(`[Socket] User ${uid} joined room user_${uid}`);
+            const roomSize = io.sockets.adapter.rooms.get(`user_${uid}`)?.size || 0;
+            console.log(`[Socket] Current room user_${uid} size: ${roomSize}`);
+        } else {
+            console.warn('[Socket] Attempted join with invalid userId:', userId);
         }
     });
 

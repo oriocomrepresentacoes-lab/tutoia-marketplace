@@ -145,19 +145,30 @@ export const Messages = () => {
         setNewMessage('');
 
         try {
-            const tempMsg = {
+            const tempId = 'temp-' + Date.now();
+            const optimisticMsg: Message = {
+                id: tempId,
                 content,
+                sender_id: user!.id,
                 receiver_id: activeChat.other_user_id,
                 ad_id: activeChat.ad_id,
+                created_at: new Date().toISOString()
             };
+
+            setMessages(prev => [...prev, optimisticMsg]);
+            scrollToBottom();
 
             const savedMsg = await fetchApi('/messages', {
                 method: 'POST',
-                body: JSON.stringify(tempMsg)
+                body: JSON.stringify({
+                    content,
+                    receiver_id: activeChat.other_user_id,
+                    ad_id: activeChat.ad_id,
+                })
             });
 
             if (savedMsg) {
-                setMessages(prev => [...prev, savedMsg]);
+                setMessages(prev => prev.map(m => m.id === tempId ? savedMsg : m));
                 scrollToBottom();
             }
         } catch (error) {
