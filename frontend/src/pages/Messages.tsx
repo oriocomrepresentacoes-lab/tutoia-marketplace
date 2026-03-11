@@ -21,10 +21,15 @@ export const Messages = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [chats, setChats] = useState<any[]>([]);
     const [activeChat, setActiveChat] = useState<any>(null);
+    const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Sync ref with state for socket listener
+    useEffect(() => {
+        activeChatRef.current = activeChat;
+    }, [activeChat]);
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
@@ -98,16 +103,18 @@ export const Messages = () => {
             }
 
             socket.on('new_message', (msg: Message) => {
-                console.log('[Socket] New message received:', msg);
-                setActiveChat((currentActive: any) => {
-                    if (currentActive &&
-                        msg.ad_id === currentActive.ad_id &&
-                        (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
-                        setMessages(prev => [...prev, msg]);
-                        scrollToBottom();
-                    }
-                    return currentActive;
-                });
+                const currentActive = activeChatRef.current;
+                console.log('[Socket] Message received:', msg, 'Current active chat:', currentActive?.ad_id);
+
+                if (currentActive &&
+                    msg.ad_id === currentActive.ad_id &&
+                    (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
+                    console.log('[Socket] Message matches active chat, appending to UI');
+                    setMessages(prev => [...prev, msg]);
+                    scrollToBottom();
+                } else {
+                    console.log('[Socket] Message ignored: does not match active conversation or no chat selected');
+                }
             });
         }
 
