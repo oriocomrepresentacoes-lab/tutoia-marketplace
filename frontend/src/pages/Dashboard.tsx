@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, ExternalLink, MapPin, UploadCloud, Link as LinkIcon, Type, ImageIcon, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, MapPin, UploadCloud, Link as LinkIcon, Type, ImageIcon, CheckCircle, Info } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
