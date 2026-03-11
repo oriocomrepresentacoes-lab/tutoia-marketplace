@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { User, Settings, Camera, Save, X } from 'lucide-react';
+import { User, Settings, Camera, Save, X, Bell } from 'lucide-react';
 import { fetchApi } from '../utils/api';
+import { setupNotifications } from '../utils/pushManager';
 
 export const Profile = () => {
     const { user, logout, setAuth } = useAuthStore();
@@ -95,9 +96,12 @@ export const Profile = () => {
                         <p style={{ color: '#64748b', marginBottom: '0.5rem' }}>{user.email}</p>
                         {user.phone && <p style={{ color: '#64748b', marginBottom: '2rem' }}>📱 {user.phone}</p>}
 
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <button className="btn btn-secondary" onClick={() => setIsEditing(true)}>
                                 <Settings size={20} style={{ marginRight: '0.5rem' }} /> Editar Perfil
+                            </button>
+                            <button className="btn btn-outline-primary" onClick={setupNotifications} title="Ativar notificações push neste dispositivo">
+                                <Bell size={20} style={{ marginRight: '0.5rem' }} /> Ativar Notificações
                             </button>
                             <button onClick={logout} className="btn" style={{ background: '#ef4444', color: 'white' }}>
                                 Sair da Conta
