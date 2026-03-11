@@ -2,6 +2,11 @@ import { fetchApi } from './api';
 
 const VAPID_PUBLIC_KEY = 'BFPGPsZZlw1Q9h_igMtlJ66j22Oq8e_Ux59Og3NkS331TLTFGr_z_vYyViVzya9Vdfe_YLU_sjxr0-FUmADAcFM';
 
+export const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) return 'unsupported';
+    return await Notification.requestPermission();
+};
+
 export const setupNotifications = async () => {
     console.log('[PushManager] Initializing setup...');
 
@@ -20,33 +25,21 @@ export const setupNotifications = async () => {
 
         if (!registration) {
             console.log('[PushManager] No registration found, registering manually...');
-            registration = await navigator.serviceWorker.register('/sw.js', { type: 'module' });
-        }
-
-        // Wait for service worker to be active
-        if (registration.installing) {
-            console.log('[PushManager] SW is installing...');
+            registration = await navigator.serviceWorker.register('/sw.js');
         }
 
         console.log('[PushManager] Current permission state:', Notification.permission);
+
+        if (Notification.permission !== 'granted') {
+            console.log('[PushManager] Permission not granted, skipping auto-subscribe.');
+            return;
+        }
 
         // Check if already subscribed
         let subscription = await registration.pushManager.getSubscription();
 
         if (!subscription) {
-            console.log('[PushManager] No existing subscription, requesting permission...');
-
-            // Note: In some browsers, this MUST be triggered by a user gesture.
-            // But we'll try here as a first attempt.
-            const permission = await Notification.requestPermission();
-            console.log('[PushManager] Permission result:', permission);
-
-            if (permission !== 'granted') {
-                console.warn('[PushManager] Notification permission not granted.');
-                return;
-            }
-
-            console.log('[PushManager] Creating new subscription...');
+            console.log('[PushManager] Permission granted but no subscription, creating one...');
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)

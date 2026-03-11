@@ -4,7 +4,8 @@ import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
 import { getSocket } from '../utils/socket';
 import { Socket } from 'socket.io-client';
-import { Send, User as UserIcon, MessageCircle } from 'lucide-react';
+import { Send, User as UserIcon, MessageCircle, BellOff, Bell } from 'lucide-react';
+import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
 import './Messages.css';
 
 interface Message {
@@ -24,66 +25,84 @@ export const Messages = () => {
     const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
-    const [testStatus, setTestStatus] = useState<string>('idle');
-    const [socketInfo, setSocketInfo] = useState<{ id?: string, transport?: string }>({});
+    const [pushPermission, setPushPermission] = useState<string>(Notification.permission);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const version = "v1.0.8-sync-fix";
+
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+
+    // Auto-scroll when messages change or chat selected
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    useEffect(() => {
+        if (activeChat) scrollToBottom('auto');
+    }, [activeChat]);
+
+    // Handle mobile keyboard (visualViewport)
+    useEffect(() => {
+        if (window.visualViewport) {
+            const handleResize = () => {
+                if (activeChat) scrollToBottom('smooth');
+            };
+            window.visualViewport.addEventListener('resize', handleResize);
+            return () => window.visualViewport?.removeEventListener('resize', handleResize);
+        }
+    }, [activeChat]);
 
     // Sync ref with state for socket listener
     useEffect(() => {
         activeChatRef.current = activeChat;
     }, [activeChat]);
-    const location = useLocation();
-    const [searchParams] = useSearchParams();
 
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+    const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior });
+        } else {
+            const container = document.querySelector('.chat-messages');
+            if (container) container.scrollTop = container.scrollHeight;
+        }
+    };
+
+    const handleRequestPush = async () => {
+        const result = await requestNotificationPermission();
+        setPushPermission(result);
+        if (result === 'granted') {
+            await setupNotifications();
+        }
+    };
+
+    const handleManualReconnect = () => {
+        if (socketRef.current) {
+            socketRef.current.connect();
+        } else if (token) {
+            getSocket(token || '');
+        }
     };
 
     useEffect(() => {
-        if (!user || !token) return;
-
-        // Fetch user's chat history
-        fetchApi('/messages/conversations').then(apiData => {
-            const data = Array.isArray(apiData) ? apiData : [];
+        fetchApi('/messages/conversations').then(data => {
             if (data) {
-                // If coming from ad detail page
-                const state = location.state as { adId?: string, sellerId?: string } | null;
-                const adId = searchParams.get('adId') || state?.adId;
-                const sellerId = searchParams.get('sellerId') || state?.sellerId;
+                const urlAdId = searchParams.get('adId');
+                const urlSellerId = searchParams.get('sellerId');
 
-                if (adId && sellerId) {
-                    const existingChat = data.find((c: any) => c.ad_id === adId && c.other_user_id === sellerId);
-                    if (existingChat) {
-                        setChats(data);
-                        loadMessages(existingChat);
-                    } else {
-                        // Create a temporary chat object so the user can send the first message
-                        const tempChat = {
-                            ad_id: adId,
-                            other_user_id: sellerId,
-                            ad_title: 'Carregando anúncio...',
-                            other_user_name: 'Usuário...',
+                if (urlAdId && urlSellerId) {
+                    const existing = data.find((c: any) => c.ad_id === urlAdId && c.other_user_id === urlSellerId);
+                    if (existing) {
+                        setActiveChat(existing);
+                        loadMessages(existing);
+                    } else if (location.state?.tempChat) {
+                        const temp = location.state.tempChat;
+                        const enrichedTempChat = {
+                            ...temp,
+                            ad_id: urlAdId,
+                            other_user_id: urlSellerId
                         };
-                        setChats([tempChat, ...data]);
-                        setActiveChat(tempChat);
-
-                        // Fetch ad details to get correct title and name
-                        fetchApi(`/ads/${adId}`).then(adData => {
-                            if (adData) {
-                                const enrichedTempChat = {
-                                    ad_id: adId,
-                                    other_user_id: sellerId,
-                                    ad_title: adData.title,
-                                    other_user_name: adData.user.name,
-                                };
-                                setChats([enrichedTempChat, ...data]);
-                                setActiveChat(enrichedTempChat);
-                            }
-                        });
+                        setChats([enrichedTempChat, ...data]);
+                        setActiveChat(enrichedTempChat);
+                        loadMessages(enrichedTempChat);
                     }
                 } else {
                     setChats(data);
@@ -91,7 +110,7 @@ export const Messages = () => {
             }
         }).catch(() => { });
 
-        const socket = getSocket(token);
+        const socket = getSocket(token || '');
         if (socket) {
             socketRef.current = socket;
             setIsConnected(socket.connected);
@@ -99,21 +118,15 @@ export const Messages = () => {
             const handleConnect = () => {
                 console.log('[Messages] Local connected');
                 setIsConnected(true);
-                setSocketInfo({
-                    id: socket.id,
-                    transport: (socket as any).io?.engine?.transport?.name || 'unknown'
-                });
-                socket.emit('join', user.id);
+                socket.emit('join', user?.id);
             };
             const handleDisconnect = () => {
                 console.log('[Messages] Local disconnected');
                 setIsConnected(false);
-                setSocketInfo({});
             };
             const handleError = (err: any) => {
                 console.error('[Messages] Local error:', err);
                 setIsConnected(false);
-                setSocketInfo({});
             };
 
             socket.on('connect', handleConnect);
@@ -121,46 +134,29 @@ export const Messages = () => {
             socket.on('connect_error', handleError);
 
             if (socket.connected) {
-                socket.emit('join', user.id);
+                socket.emit('join', user?.id);
             }
 
             const handleNewMessage = (msg: Message) => {
                 const currentActive = activeChatRef.current;
-                console.log(`[Messages][v1.0.8] Received:`, msg.id, 'for ad:', msg.ad_id, 'Active ad:', currentActive?.ad_id);
-
-                if (!currentActive) {
-                    console.log('[Messages][v1.0.8] Ignored: No active chat selected');
-                    return;
-                }
+                if (!currentActive) return;
 
                 const matchesAd = msg.ad_id === currentActive.ad_id;
                 const matchesUser = (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id);
 
                 if (matchesAd && matchesUser) {
-                    console.log('[Messages][v1.0.8] MATCH FOUND! Appending to UI');
                     setMessages(prev => {
-                        // 1. Regular deduplication by ID
                         if (prev.some(p => p.id === msg.id)) return prev;
-
-                        // 2. Optimistic UI deduplication (for self-sent messages)
                         if (msg.sender_id === user?.id) {
-                            const tempIndex = prev.findIndex(m =>
-                                m.id.startsWith('temp-') && m.content === msg.content
-                            );
+                            const tempIndex = prev.findIndex(m => m.id.startsWith('temp-') && m.content === msg.content);
                             if (tempIndex !== -1) {
-                                console.log('[Messages] Replacing optimistic message with real one');
                                 const next = [...prev];
                                 next[tempIndex] = msg;
                                 return next;
                             }
                         }
-
                         return [...prev, msg];
                     });
-                    scrollToBottom();
-                } else {
-                    console.log(`[Messages][v1.0.8] MISMATCH: adMatch=${matchesAd}, userMatch=${matchesUser}`);
-                    console.log(`[Messages][v1.0.8] msg IDs: S=${msg.sender_id} R=${msg.receiver_id} | Active ID: ${currentActive.other_user_id}`);
                 }
             };
 
@@ -171,57 +167,15 @@ export const Messages = () => {
                 socket.off('disconnect', handleDisconnect);
                 socket.off('connect_error', handleError);
                 socket.off('new_message', handleNewMessage);
-                socket.off('pong_test');
             };
         }
     }, [user, token, location.state]);
-
-    const handleTestConnection = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!socketRef.current || !socketRef.current.connected) {
-            setTestStatus('Erro: Socket desconectado');
-            return;
-        }
-
-        setTestStatus('Testando...');
-        const start = Date.now();
-        console.log('[Messages][v1.0.8] Testing connection...');
-
-        const onPong = (data: any) => {
-            const lat = Date.now() - start;
-            setTestStatus(`OK (${lat}ms)`);
-            console.log('[Messages][v1.0.8] Pong received:', data);
-            socketRef.current?.off('pong_test', onPong);
-            setTimeout(() => setTestStatus('idle'), 3000);
-        };
-
-        socketRef.current.on('pong_test', onPong);
-        socketRef.current.emit('ping_test', { version, time: new Date().toISOString() });
-
-        setTimeout(() => {
-            if (testStatus === 'Testando...') {
-                setTestStatus('Timeout');
-                socketRef.current?.off('pong_test', onPong);
-                setTimeout(() => setTestStatus('idle'), 3000);
-            }
-        }, 5000);
-    };
-
-    const handleManualReconnect = () => {
-        if (socketRef.current) {
-            console.log('[Messages] Forcing reconnection...');
-            socketRef.current.connect();
-        } else if (token) {
-            getSocket(token);
-        }
-    };
 
     const loadMessages = async (chat: any) => {
         setActiveChat(chat);
         try {
             const data = await fetchApi(`/messages/${chat.ad_id}/${chat.other_user_id}`);
             if (data) setMessages(data);
-            scrollToBottom();
         } catch (error) {
             console.error(error);
         }
@@ -229,7 +183,7 @@ export const Messages = () => {
 
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !activeChat) return;
+        if (!newMessage.trim() || !activeChat || !user) return;
 
         const content = newMessage;
         setNewMessage('');
@@ -239,59 +193,53 @@ export const Messages = () => {
             const optimisticMsg: Message = {
                 id: tempId,
                 content,
-                sender_id: user!.id,
+                sender_id: user.id,
                 receiver_id: activeChat.other_user_id,
                 ad_id: activeChat.ad_id,
                 created_at: new Date().toISOString()
             };
 
             setMessages(prev => [...prev, optimisticMsg]);
-            scrollToBottom();
 
-            const savedMsg = await fetchApi('/messages', {
+            await fetchApi('/messages', {
                 method: 'POST',
                 body: JSON.stringify({
-                    content,
                     receiver_id: activeChat.other_user_id,
                     ad_id: activeChat.ad_id,
+                    content
                 })
             });
-
-            if (savedMsg) {
-                setMessages(prev => prev.map(m => m.id === tempId ? savedMsg : m));
-                scrollToBottom();
-            }
         } catch (error) {
-            console.error('Failed to send msg', error);
+            console.error(error);
         }
     };
 
-    if (!user) return <div className="container mt-4"><h3>Por favor, faça login para ver suas mensagens.</h3></div>;
-
     return (
         <div className="messages-page container">
-            <div className={`chat-layout box-card ${searchParams.get('adId') ? 'specific-chat' : ''}`}>
+            <div className={`chat-layout ${activeChat ? 'specific-chat' : ''}`}>
                 <div className="chat-sidebar">
-                    <h3 className="chat-sidebar-title">Conversas</h3>
+                    <div className="chat-sidebar-header">
+                        <h2 className="chat-sidebar-title">Mensagens</h2>
+                    </div>
                     <div className="chat-list">
-                        {chats.length === 0 ? (
-                            <p className="p-3 text-light text-center">Nenhuma conversa encontrada</p>
-                        ) : (
-                            chats.map((chat, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`chat-item ${activeChat === chat ? 'active' : ''}`}
-                                    onClick={() => loadMessages(chat)}
-                                >
-                                    <div className="chat-avatar">
-                                        <UserIcon size={24} />
-                                    </div>
-                                    <div className="chat-info">
-                                        <h4>{chat.other_user_name}</h4>
-                                        <p>{chat.ad_title}</p>
-                                    </div>
+                        {chats.length > 0 ? chats.map((chat, idx) => (
+                            <div
+                                key={`${chat.ad_id}-${chat.other_user_id}-${idx}`}
+                                className={`chat-item ${activeChat?.ad_id === chat.ad_id && activeChat?.other_user_id === chat.other_user_id ? 'active' : ''}`}
+                                onClick={() => loadMessages(chat)}
+                            >
+                                <div className="chat-avatar">
+                                    <UserIcon size={24} />
                                 </div>
-                            ))
+                                <div className="chat-info">
+                                    <h4>{chat.other_user_name}</h4>
+                                    <p>{chat.ad_title}</p>
+                                </div>
+                            </div>
+                        )) : (
+                            <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>
+                                Nenhuma conversa ainda.
+                            </div>
                         )}
                     </div>
                 </div>
@@ -321,41 +269,18 @@ export const Messages = () => {
                                                 title={isConnected ? "Conectado" : "Desconectado - Clique para reconectar"}
                                                 onClick={!isConnected ? handleManualReconnect : undefined}
                                             />
-                                            {!isConnected && (
-                                                <span
-                                                    style={{ fontSize: '0.7rem', color: '#f44336', cursor: 'pointer', textDecoration: 'underline' }}
-                                                    onClick={handleManualReconnect}
-                                                >
-                                                    Reconectar
-                                                </span>
-                                            )}
-                                            {isConnected && (
+                                            {pushPermission !== 'granted' && (
                                                 <button
-                                                    onClick={handleTestConnection}
-                                                    className="btn-test"
-                                                    style={{
-                                                        fontSize: '0.6rem',
-                                                        padding: '4px 8px',
-                                                        background: testStatus === 'idle' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-                                                        border: `1px solid ${testStatus.startsWith('OK') ? '#4caf50' : '#888'}`,
-                                                        borderRadius: '4px',
-                                                        cursor: 'pointer',
-                                                        color: '#4caf50',
-                                                        marginLeft: '8px'
-                                                    }}
+                                                    onClick={handleRequestPush}
+                                                    style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#ff9800' }}
+                                                    title="Ativar Notificações"
                                                 >
-                                                    {testStatus === 'idle' ? 'Testar Conexão' : testStatus}
+                                                    <BellOff size={16} />
                                                 </button>
                                             )}
                                         </h3>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap' }}>
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
-                                            <span style={{ fontSize: '0.6rem', color: '#666' }}>{version}</span>
-                                            {socketInfo.id && (
-                                                <span style={{ fontSize: '0.6rem', color: '#888' }}>
-                                                    ID: {socketInfo.id.substring(0, 5)}... ({socketInfo.transport})
-                                                </span>
-                                            )}
+                                        <div style={{ marginTop: '4px' }}>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -363,14 +288,14 @@ export const Messages = () => {
 
                             <div className="chat-messages">
                                 {messages.map((msg, idx) => (
-                                    <div key={idx} className={`message-bubble ${msg.sender_id === user.id ? 'sent' : 'received'}`}>
+                                    <div key={idx} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
                                         <div className="message-content">{msg.content}</div>
                                         <span className="message-time">
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 ))}
-                                <div ref={messagesEndRef} />
+                                <div ref={messagesEndRef} style={{ height: '1px' }} />
                             </div>
 
                             <form className="chat-input-area" onSubmit={sendMessage}>
@@ -381,8 +306,8 @@ export const Messages = () => {
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                 />
-                                <button type="submit" className="btn btn-primary btn-icon-only">
-                                    <Send size={20} />
+                                <button type="submit" className="btn btn-primary btn-icon-only" disabled={!newMessage.trim()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Send size={20} color="#ffffff" style={{ minWidth: '20px' }} />
                                 </button>
                             </form>
                         </>
