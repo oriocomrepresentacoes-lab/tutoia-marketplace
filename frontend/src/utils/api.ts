@@ -1,5 +1,5 @@
 export const BASE_URL = import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : window.location.origin);
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split('/api')[0] : window.location.origin);
 
 export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
     const token = localStorage.getItem('token');
