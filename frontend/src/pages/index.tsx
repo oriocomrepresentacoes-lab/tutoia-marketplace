@@ -13,3 +13,6 @@ export * from './Checkout';
 export * from './BannerForm';
 export * from './PlansTest';
 export * from './ForgotPassword';
+export * from './Terms';
+export * from './Privacy';
+export * from './Contact';
