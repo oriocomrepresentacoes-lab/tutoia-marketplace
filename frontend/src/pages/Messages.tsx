@@ -24,8 +24,11 @@ export const Messages = () => {
     const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
+    const [testStatus, setTestStatus] = useState<string>('idle');
+    const [lastLatency, setLastLatency] = useState<number | null>(null);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const version = "v1.0.8-sync-fix";
 
     // Sync ref with state for socket listener
     useEffect(() => {
@@ -117,19 +120,26 @@ export const Messages = () => {
 
             const handleNewMessage = (msg: Message) => {
                 const currentActive = activeChatRef.current;
-                console.log('[Socket] Message received:', msg, 'Current active chat:', currentActive?.ad_id);
+                console.log(`[Messages][v1.0.8] Received:`, msg.id, 'for ad:', msg.ad_id, 'Active ad:', currentActive?.ad_id);
 
-                if (currentActive &&
-                    msg.ad_id === currentActive.ad_id &&
-                    (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
-                    console.log('[Socket] Message matches active chat, appending to UI');
+                if (!currentActive) {
+                    console.log('[Messages][v1.0.8] Ignored: No active chat selected');
+                    return;
+                }
+
+                const matchesAd = msg.ad_id === currentActive.ad_id;
+                const matchesUser = (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id);
+
+                if (matchesAd && matchesUser) {
+                    console.log('[Messages][v1.0.8] MATCH FOUND! Appending to UI');
                     setMessages(prev => {
                         if (prev.some(p => p.id === msg.id)) return prev;
                         return [...prev, msg];
                     });
                     scrollToBottom();
                 } else {
-                    console.log('[Socket] Message ignored: does not match active conversation or no chat selected');
+                    console.log(`[Messages][v1.0.8] MISMATCH: adMatch=${matchesAd}, userMatch=${matchesUser}`);
+                    console.log(`[Messages][v1.0.8] msg IDs: S=${msg.sender_id} R=${msg.receiver_id} | Active ID: ${currentActive.other_user_id}`);
                 }
             };
 
@@ -145,26 +155,35 @@ export const Messages = () => {
         }
     }, [user, token, location.state]);
 
-    const handleTestConnection = () => {
+    const handleTestConnection = (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (!socketRef.current || !socketRef.current.connected) {
-            alert('Socket não conectado. Tente recarregar ou clicar em Reconectar.');
+            setTestStatus('Erro: Socket desconectado');
             return;
         }
-        console.log('[Messages] Sending ping_test...');
+
+        setTestStatus('Testando...');
         const start = Date.now();
+        console.log('[Messages][v1.0.8] Testing connection...');
 
         const onPong = (data: any) => {
-            const end = Date.now();
-            alert(`✅ Conexão OK!\nLatência: ${end - start}ms\nServidor: ${data.time}`);
+            const lat = Date.now() - start;
+            setLastLatency(lat);
+            setTestStatus(`OK (${lat}ms)`);
+            console.log('[Messages][v1.0.8] Pong received:', data);
             socketRef.current?.off('pong_test', onPong);
+            setTimeout(() => setTestStatus('idle'), 3000);
         };
 
         socketRef.current.on('pong_test', onPong);
-        socketRef.current.emit('ping_test', { clientTime: new Date().toISOString() });
+        socketRef.current.emit('ping_test', { version, time: new Date().toISOString() });
 
-        // Timeout in case server doesn't respond
         setTimeout(() => {
-            socketRef.current?.off('pong_test', onPong);
+            if (testStatus === 'Testando...') {
+                setTestStatus('Timeout');
+                socketRef.current?.off('pong_test', onPong);
+                setTimeout(() => setTestStatus('idle'), 3000);
+            }
         }, 5000);
     };
 
@@ -293,13 +312,26 @@ export const Messages = () => {
                                             {isConnected && (
                                                 <button
                                                     onClick={handleTestConnection}
-                                                    style={{ fontSize: '0.6rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: '1px solid #4caf50', borderRadius: '4px', cursor: 'pointer', color: '#4caf50' }}
+                                                    className="btn-test"
+                                                    style={{
+                                                        fontSize: '0.6rem',
+                                                        padding: '4px 8px',
+                                                        background: testStatus === 'idle' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+                                                        border: `1px solid ${testStatus.startsWith('OK') ? '#4caf50' : '#888'}`,
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer',
+                                                        color: '#4caf50',
+                                                        marginLeft: '8px'
+                                                    }}
                                                 >
-                                                    Testar Conexão
+                                                    {testStatus === 'idle' ? 'Testar Conexão' : testStatus}
                                                 </button>
                                             )}
                                         </h3>
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
+                                            <span style={{ fontSize: '0.6rem', color: '#666' }}>{version}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
