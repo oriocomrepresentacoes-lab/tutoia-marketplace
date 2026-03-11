@@ -25,7 +25,6 @@ export const Messages = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [testStatus, setTestStatus] = useState<string>('idle');
-    const [lastLatency, setLastLatency] = useState<number | null>(null);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const version = "v1.0.8-sync-fix";
@@ -168,7 +167,6 @@ export const Messages = () => {
 
         const onPong = (data: any) => {
             const lat = Date.now() - start;
-            setLastLatency(lat);
             setTestStatus(`OK (${lat}ms)`);
             console.log('[Messages][v1.0.8] Pong received:', data);
             socketRef.current?.off('pong_test', onPong);
