@@ -33,6 +33,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     logout: () => {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        const { disconnectSocket } = require('../utils/socket');
+        disconnectSocket();
         set({ user: null, token: null });
     }
 }));

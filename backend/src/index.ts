@@ -26,6 +26,8 @@ export const io = new Server(server, {
     cors: {
         origin: '*',
     },
+    pingInterval: 20000,
+    pingTimeout: 60000,
 });
 
 app.set('io', io);

@@ -94,17 +94,22 @@ export const Messages = () => {
             setIsConnected(socket.connected);
 
             const handleConnect = () => {
-                console.log('[Messages] Socket connected');
+                console.log('[Messages] Local connected');
                 setIsConnected(true);
                 socket.emit('join', user.id);
             };
             const handleDisconnect = () => {
-                console.log('[Messages] Socket disconnected');
+                console.log('[Messages] Local disconnected');
+                setIsConnected(false);
+            };
+            const handleError = (err: any) => {
+                console.error('[Messages] Local error:', err);
                 setIsConnected(false);
             };
 
             socket.on('connect', handleConnect);
             socket.on('disconnect', handleDisconnect);
+            socket.on('connect_error', handleError);
 
             if (socket.connected) {
                 socket.emit('join', user.id);
@@ -128,10 +133,20 @@ export const Messages = () => {
             return () => {
                 socket.off('connect', handleConnect);
                 socket.off('disconnect', handleDisconnect);
+                socket.off('connect_error', handleError);
                 socket.off('new_message');
             };
         }
     }, [user, token, location.state]);
+
+    const handleManualReconnect = () => {
+        if (socketRef.current) {
+            console.log('[Messages] Forcing reconnection...');
+            socketRef.current.connect();
+        } else if (token) {
+            getSocket(token);
+        }
+    };
 
     const loadMessages = async (chat: any) => {
         setActiveChat(chat);
@@ -232,10 +247,20 @@ export const Messages = () => {
                                                     height: '10px',
                                                     borderRadius: '50%',
                                                     backgroundColor: isConnected ? '#4caf50' : '#f44336',
-                                                    display: 'inline-block'
+                                                    display: 'inline-block',
+                                                    cursor: isConnected ? 'default' : 'pointer'
                                                 }}
-                                                title={isConnected ? "Conectado" : "Desconectado"}
+                                                title={isConnected ? "Conectado" : "Desconectado - Clique para reconectar"}
+                                                onClick={!isConnected ? handleManualReconnect : undefined}
                                             />
+                                            {!isConnected && (
+                                                <span
+                                                    style={{ fontSize: '0.7rem', color: '#f44336', cursor: 'pointer', textDecoration: 'underline' }}
+                                                    onClick={handleManualReconnect}
+                                                >
+                                                    Reconectar
+                                                </span>
+                                            )}
                                         </h3>
                                         <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
                                     </div>
