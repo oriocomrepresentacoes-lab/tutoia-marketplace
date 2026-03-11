@@ -268,7 +268,7 @@ export const Messages = () => {
                                         </button>
                                     )}
                                     <div style={{ position: 'relative' }}>
-                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                             {activeChat.other_user_name}
                                             <span
                                                 style={{
@@ -289,6 +289,14 @@ export const Messages = () => {
                                                 >
                                                     Reconectar
                                                 </span>
+                                            )}
+                                            {isConnected && (
+                                                <button
+                                                    onClick={handleTestConnection}
+                                                    style={{ fontSize: '0.6rem', padding: '2px 5px', background: 'rgba(255,255,255,0.1)', border: '1px solid #4caf50', borderRadius: '4px', cursor: 'pointer', color: '#4caf50' }}
+                                                >
+                                                    Testar Conexão
+                                                </button>
                                             )}
                                         </h3>
                                         <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
