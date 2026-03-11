@@ -25,6 +25,7 @@ export const Messages = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [testStatus, setTestStatus] = useState<string>('idle');
+    const [socketInfo, setSocketInfo] = useState<{ id?: string, transport?: string }>({});
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const version = "v1.0.8-sync-fix";
@@ -98,15 +99,21 @@ export const Messages = () => {
             const handleConnect = () => {
                 console.log('[Messages] Local connected');
                 setIsConnected(true);
+                setSocketInfo({
+                    id: socket.id,
+                    transport: (socket as any).io?.engine?.transport?.name || 'unknown'
+                });
                 socket.emit('join', user.id);
             };
             const handleDisconnect = () => {
                 console.log('[Messages] Local disconnected');
                 setIsConnected(false);
+                setSocketInfo({});
             };
             const handleError = (err: any) => {
                 console.error('[Messages] Local error:', err);
                 setIsConnected(false);
+                setSocketInfo({});
             };
 
             socket.on('connect', handleConnect);
