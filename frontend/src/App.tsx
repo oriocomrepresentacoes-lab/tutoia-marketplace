@@ -25,10 +25,19 @@ function App() {
       const socket = getSocket(token || '');
 
       if (socket) {
+        const onConnect = () => {
+          console.log('[App] Socket connected, joining room:', user.id);
+          socket.emit('join', user.id);
+        };
+
+        if (socket.connected) {
+          onConnect();
+        } else {
+          socket.on('connect', onConnect);
+        }
+
         socket.on('new_ad', (ad: any) => {
           console.log('[App] New ad broadcast:', ad);
-          // Simple browser notification or custom UI could go here
-          // For now, let's keep it quiet in logs or use a simple alert if user prefers
         });
 
         socket.on('new_message', (msg: any) => {

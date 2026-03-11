@@ -23,6 +23,7 @@ export const Messages = () => {
     const [activeChat, setActiveChat] = useState<any>(null);
     const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
+    const [isConnected, setIsConnected] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -90,16 +91,23 @@ export const Messages = () => {
         const socket = getSocket(token);
         if (socket) {
             socketRef.current = socket;
+            setIsConnected(socket.connected);
 
-            const onConnect = () => {
-                console.log('[Socket] Joining room: user_', user.id);
+            const handleConnect = () => {
+                console.log('[Messages] Socket connected');
+                setIsConnected(true);
                 socket.emit('join', user.id);
             };
+            const handleDisconnect = () => {
+                console.log('[Messages] Socket disconnected');
+                setIsConnected(false);
+            };
+
+            socket.on('connect', handleConnect);
+            socket.on('disconnect', handleDisconnect);
 
             if (socket.connected) {
-                onConnect();
-            } else {
-                socket.on('connect', onConnect);
+                socket.emit('join', user.id);
             }
 
             socket.on('new_message', (msg: Message) => {
@@ -116,14 +124,13 @@ export const Messages = () => {
                     console.log('[Socket] Message ignored: does not match active conversation or no chat selected');
                 }
             });
-        }
 
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.off('connect');
-                socketRef.current.off('new_message');
-            }
-        };
+            return () => {
+                socket.off('connect', handleConnect);
+                socket.off('disconnect', handleDisconnect);
+                socket.off('new_message');
+            };
+        }
     }, [user, token, location.state]);
 
     const loadMessages = async (chat: any) => {
@@ -224,10 +231,10 @@ export const Messages = () => {
                                                     width: '10px',
                                                     height: '10px',
                                                     borderRadius: '50%',
-                                                    backgroundColor: socketRef.current?.connected ? '#4caf50' : '#f44336',
+                                                    backgroundColor: isConnected ? '#4caf50' : '#f44336',
                                                     display: 'inline-block'
                                                 }}
-                                                title={socketRef.current?.connected ? "Conectado" : "Desconectado"}
+                                                title={isConnected ? "Conectado" : "Desconectado"}
                                             />
                                         </h3>
                                         <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
