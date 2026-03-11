@@ -15,8 +15,8 @@ export const Home = () => {
 
     useEffect(() => {
         setLoading(true);
-        fetchApi('/ads?sort=recent').then(data => {
-            if (data) setAds(data);
+        fetchApi('/ads?sort=recent&limit=12').then(data => {
+            if (data && data.ads) setAds(data.ads);
             setLoading(false);
         }).catch(() => setLoading(false));
     }, []);

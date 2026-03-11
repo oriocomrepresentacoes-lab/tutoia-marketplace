@@ -69,7 +69,11 @@ export const createAd = async (req: AuthRequest, res: Response) => {
 
 export const getAds = async (req: Request, res: Response) => {
     try {
-        const { search, category, city, type, sort, user_id, status } = req.query;
+        const { search, category, city, type, sort, user_id, status, page, limit } = req.query;
+
+        const p = parseInt(String(page)) || 1;
+        const l = parseInt(String(limit)) || 20;
+        const skip = (p - 1) * l;
 
         let filter: any = { status: status ? String(status) : 'ACTIVE' };
 
@@ -91,34 +95,39 @@ export const getAds = async (req: Request, res: Response) => {
         if (sort === 'views') orderBy = { views: 'desc' };
         if (sort === 'price_asc') orderBy = { price: 'asc' };
 
-        const ads = await prisma.ad.findMany({
-            where: filter,
-            orderBy,
-            include: {
-                category: true,
-                user: {
-                    select: { name: true, phone: true, profile_picture: true }
-                }
-            },
-        });
+        const [totalCount, ads] = await Promise.all([
+            prisma.ad.count({ where: filter }),
+            prisma.ad.findMany({
+                where: filter,
+                orderBy,
+                skip,
+                take: l,
+                include: {
+                    category: true,
+                    user: {
+                        select: { name: true, phone: true, profile_picture: true }
+                    }
+                },
+            })
+        ]);
 
         // Find active highlight transactions linked to specific ads (20-day limit valid)
+        // Optimization: only check highlights for the returned 'ads' subset
+        const adIds = ads.map(a => a.id);
         const activeHighlights = await prisma.transaction.findMany({
             where: {
                 type: 'AD_IMAGES',
                 status: 'USED',
                 expires_at: { gte: new Date() },
-                ad_id: { not: null }
+                ad_id: { in: adIds }
             },
             select: { ad_id: true }
         });
 
-        // Find ALL transactions of type AD_IMAGES tied to an ad, even expired ones
-        // This helps identify if an ad HAD a premium plan (10 images)
         const allImageTransactions = await prisma.transaction.findMany({
             where: {
                 type: 'AD_IMAGES',
-                ad_id: { not: null }
+                ad_id: { in: adIds }
             },
             select: { ad_id: true, expires_at: true }
         });
@@ -147,17 +156,23 @@ export const getAds = async (req: Request, res: Response) => {
             };
         });
 
-        // Sort to bring featured ads to the top (only if no specific sort was requested, or as secondary sort)
-        // If sort by price_asc or views was requested, we still prioritize featured, then apply the requested sort
+        // Sort to bring featured ads to the top within this page
         formattedAds.sort((a, b) => {
             if (a.isFeatured && !b.isFeatured) return -1;
             if (!a.isFeatured && b.isFeatured) return 1;
-
-            // If they have the same featured status, they keep the prisma ordering (created_at desc, views desc, or price asc)
-            return 0; // Stable sort relies on Node's native Array.prototype.sort stability or we just leave Prisma's order intact within groups
+            return 0;
         });
 
-        res.json(formattedAds);
+        res.json({
+            ads: formattedAds,
+            meta: {
+                totalCount,
+                page: p,
+                limit: l,
+                totalPages: Math.ceil(totalCount / l),
+                hasNextPage: skip + l < totalCount
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar anúncios.' });
     }

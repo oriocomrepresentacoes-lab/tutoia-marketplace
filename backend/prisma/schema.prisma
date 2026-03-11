@@ -59,6 +59,11 @@ model Ad {
 
   messages    Message[]
 
+  @@index([status])
+  @@index([city])
+  @@index([category_id])
+  @@index([type])
+  @@index([created_at])
   @@map("anuncios")
 }
 
@@ -96,6 +101,9 @@ model Banner {
   user_id     String?
   user        User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([active])
+  @@index([position])
+  @@index([end_date])
   @@map("banners")
 }
 
@@ -113,5 +121,9 @@ model Transaction {
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
 
+  @@index([user_id])
+  @@index([status])
+  @@index([type])
+  @@index([ad_id])
   @@map("transactions")
 }

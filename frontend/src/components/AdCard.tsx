@@ -23,7 +23,13 @@ export const AdCard = ({ ad }: AdCardProps) => {
 
     return (
         <Link to={`/ad/${ad.id}`} className="listing-card">
-            <div className={`listing-card-img ${ad.isFeatured ? 'featured-img' : ''}`} style={{ backgroundImage: `url(${imageUrl})` }}>
+            <div className={`listing-card-img-container ${ad.isFeatured ? 'featured-img' : ''}`}>
+                <img
+                    src={imageUrl}
+                    alt={ad.title}
+                    className="listing-card-img"
+                    loading="lazy"
+                />
                 {ad.isFeatured && (
                     <div className="featured-badge">
                         <Star size={14} fill="currentColor" /> Destaque
