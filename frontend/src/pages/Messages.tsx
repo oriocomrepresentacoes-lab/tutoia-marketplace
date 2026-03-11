@@ -205,8 +205,20 @@ export const Messages = () => {
                                             &larr; Voltar
                                         </button>
                                     )}
-                                    <div>
-                                        <h3 style={{ margin: 0 }}>{activeChat.other_user_name}</h3>
+                                    <div style={{ position: 'relative' }}>
+                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {activeChat.other_user_name}
+                                            <span
+                                                style={{
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: socketRef.current?.connected ? '#4caf50' : '#f44336',
+                                                    display: 'inline-block'
+                                                }}
+                                                title={socketRef.current?.connected ? "Conectado" : "Desconectado"}
+                                            />
+                                        </h3>
                                         <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
                                     </div>
                                 </div>
