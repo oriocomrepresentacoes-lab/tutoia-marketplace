@@ -93,8 +93,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         // Real-time notification via Socket.io
         const io: Server = req.app.get('io');
         if (io) {
-            console.log(`[Socket] Emitting new_message to user_${receiver_id}`);
-            io.to(`user_${receiver_id}`).emit('new_message', message);
+            console.log(`[Socket] Emitting new_message to sender user_${sender_id} and receiver user_${receiver_id}`);
+            io.to(`user_${receiver_id}`).to(`user_${sender_id}`).emit('new_message', message);
         } else {
             console.warn('[Socket] IO instance not found in req.app');
         }

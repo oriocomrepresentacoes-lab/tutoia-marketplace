@@ -115,7 +115,7 @@ export const Messages = () => {
                 socket.emit('join', user.id);
             }
 
-            socket.on('new_message', (msg: Message) => {
+            const handleNewMessage = (msg: Message) => {
                 const currentActive = activeChatRef.current;
                 console.log('[Socket] Message received:', msg, 'Current active chat:', currentActive?.ad_id);
 
@@ -123,18 +123,23 @@ export const Messages = () => {
                     msg.ad_id === currentActive.ad_id &&
                     (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
                     console.log('[Socket] Message matches active chat, appending to UI');
-                    setMessages(prev => [...prev, msg]);
+                    setMessages(prev => {
+                        if (prev.some(p => p.id === msg.id)) return prev;
+                        return [...prev, msg];
+                    });
                     scrollToBottom();
                 } else {
                     console.log('[Socket] Message ignored: does not match active conversation or no chat selected');
                 }
-            });
+            };
+
+            socket.on('new_message', handleNewMessage);
 
             return () => {
                 socket.off('connect', handleConnect);
                 socket.off('disconnect', handleDisconnect);
                 socket.off('connect_error', handleError);
-                socket.off('new_message');
+                socket.off('new_message', handleNewMessage);
             };
         }
     }, [user, token, location.state]);
