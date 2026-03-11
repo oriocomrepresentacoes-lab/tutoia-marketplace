@@ -70,7 +70,7 @@ export const AdDetail = () => {
                 <div className="ad-main">
                     <div className="ad-gallery">
                         {ad.images && ad.images.length > 0 ? (
-                            <img src={getOptimizedImageUrl(ad.images[activeImage], 800)} alt={ad.title} className="ad-hero-img" />
+                            <img src={getOptimizedImageUrl(ad.images[activeImage], 1200, true)} alt={ad.title} className="ad-hero-img" />
                         ) : (
                             <div className="ad-placeholder-img">Sem imagem</div>
                         )}

@@ -116,7 +116,7 @@ export const BannerWidget = ({ position }: { position: string }) => {
 
     if (banners.length === 0) return null;
 
-    const getImageUrl = (img: string) => getOptimizedImageUrl(img, 1200);
+    const getImageUrl = (img: string) => getOptimizedImageUrl(img, 1920, true);
 
     return (
         <div
