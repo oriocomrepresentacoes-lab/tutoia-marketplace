@@ -4,8 +4,9 @@ import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
 import { getSocket } from '../utils/socket';
 import { Socket } from 'socket.io-client';
-import { Send, User as UserIcon, MessageCircle, BellOff } from 'lucide-react';
+import { Send, User as UserIcon, MessageCircle } from 'lucide-react';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
+import { PushPrompt } from '../components/PushPrompt';
 import './Messages.css';
 
 interface Message {
@@ -25,12 +26,21 @@ export const Messages = () => {
     const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
-    const [pushPermission, setPushPermission] = useState<string>(Notification.permission);
+    const [showPushPrompt, setShowPushPrompt] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
     const [searchParams] = useSearchParams();
+
+    // Check if we should show push prompt
+    useEffect(() => {
+        if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
+            // Small delay to not overwhelm on page load
+            const timer = setTimeout(() => setShowPushPrompt(true), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, []);
 
     // Auto-scroll when messages change or chat selected
     useEffect(() => {
@@ -68,7 +78,6 @@ export const Messages = () => {
 
     const handleRequestPush = async () => {
         const result = await requestNotificationPermission();
-        setPushPermission(result);
         if (result === 'granted') {
             await setupNotifications();
         }
@@ -269,15 +278,6 @@ export const Messages = () => {
                                                 title={isConnected ? "Conectado" : "Desconectado - Clique para reconectar"}
                                                 onClick={!isConnected ? handleManualReconnect : undefined}
                                             />
-                                            {pushPermission !== 'granted' && (
-                                                <button
-                                                    onClick={handleRequestPush}
-                                                    style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#ff9800' }}
-                                                    title="Ativar Notificações"
-                                                >
-                                                    <BellOff size={16} />
-                                                </button>
-                                            )}
                                         </h3>
                                         <div style={{ marginTop: '4px' }}>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
@@ -319,6 +319,19 @@ export const Messages = () => {
                     )}
                 </div>
             </div>
+
+            {showPushPrompt && (
+                <PushPrompt
+                    onAccept={() => {
+                        handleRequestPush();
+                        setShowPushPrompt(false);
+                    }}
+                    onClose={() => {
+                        setShowPushPrompt(false);
+                        localStorage.setItem('pushPromptDismissed', 'true');
+                    }}
+                />
+            )}
         </div>
     );
 };
