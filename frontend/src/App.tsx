@@ -11,15 +11,21 @@ import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
 
 import { useEffect } from 'react';
+import { useAuthStore } from './store/authStore';
 import { setupNotifications } from './utils/pushManager';
 
 function App() {
+  const { user } = useAuthStore();
+
   useEffect(() => {
-    // Small delay to ensure service worker is ready
-    setTimeout(() => {
-      setupNotifications();
-    }, 2000);
-  }, []);
+    if (user) {
+      console.log('[App] User detected, initializing notifications...');
+      // Small delay to ensure service worker is ready
+      setTimeout(() => {
+        setupNotifications();
+      }, 5000); // 5s delay to be safe
+    }
+  }, [user]);
 
   return (
     <BrowserRouter>

@@ -1,6 +1,6 @@
 import { fetchApi } from './api';
 
-const VAPID_PUBLIC_KEY = 'BJYUSJBlJMoOLfPBFGWf7B877X-qeadHZjCHvIEzNGSSlVY7e-MZKZCro0wqbEl8P6ija870GbspH7H4EbZmah0';
+const VAPID_PUBLIC_KEY = 'BFPGPsZZlw1Q9h_igMtlJ66j22Oq8e_Ux59Og3NkS331TLTFGr_z_vYyViVzya9Vdfe_YLU_sjxr0-FUmADAcFM';
 
 export const setupNotifications = async () => {
     console.log('[PushManager] Initializing setup...');

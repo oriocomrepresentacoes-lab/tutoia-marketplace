@@ -36,12 +36,15 @@ io.on('connection', (socket) => {
     socket.on('join', (userId: string) => {
         if (userId) {
             socket.join(`user_${userId}`);
-            console.log(`User user_${userId} joined their private room.`);
+            console.log(`[Socket] User ${userId} joined room user_${userId}`);
+            // Let's also check room status
+            const rooms = io.sockets.adapter.rooms;
+            console.log(`[Socket] Room user_${userId} size:`, rooms.get(`user_${userId}`)?.size || 0);
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+        console.log('[Socket] User disconnected:', socket.id);
     });
 });
 

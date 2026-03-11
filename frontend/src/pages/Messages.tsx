@@ -85,7 +85,18 @@ export const Messages = () => {
             query: { token }
         });
 
+        socketRef.current.on('connect', () => {
+            console.log('[Socket] Connected to:', SOCKET_URL);
+            console.log('[Socket] Joining room: user_', user.id);
+            socketRef.current?.emit('join', user.id);
+        });
+
+        socketRef.current.on('connect_error', (error) => {
+            console.error('[Socket] Connection error:', error.message);
+        });
+
         socketRef.current.on('new_message', (msg: Message) => {
+            console.log('[Socket] New message received:', msg);
             // Only add message if it belongs to the current active chat
             setActiveChat((currentActive: any) => {
                 if (currentActive &&
