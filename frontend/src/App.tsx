@@ -10,7 +10,17 @@ import {
 import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
 
+import { useEffect } from 'react';
+import { setupNotifications } from './utils/pushManager';
+
 function App() {
+  useEffect(() => {
+    // Small delay to ensure service worker is ready
+    setTimeout(() => {
+      setupNotifications();
+    }, 2000);
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="app-container">

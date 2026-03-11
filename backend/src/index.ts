@@ -35,8 +35,8 @@ io.on('connection', (socket) => {
 
     socket.on('join', (userId: string) => {
         if (userId) {
-            socket.join(userId);
-            console.log(`User ${userId} joined their private room.`);
+            socket.join(`user_${userId}`);
+            console.log(`User user_${userId} joined their private room.`);
         }
     });
 

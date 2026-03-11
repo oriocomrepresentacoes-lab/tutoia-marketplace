@@ -25,6 +25,7 @@ model User {
   received_messages Message[] @relation("ReceivedMessages")
   transactions   Transaction[]
   banners        Banner[]
+  push_subscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -126,4 +127,16 @@ model Transaction {
   @@index([type])
   @@index([ad_id])
   @@map("transactions")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  user_id   String?
+  user      User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@map("push_subscriptions")
 }

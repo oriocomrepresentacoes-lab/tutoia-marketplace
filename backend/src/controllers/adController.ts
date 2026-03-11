@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
+import { sendPushNotification } from '../utils/webPush';
 
 export const createAd = async (req: AuthRequest, res: Response) => {
     try {
@@ -62,7 +63,32 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         }
 
         res.status(201).json(ad);
+
+        // Broadcast notification to all push subscribers (Background)
+        const subscriptions = await prisma.pushSubscription.findMany();
+        const notificationPayload = {
+            title: '🎉 Novo Anúncio no TutShop!',
+            body: `${ad.title} acaba de ser postado. Confira agora!`,
+            icon: '/app-icon-v3.png',
+            data: { url: `/ad/${ad.id}` }
+        };
+
+        subscriptions.forEach(async (sub) => {
+            const pushSub = {
+                endpoint: sub.endpoint,
+                keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth
+                }
+            };
+            const result = await sendPushNotification(pushSub, notificationPayload);
+            if (result.shouldRemove) {
+                await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+            }
+        });
+
     } catch (error) {
+        console.error('Create ad error:', error);
         res.status(500).json({ error: 'Erro ao criar o anúncio.' });
     }
 };

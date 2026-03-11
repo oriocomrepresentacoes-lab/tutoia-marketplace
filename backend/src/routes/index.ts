@@ -8,6 +8,7 @@ import adminRoutes from './adminRoutes';
 import paymentRoutes from './paymentRoutes';
 import planRoutes from './planRoutes';
 import userRoutes from './userRoutes';
+import pushRoutes from './pushRoutes';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/payments', paymentRoutes);
 router.use('/payment', paymentRoutes); // Alias to avoid plural/singular confusion in webhook URL
 router.use('/user-plans', planRoutes);
 router.use('/users', userRoutes);
+router.use('/push', pushRoutes);
 
 export default router;

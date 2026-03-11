@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
-import { io } from '../index'; // import Socket server to emit if needed, though usually socket logic is separate
+import { io } from '../index';
+import { sendPushNotification } from '../utils/webPush';
 
 export const getConversations = async (req: AuthRequest, res: Response) => {
     try {
@@ -89,12 +90,39 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             }
         });
 
-        // Real-time notification if recipient is connected (we can just emit a global event and let client filter, 
-        // or use Socket.io rooms per user)
+        // Real-time notification via Socket.io
         io.to(`user_${receiver_id}`).emit('new_message', message);
+
+        // Background Push Notification
+        const recipientSubscriptions = await prisma.pushSubscription.findMany({
+            where: { user_id: receiver_id }
+        });
+
+        if (recipientSubscriptions.length > 0) {
+            const sender = await prisma.user.findUnique({ where: { id: sender_id }, select: { name: true } });
+            const ad = await prisma.ad.findUnique({ where: { id: ad_id }, select: { title: true } });
+
+            const payload = {
+                title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
+                body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`,
+                icon: '/app-icon-v3.png',
+                data: { url: `/messages?adId=${ad_id}&sellerId=${sender_id}` }
+            };
+
+            recipientSubscriptions.forEach(async (sub) => {
+                const result = await sendPushNotification({
+                    endpoint: sub.endpoint,
+                    keys: { p256dh: sub.p256dh, auth: sub.auth }
+                }, payload);
+                if (result.shouldRemove) {
+                    await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+                }
+            });
+        }
 
         res.status(201).json(message);
     } catch (error) {
+        console.error('Send message error:', error);
         res.status(500).json({ error: 'Erro ao enviar a mensagem.' });
     }
 };

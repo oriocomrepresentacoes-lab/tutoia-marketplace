@@ -85,9 +85,17 @@ export const Messages = () => {
             query: { token }
         });
 
-        socketRef.current.on('receive_message', (msg: Message) => {
-            setMessages(prev => [...prev, msg]);
-            scrollToBottom();
+        socketRef.current.on('new_message', (msg: Message) => {
+            // Only add message if it belongs to the current active chat
+            setActiveChat((currentActive: any) => {
+                if (currentActive &&
+                    msg.ad_id === currentActive.ad_id &&
+                    (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
+                    setMessages(prev => [...prev, msg]);
+                    scrollToBottom();
+                }
+                return currentActive;
+            });
         });
 
         return () => {
@@ -110,21 +118,25 @@ export const Messages = () => {
         e.preventDefault();
         if (!newMessage.trim() || !activeChat) return;
 
+        const content = newMessage;
+        setNewMessage('');
+
         try {
             const tempMsg = {
-                content: newMessage,
+                content,
                 receiver_id: activeChat.other_user_id,
                 ad_id: activeChat.ad_id,
             };
 
-            await fetchApi('/messages', {
+            const savedMsg = await fetchApi('/messages', {
                 method: 'POST',
                 body: JSON.stringify(tempMsg)
             });
 
-            // Socket takes care of broadcasting or we just optimistically add
-            setNewMessage('');
-            loadMessages(activeChat); // Reload to ensure sync
+            if (savedMsg) {
+                setMessages(prev => [...prev, savedMsg]);
+                scrollToBottom();
+            }
         } catch (error) {
             console.error('Failed to send msg', error);
         }
