@@ -14,11 +14,29 @@ import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import { setupNotifications } from './utils/pushManager';
 
+import { getSocket } from './utils/socket';
+
 function App() {
   const { user } = useAuthStore();
 
   useEffect(() => {
     if (user) {
+      const token = localStorage.getItem('token');
+      const socket = getSocket(token || '');
+
+      if (socket) {
+        socket.on('new_ad', (ad: any) => {
+          console.log('[App] New ad broadcast:', ad);
+          // Simple browser notification or custom UI could go here
+          // For now, let's keep it quiet in logs or use a simple alert if user prefers
+        });
+
+        socket.on('new_message', (msg: any) => {
+          // If we are NOT on the messages page, we could show a badge
+          console.log('[App] Global new_message signal');
+        });
+      }
+
       console.log('[App] User detected, initializing notifications...');
       // Small delay to ensure service worker is ready
       setTimeout(() => {

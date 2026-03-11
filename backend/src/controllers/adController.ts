@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
 import { sendPushNotification } from '../utils/webPush';
+import { Server } from 'socket.io';
 
 export const createAd = async (req: AuthRequest, res: Response) => {
     try {
@@ -63,6 +64,18 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         }
 
         res.status(201).json(ad);
+
+        // Real-time broadcast for active users
+        const io: Server = req.app.get('io');
+        if (io) {
+            console.log(`[Socket] Broadcasting new_ad: ${ad.title}`);
+            io.emit('new_ad', {
+                id: ad.id,
+                title: ad.title,
+                price: ad.price,
+                image: images.length > 0 ? images[0] : null
+            });
+        }
 
         // Broadcast notification to all push subscribers (Background)
         const subscriptions = await prisma.pushSubscription.findMany();

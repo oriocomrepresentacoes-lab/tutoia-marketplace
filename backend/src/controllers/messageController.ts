@@ -1,8 +1,8 @@
 import { Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
-import { io } from '../index';
 import { sendPushNotification } from '../utils/webPush';
+import { Server } from 'socket.io';
 
 export const getConversations = async (req: AuthRequest, res: Response) => {
     try {
@@ -91,7 +91,13 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         });
 
         // Real-time notification via Socket.io
-        io.to(`user_${receiver_id}`).emit('new_message', message);
+        const io: Server = req.app.get('io');
+        if (io) {
+            console.log(`[Socket] Emitting new_message to user_${receiver_id}`);
+            io.to(`user_${receiver_id}`).emit('new_message', message);
+        } else {
+            console.warn('[Socket] IO instance not found in req.app');
+        }
 
         // Background Push Notification
         const recipientSubscriptions = await prisma.pushSubscription.findMany({
