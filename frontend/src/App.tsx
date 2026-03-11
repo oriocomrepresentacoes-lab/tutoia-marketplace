@@ -40,12 +40,19 @@ function App() {
           console.log('[App] New ad broadcast:', ad);
         });
 
-        socket.on('new_message', (msg: any) => {
+        const onNewMessage = (msg: any) => {
           console.log('[App] Global new_message signal:', msg?.content || 'Signal');
           if (window.location.pathname !== '/messages') {
             console.log('[App] Background message received');
           }
-        });
+        };
+
+        socket.on('new_message', onNewMessage);
+
+        return () => {
+          socket.off('connect', onConnect);
+          socket.off('new_message', onNewMessage);
+        };
       }
 
       console.log('[App] User detected, initializing notifications...');
