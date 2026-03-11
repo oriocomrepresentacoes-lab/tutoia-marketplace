@@ -333,9 +333,14 @@ export const Messages = () => {
                                                 </button>
                                             )}
                                         </h3>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Ref: {activeChat.ad_title}</span>
                                             <span style={{ fontSize: '0.6rem', color: '#666' }}>{version}</span>
+                                            {socketInfo.id && (
+                                                <span style={{ fontSize: '0.6rem', color: '#888' }}>
+                                                    ID: {socketInfo.id.substring(0, 5)}... ({socketInfo.transport})
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
