@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { fetchApi, SOCKET_URL } from '../utils/api';
-import { io, Socket } from 'socket.io-client';
+import { fetchApi } from '../utils/api';
+import { getSocket } from '../utils/socket';
+import { Socket } from 'socket.io-client';
 import { Send, User as UserIcon, MessageCircle } from 'lucide-react';
 import './Messages.css';
 
@@ -81,36 +82,40 @@ export const Messages = () => {
             }
         }).catch(() => { });
 
-        socketRef.current = io(SOCKET_URL, {
-            query: { token }
-        });
+        const socket = getSocket(token);
+        if (socket) {
+            socketRef.current = socket;
 
-        socketRef.current.on('connect', () => {
-            console.log('[Socket] Connected to:', SOCKET_URL);
-            console.log('[Socket] Joining room: user_', user.id);
-            socketRef.current?.emit('join', user.id);
-        });
+            const onConnect = () => {
+                console.log('[Socket] Joining room: user_', user.id);
+                socket.emit('join', user.id);
+            };
 
-        socketRef.current.on('connect_error', (error) => {
-            console.error('[Socket] Connection error:', error.message);
-        });
+            if (socket.connected) {
+                onConnect();
+            } else {
+                socket.on('connect', onConnect);
+            }
 
-        socketRef.current.on('new_message', (msg: Message) => {
-            console.log('[Socket] New message received:', msg);
-            // Only add message if it belongs to the current active chat
-            setActiveChat((currentActive: any) => {
-                if (currentActive &&
-                    msg.ad_id === currentActive.ad_id &&
-                    (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
-                    setMessages(prev => [...prev, msg]);
-                    scrollToBottom();
-                }
-                return currentActive;
+            socket.on('new_message', (msg: Message) => {
+                console.log('[Socket] New message received:', msg);
+                setActiveChat((currentActive: any) => {
+                    if (currentActive &&
+                        msg.ad_id === currentActive.ad_id &&
+                        (msg.sender_id === currentActive.other_user_id || msg.receiver_id === currentActive.other_user_id)) {
+                        setMessages(prev => [...prev, msg]);
+                        scrollToBottom();
+                    }
+                    return currentActive;
+                });
             });
-        });
+        }
 
         return () => {
-            socketRef.current?.disconnect();
+            if (socketRef.current) {
+                socketRef.current.off('connect');
+                socketRef.current.off('new_message');
+            }
         };
     }, [user, token, location.state]);
 
