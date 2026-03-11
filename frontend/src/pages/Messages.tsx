@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
 import { getSocket } from '../utils/socket';
 import { Socket } from 'socket.io-client';
-import { Send, User as UserIcon, MessageCircle, BellOff, Bell } from 'lucide-react';
+import { Send, User as UserIcon, MessageCircle, BellOff } from 'lucide-react';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
 import './Messages.css';
 
