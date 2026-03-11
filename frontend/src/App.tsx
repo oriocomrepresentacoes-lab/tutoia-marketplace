@@ -31,7 +31,7 @@ function App() {
           // For now, let's keep it quiet in logs or use a simple alert if user prefers
         });
 
-        socket.on('new_message', (msg: any) => {
+        socket.on('new_message', () => {
           // If we are NOT on the messages page, we could show a badge
           console.log('[App] Global new_message signal');
         });
