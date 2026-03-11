@@ -139,7 +139,22 @@ export const Messages = () => {
                 if (matchesAd && matchesUser) {
                     console.log('[Messages][v1.0.8] MATCH FOUND! Appending to UI');
                     setMessages(prev => {
+                        // 1. Regular deduplication by ID
                         if (prev.some(p => p.id === msg.id)) return prev;
+
+                        // 2. Optimistic UI deduplication (for self-sent messages)
+                        if (msg.sender_id === user?.id) {
+                            const tempIndex = prev.findIndex(m =>
+                                m.id.startsWith('temp-') && m.content === msg.content
+                            );
+                            if (tempIndex !== -1) {
+                                console.log('[Messages] Replacing optimistic message with real one');
+                                const next = [...prev];
+                                next[tempIndex] = msg;
+                                return next;
+                            }
+                        }
+
                         return [...prev, msg];
                     });
                     scrollToBottom();
