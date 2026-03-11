@@ -34,6 +34,20 @@
     background-repeat: no-repeat;
 }
 
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .banner-track {
+        aspect-ratio: 16 / 7;
+        /* Taller on mobile as requested */
+        min-height: 160px;
+    }
+
+    .banner-image {
+        background-size: cover;
+        /* Fill area on mobile */
+    }
+}
+
 /* Slider Pagination */
 .slider-dots {
     position: absolute;

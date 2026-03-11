@@ -312,7 +312,10 @@ export const Dashboard = () => {
                                 >
                                     <UploadCloud size={48} className="upload-icon mx-auto" style={{ color: 'var(--primary)', marginBottom: '1rem' }} />
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
-                                    <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>)</p>
+                                    <p className="upload-hint" style={{ color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.5rem' }}>
+                                        <Info size={16} style={{ verticalAlign: '-3px', marginRight: '4px' }} />
+                                        Dimensões ideais: 1200 x 350 pixels
+                                    </p>
                                     <input
                                         type="file"
                                         ref={fileInputRef}

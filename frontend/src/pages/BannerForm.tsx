@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
-import { UploadCloud, Link as LinkIcon, Type, Image as ImageIcon, Shield, Star, CheckCircle } from 'lucide-react';
+import { UploadCloud, Link as LinkIcon, Type, Image as ImageIcon, Shield, Star, CheckCircle, Info } from 'lucide-react';
 import './Dashboard.css';
 import './BannerForm.css';
 
@@ -353,7 +353,10 @@ export const BannerForm = () => {
                                 >
                                     <UploadCloud size={48} className="upload-icon mx-auto" />
                                     <h4 className="upload-text">Clique para buscar ou arraste a imagem aqui</h4>
-                                    <p className="upload-hint">Recomendamos formato retangular horizontal (<b>1200x350px</b>) - JPG, PNG ou WEBP</p>
+                                    <p className="upload-hint" style={{ color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.5rem' }}>
+                                        <Info size={16} style={{ verticalAlign: '-3px', marginRight: '4px' }} />
+                                        Dimensões ideais: 1200 x 350 pixels
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="preview-container" onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }}>
