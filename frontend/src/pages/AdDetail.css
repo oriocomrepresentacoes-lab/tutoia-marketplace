@@ -133,7 +133,8 @@
     display: flex;
     gap: 1rem;
     overflow-x: auto;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0.5rem;
+    /* Added horizontal padding to prevent border clipping */
     scrollbar-width: none;
 }
 
@@ -159,6 +160,8 @@
 }
 
 .gallery-thumb-box.active {
+    box-shadow: 0 0 0 3px var(--primary);
+    /* Use box-shadow for cleaner, non-shifting border */
     border-color: var(--primary);
     opacity: 1;
     transform: scale(1.05);
@@ -212,6 +215,8 @@
 .sticky-element {
     position: sticky;
     top: 2rem;
+    z-index: 100;
+    /* Ensure sticky card stays above scrolling content */
 }
 
 .ad-visual-sidebar {

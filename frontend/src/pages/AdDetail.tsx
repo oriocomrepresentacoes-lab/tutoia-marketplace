@@ -119,77 +119,79 @@ export const AdDetail = () => {
                 </div>
 
                 <div className="ad-sidebar">
-                    {/* Primary Info Sidebar - High visibility */}
-                    <div className="ad-visual-sidebar box-card sticky-element">
-                        <h1 className="ad-title-v4">{ad.title}</h1>
-                        <p className="ad-price-v4">{formattedPrice}</p>
+                    <div className="sticky-element">
+                        {/* Primary Info Sidebar - High visibility */}
+                        <div className="ad-visual-sidebar box-card">
+                            <h1 className="ad-title-v4">{ad.title}</h1>
+                            <p className="ad-price-v4">{formattedPrice}</p>
 
-                        <div className="ad-meta-v4">
-                            <span className="meta-row"><MapPin size={18} /> {ad.city}</span>
-                            <span className="meta-row"><Calendar size={18} /> Publicado em {date}</span>
-                            <span className="meta-row"><Eye size={18} /> {ad.views} visualizações</span>
-                        </div>
-
-                        {ad.isExpiredPremium && (
-                            <div className="premium-alert-v4">
-                                Plano Premium Expirado
+                            <div className="ad-meta-v4">
+                                <span className="meta-row"><MapPin size={18} /> {ad.city}</span>
+                                <span className="meta-row"><Calendar size={18} /> Publicado em {date}</span>
+                                <span className="meta-row"><Eye size={18} /> {ad.views} visualizações</span>
                             </div>
-                        )}
 
-                        <div className="contact-buttons-v4">
-                            {user ? (
-                                <>
-                                    <button
-                                        className="btn btn-primary btn-block contact-btn"
-                                        onClick={handleChatClick}
-                                    >
-                                        <MessageCircle size={20} /> Chat Agora
-                                    </button>
-                                    {ad.user.phone && (
-                                        <a
-                                            href={`https://wa.me/55${ad.user.phone.replace(/\D/g, '')}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-outline btn-block contact-btn whatsapp"
-                                            onClick={handleWhatsappClick}
-                                        >
-                                            <Phone size={20} /> WhatsApp
-                                        </a>
-                                    )}
-                                </>
-                            ) : (
-                                <button
-                                    className="btn btn-secondary btn-block contact-btn"
-                                    onClick={() => navigate('/login', { state: { from: location.pathname } })}
-                                >
-                                    <User size={20} /> Entrar para contatar
-                                </button>
+                            {ad.isExpiredPremium && (
+                                <div className="premium-alert-v4">
+                                    Plano Premium Expirado
+                                </div>
                             )}
-                        </div>
-                    </div>
 
-                    {/* Seller Details */}
-                    <div className="seller-box-v4 box-card">
-                        <div className="seller-intro">
-                            <div className="seller-pfp">
-                                {ad.user.profile_picture ? (
-                                    <img src={getOptimizedImageUrl(ad.user.profile_picture, 150)} alt="Avatar" />
+                            <div className="contact-buttons-v4">
+                                {user ? (
+                                    <>
+                                        <button
+                                            className="btn btn-primary btn-block contact-btn"
+                                            onClick={handleChatClick}
+                                        >
+                                            <MessageCircle size={20} /> Chat Agora
+                                        </button>
+                                        {ad.user.phone && (
+                                            <a
+                                                href={`https://wa.me/55${ad.user.phone.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="btn btn-outline btn-block contact-btn whatsapp"
+                                                onClick={handleWhatsappClick}
+                                            >
+                                                <Phone size={20} /> WhatsApp
+                                            </a>
+                                        )}
+                                    </>
                                 ) : (
-                                    <User size={28} />
+                                    <button
+                                        className="btn btn-secondary btn-block contact-btn"
+                                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                                    >
+                                        <User size={20} /> Entrar para contatar
+                                    </button>
                                 )}
                             </div>
-                            <div className="seller-info">
-                                <h4 className="name">{ad.user.name}</h4>
-                                <span className="verified"><ShieldCheck size={14} /> Verificado</span>
-                            </div>
                         </div>
 
-                        <div className="safety-box-v4">
-                            <h5>Segurança</h5>
-                            <ul>
-                                <li>Não pague antecipadamente.</li>
-                                <li>Encontre-se em local público.</li>
-                            </ul>
+                        {/* Seller Details */}
+                        <div className="seller-box-v4 box-card">
+                            <div className="seller-intro">
+                                <div className="seller-pfp">
+                                    {ad.user.profile_picture ? (
+                                        <img src={getOptimizedImageUrl(ad.user.profile_picture, 150)} alt="Avatar" />
+                                    ) : (
+                                        <User size={28} />
+                                    )}
+                                </div>
+                                <div className="seller-info">
+                                    <h4 className="name">{ad.user.name}</h4>
+                                    <span className="verified"><ShieldCheck size={14} /> Verificado</span>
+                                </div>
+                            </div>
+
+                            <div className="safety-box-v4">
+                                <h5>Segurança</h5>
+                                <ul>
+                                    <li>Não pague antecipadamente.</li>
+                                    <li>Encontre-se em local público.</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
