@@ -27,6 +27,8 @@ export const EditAd = () => {
 
     useEffect(() => {
         const loadData = async () => {
+            setMaxImages(4);
+            setHasImagePlan(false);
             try {
                 const [catsData, plansData, adData] = await Promise.all([
                     fetchApi('/categories'),
@@ -41,6 +43,7 @@ export const EditAd = () => {
                     const hasActivePlan = plansData.transactions.some((t: any) =>
                         t.type === 'AD_IMAGES' &&
                         t.status === 'APPROVED' &&
+                        !t.ad_id && // Must not be linked to another ad
                         new Date(t.expires_at) >= now
                     );
                     if (hasActivePlan) {

@@ -19,6 +19,7 @@ export const createAd = async (req: AuthRequest, res: Response) => {
                 user_id,
                 type: 'AD_IMAGES',
                 status: 'APPROVED',
+                ad_id: null,
                 expires_at: { gte: new Date() }
             }
         });
@@ -303,6 +304,7 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
                 user_id,
                 type: 'AD_IMAGES',
                 status: 'APPROVED',
+                ad_id: null,
                 expires_at: { gte: new Date() }
             }
         });
