@@ -14,6 +14,8 @@ export const AdDetail = () => {
     const [ad, setAd] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalImgIndex, setModalImgIndex] = useState(0);
 
     useEffect(() => {
         fetchApi(`/ads/${id}`).then(data => {
@@ -83,7 +85,16 @@ export const AdDetail = () => {
                 <div className="ad-main">
                     <div className="ad-gallery">
                         {ad.images && ad.images.length > 0 ? (
-                            <img src={getOptimizedImageUrl(ad.images[activeImage], 800)} alt={ad.title} className="ad-hero-img" />
+                            <img
+                                src={getOptimizedImageUrl(ad.images[activeImage], 800)}
+                                alt={ad.title}
+                                className="ad-hero-img"
+                                onClick={() => {
+                                    setModalImgIndex(activeImage);
+                                    setIsModalOpen(true);
+                                }}
+                                style={{ cursor: 'zoom-in' }}
+                            />
                         ) : (
                             <div className="ad-placeholder-img">Sem imagem</div>
                         )}
@@ -195,6 +206,49 @@ export const AdDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Image Lightbox Modal */}
+            {isModalOpen && ad.images && ad.images.length > 0 && (
+                <div className="lightbox-overlay" onClick={() => setIsModalOpen(false)}>
+                    <button className="lightbox-close" onClick={() => setIsModalOpen(false)}>&times;</button>
+
+                    {ad.images.length > 1 && (
+                        <>
+                            <button
+                                className="lightbox-nav prev"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setModalImgIndex((prev) => (prev > 0 ? prev - 1 : ad.images.length - 1));
+                                }}
+                            >
+                                &#10094;
+                            </button>
+                            <button
+                                className="lightbox-nav next"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setModalImgIndex((prev) => (prev < ad.images.length - 1 ? prev + 1 : 0));
+                                }}
+                            >
+                                &#10095;
+                            </button>
+                        </>
+                    )}
+
+                    <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                        <img
+                            src={getOptimizedImageUrl(ad.images[modalImgIndex], 1200)}
+                            alt={`Slide ${modalImgIndex + 1}`}
+                            className="lightbox-img"
+                        />
+                        {ad.images.length > 1 && (
+                            <div className="lightbox-counter">
+                                {modalImgIndex + 1} / {ad.images.length}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

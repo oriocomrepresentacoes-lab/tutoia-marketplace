@@ -22,14 +22,16 @@
     width: 100%;
     position: relative;
     overflow: hidden;
+    background: #1a1a1a;
+    /* Dark cinematic background */
 }
 
 .listing-card-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    /* Show entire product without cropping */
     transition: transform 0.5s ease;
-    border-bottom: 1px solid var(--border);
 }
 
 .listing-card:hover .listing-card-img {
