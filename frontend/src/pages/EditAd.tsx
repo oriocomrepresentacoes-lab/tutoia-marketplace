@@ -24,11 +24,13 @@ export const EditAd = () => {
     const [error, setError] = useState<{ message: string; details?: string } | null>(null);
     const [maxImages, setMaxImages] = useState(4);
     const [hasImagePlan, setHasImagePlan] = useState(false);
+    const [isExpiredPremium, setIsExpiredPremium] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
             setMaxImages(4);
             setHasImagePlan(false);
+            setIsExpiredPremium(false);
             try {
                 const [catsData, plansData, adData] = await Promise.all([
                     fetchApi('/categories'),
@@ -68,16 +70,15 @@ export const EditAd = () => {
 
                     // If ad already has more than 4 images, it's premium
                     const now = new Date();
-                    const isAdAlreadyPremium = plansData?.transactions?.some((t: any) =>
-                        t.ad_id === id &&
-                        t.type === 'AD_IMAGES' &&
-                        t.status === 'USED' &&
-                        new Date(t.expires_at) >= now
-                    );
-
-                    if (isAdAlreadyPremium || (adData.images && adData.images.length > 4)) {
+                    if (isAdAlreadyPremium) {
                         setMaxImages(10);
                         setHasImagePlan(true);
+                        setIsExpiredPremium(false);
+                    } else if (adData.images && adData.images.length > 4) {
+                        // Expired but has 10 photos
+                        setIsExpiredPremium(true);
+                        setHasImagePlan(false);
+                        setMaxImages(adData.images.length); // Allow keeping current count but locked
                     }
                 }
             } catch (err: any) {
@@ -192,10 +193,18 @@ export const EditAd = () => {
                     </div>
                 )}
 
-                {!hasImagePlan && (
+                {!hasImagePlan && !isExpiredPremium && (
                     <div style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
                         <p style={{ color: '#1e40af', margin: 0, fontSize: '0.9rem' }}>
-                            💡 Sabia que pode adicionar até 10 fotos? <button onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Confira os planos!</button>
+                            💡 Sabia que pode adicionar até 10 fotos? <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Confira os planos!</button>
+                        </p>
+                    </div>
+                )}
+
+                {isExpiredPremium && (
+                    <div style={{ backgroundColor: '#fff7ed', borderLeft: '4px solid #f97316', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
+                        <p style={{ color: '#9a3412', margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>
+                            ⚠️ **Destaque Expirado:** Suas 10 fotos continuam visíveis, mas para alterá-las ou adicionar novas você precisa renovar o destaque. <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#c2410c', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Renovar agora!</button>
                         </p>
                     </div>
                 )}
@@ -209,15 +218,15 @@ export const EditAd = () => {
 
                 <form onSubmit={handleSubmit} className="ad-form">
                     <div className="image-upload-section">
-                        <label className="upload-label" style={{ opacity: (existingImages.length + newImages.length) >= maxImages ? 0.5 : 1 }}>
+                        <label className="upload-label" style={{ opacity: ((existingImages.length + newImages.length) >= maxImages || isExpiredPremium) ? 0.5 : 1 }}>
                             <Upload size={32} />
-                            <span>Adicionar fotos ({existingImages.length + newImages.length}/{maxImages})</span>
+                            <span>{isExpiredPremium ? 'Fotos bloqueadas (Expirado)' : `Adicionar fotos (${existingImages.length + newImages.length}/${maxImages})`}</span>
                             <input
                                 type="file"
                                 accept="image/*"
                                 multiple
                                 onChange={handleNewImageChange}
-                                disabled={(existingImages.length + newImages.length) >= maxImages}
+                                disabled={(existingImages.length + newImages.length) >= maxImages || isExpiredPremium}
                                 hidden
                             />
                         </label>
@@ -227,7 +236,13 @@ export const EditAd = () => {
                             {existingImages.map((imgUrl, index) => (
                                 <div key={`old-${index}`} className="image-preview">
                                     <img src={getOptimizedImageUrl(imgUrl)} alt={`Existing ${index}`} />
-                                    <button type="button" className="remove-img-btn" onClick={() => removeExistingImage(imgUrl)}>
+                                    <button
+                                        type="button"
+                                        className="remove-img-btn"
+                                        onClick={() => removeExistingImage(imgUrl)}
+                                        disabled={isExpiredPremium}
+                                        style={{ display: isExpiredPremium ? 'none' : 'flex' }}
+                                    >
                                         <X size={16} />
                                     </button>
                                 </div>

@@ -228,10 +228,27 @@ export const getAdById = async (req: Request, res: Response) => {
 
         if (!ad) return res.status(404).json({ error: 'Anúncio não encontrado.' });
 
-        // increment view count
-        await prisma.ad.update({ where: { id }, data: { views: { increment: 1 } } });
+        // Check for expired premium status
+        const premiumTransaction = await prisma.transaction.findFirst({
+            where: {
+                ad_id: id,
+                type: 'AD_IMAGES',
+                status: 'USED'
+            },
+            orderBy: { expires_at: 'desc' }
+        });
 
-        res.json({ ...ad, images: JSON.parse(ad.images) });
+        const now = new Date();
+        const imagesArray = JSON.parse(ad.images);
+        const isFeatured = premiumTransaction ? (premiumTransaction.status === 'USED' && premiumTransaction.expires_at && new Date(premiumTransaction.expires_at) >= now) : false;
+        const isExpiredPremium = !isFeatured && (imagesArray.length > 4 || (premiumTransaction && premiumTransaction.expires_at && new Date(premiumTransaction.expires_at) < now));
+
+        res.json({
+            ...ad,
+            images: imagesArray,
+            isFeatured,
+            isExpiredPremium
+        });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar o anúncio.' });
     }
@@ -324,7 +341,14 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
         }
 
         if (combinedImages.length > maxImages) {
-            return res.status(400).json({ error: `Limite de imagens excedido. Máximo permitido: ${maxImages}.` });
+            // Check if it's an expired premium ad just trying to KEEP its images
+            const isJustKeepingImages = combinedImages.length === currentImages.length &&
+                newImages.length === 0 &&
+                JSON.stringify(combinedImages) === existingAd.images; // original images from DB
+
+            if (!isJustKeepingImages) {
+                return res.status(400).json({ error: `O destaque deste anúncio expirou. Para alterar ou adicionar novas fotos além de 4, você precisa renovar o plano.` });
+            }
         }
 
         const priceFloat = parseFloat(price);
