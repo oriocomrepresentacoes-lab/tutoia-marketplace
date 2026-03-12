@@ -438,6 +438,10 @@
     cursor: pointer;
     z-index: 10010;
     transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .lightbox-close:hover {
@@ -691,9 +695,12 @@
     }
 
     .lightbox-close {
-        top: 0.75rem;
-        right: 0.75rem;
-        width: 40px;
-        height: 40px;
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
