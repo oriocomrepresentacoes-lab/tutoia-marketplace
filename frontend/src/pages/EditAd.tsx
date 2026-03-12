@@ -37,8 +37,13 @@ export const EditAd = () => {
                 if (catsData) setCategories(catsData);
 
                 if (plansData && plansData.transactions) {
-                    const hasPlan = plansData.transactions.some((t: any) => t.type === 'AD_IMAGES');
-                    if (hasPlan) {
+                    const now = new Date();
+                    const hasActivePlan = plansData.transactions.some((t: any) =>
+                        t.type === 'AD_IMAGES' &&
+                        t.status === 'APPROVED' &&
+                        new Date(t.expires_at) >= now
+                    );
+                    if (hasActivePlan) {
                         setMaxImages(10);
                         setHasImagePlan(true);
                     }
@@ -59,7 +64,15 @@ export const EditAd = () => {
                     setExistingImages(adData.images || []);
 
                     // If ad already has more than 4 images, it's premium
-                    if (adData.images && adData.images.length > 4) {
+                    const now = new Date();
+                    const isAdAlreadyPremium = plansData?.transactions?.some((t: any) =>
+                        t.ad_id === id &&
+                        t.type === 'AD_IMAGES' &&
+                        t.status === 'USED' &&
+                        new Date(t.expires_at) >= now
+                    );
+
+                    if (isAdAlreadyPremium || (adData.images && adData.images.length > 4)) {
                         setMaxImages(10);
                         setHasImagePlan(true);
                     }

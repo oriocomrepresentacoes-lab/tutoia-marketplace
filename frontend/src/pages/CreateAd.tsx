@@ -30,8 +30,13 @@ export const CreateAd = () => {
                 if (catsData.length > 0) setCategoryId(catsData[0].id);
             }
             if (plansData && plansData.transactions) {
-                const hasPlan = plansData.transactions.some((t: any) => t.type === 'AD_IMAGES');
-                if (hasPlan) {
+                const now = new Date();
+                const hasActivePlan = plansData.transactions.some((t: any) =>
+                    t.type === 'AD_IMAGES' &&
+                    t.status === 'APPROVED' &&
+                    new Date(t.expires_at) >= now
+                );
+                if (hasActivePlan) {
                     setMaxImages(10);
                     setHasImagePlan(true);
                 }
@@ -45,7 +50,7 @@ export const CreateAd = () => {
             setImages(prev => {
                 const total = [...prev, ...filesArray];
                 if (total.length > maxImages) {
-                    alert(`Você pode enviar no máximo ${maxImages} imagens.`);
+                    setError({ message: `Você pode enviar no máximo ${maxImages} imagens. Adquira o plano Mais Imagens para enviar até 10.` });
                 }
                 return total.slice(0, maxImages);
             });
