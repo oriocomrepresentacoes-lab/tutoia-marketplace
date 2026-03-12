@@ -43,7 +43,7 @@ export const Dashboard = () => {
                 fetchApi('/banners/my-banners')
             ]);
 
-            if (adsData) setMyAds(adsData);
+            if (adsData && adsData.ads) setMyAds(adsData.ads);
             if (plansData) {
                 setMyPlans(plansData.transactions || []);
             }
