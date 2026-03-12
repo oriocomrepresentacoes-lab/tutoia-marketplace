@@ -534,27 +534,114 @@
 }
 
 @media (max-width: 768px) {
+    .ad-detail-page {
+        padding-top: 1rem;
+        padding-bottom: 3rem;
+    }
+
     .ad-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
     }
 
-    .ad-title-v4 {
-        font-size: 1.75rem;
+    .featured-badge {
+        margin-left: 0;
+        margin-top: 0.25rem;
     }
 
-    .ad-price-v4 {
-        font-size: 2rem;
+    .ad-content {
+        gap: 1.5rem;
+    }
+
+    .box-card {
+        padding: 1.25rem;
+        border-radius: 1rem;
+    }
+
+    /* Gallery Mobile Refinement */
+    .ad-gallery-container-v4 {
+        margin-bottom: 1.25rem;
+        border-radius: 1rem;
+        border-left: none;
+        border-right: none;
+    }
+
+    .gallery-v4 {
+        padding: 0.75rem;
+        gap: 0.75rem;
     }
 
     .gallery-main-frame {
         aspect-ratio: 4/3;
+        border-radius: 0.75rem;
+    }
+
+    .gallery-index-tag {
+        bottom: 0.75rem;
+        right: 0.75rem;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.8rem;
+    }
+
+    .gallery-thumb-box {
+        width: 80px;
+        height: 60px;
+        border-radius: 0.5rem;
+    }
+
+    /* Typography & Sidebar */
+    .ad-title-v4 {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .ad-price-v4 {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ad-meta-v4 {
+        padding: 1rem;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .meta-row {
+        font-size: 0.95rem;
+    }
+
+    .contact-btn {
+        height: 52px;
+        font-size: 1rem;
+    }
+
+    .seller-intro {
+        gap: 0.85rem;
+    }
+
+    .seller-pfp {
+        width: 50px;
+        height: 50px;
+    }
+
+    /* Lightbox Mobile */
+    .lightbox-overlay {
+        padding: 1rem;
     }
 
     .lightbox-nav-btn {
-        width: 45px;
-        height: 45px;
+        width: 44px;
+        height: 44px;
         font-size: 1rem;
+    }
+
+    .lightbox-close {
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
     }
 }
