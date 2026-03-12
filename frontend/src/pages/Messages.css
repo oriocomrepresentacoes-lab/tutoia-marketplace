@@ -193,6 +193,8 @@
     align-items: center;
     justify-content: center;
     color: var(--text-light);
+    text-align: center;
+    padding: 2rem;
 }
 
 .chat-empty-icon {
