@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, ArrowLeft, Loader2 } from 'lucide-react';
-import { fetchApi, getOptimizedImageUrl } from '../utils/api';
+import { fetchApi } from '../utils/api';
+import { getOptimizedImageUrl } from '../utils/imageUtils';
 import './CreateAd.css'; // Reusing styles from CreateAd
 
 export const EditAd = () => {
