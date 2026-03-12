@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Phone, MessageCircle, User, Calendar, Eye, ShieldCheck, Tag, Star } from 'lucide-react';
 import { fetchApi } from '../utils/api';
@@ -34,8 +34,8 @@ export const AdDetail = () => {
         }).catch(() => setLoading(false));
     }, [id]);
 
-    if (loading) return <div className="container mt-4 loading-spinner">Carregando anúncio...</div>;
-    if (!ad) return <div className="container mt-4 empty-state">Anúncio não encontrado.</div>;
+    if (loading) return <div className="container mt-4 loading-spinner">Carregando anÃºncio...</div>;
+    if (!ad) return <div className="container mt-4 empty-state">AnÃºncio nÃ£o encontrado.</div>;
 
     const formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ad.price);
     const date = new Date(ad.created_at).toLocaleDateString();
@@ -46,7 +46,7 @@ export const AdDetail = () => {
             return;
         }
         if (user.id === ad.user_id) {
-            alert("Você não pode iniciar um chat com seu próprio anúncio.");
+            alert("VocÃª nÃ£o pode iniciar um chat com seu prÃ³prio anÃºncio.");
             return;
         }
         navigate(`/messages?adId=${ad.id}&sellerId=${ad.user_id}`, {
@@ -145,12 +145,12 @@ export const AdDetail = () => {
                         <div className="ad-meta">
                             <span className="meta-item"><MapPin size={16} /> {ad.city}</span>
                             <span className="meta-item"><Calendar size={16} /> Publicado em {date}</span>
-                            <span className="meta-item"><Eye size={16} /> {ad.views} visualizações</span>
-                            <span className="meta-item"><Tag size={16} /> {ad.type === 'PRODUCT' ? 'Produto' : 'Serviço'}</span>
+                            <span className="meta-item"><Eye size={16} /> {ad.views} visualizaÃ§Ãµes</span>
+                            <span className="meta-item"><Tag size={16} /> {ad.type === 'PRODUCT' ? 'Produto' : 'ServiÃ§o'}</span>
                         </div>
 
                         <div className="ad-description">
-                            <h3>Descrição</h3>
+                            <h3>DescriÃ§Ã£o</h3>
                             <p>{ad.description}</p>
                         </div>
                     </div>
@@ -158,7 +158,7 @@ export const AdDetail = () => {
 
                 <div className="ad-sidebar">
                     <div className="seller-card box-card">
-                        <h3>Informações do Anunciante</h3>
+                        <h3>InformaÃ§Ãµes do Anunciante</h3>
                         <div className="seller-profile">
                             <div className="seller-avatar">
                                 {ad.user.profile_picture ? (
@@ -169,7 +169,7 @@ export const AdDetail = () => {
                             </div>
                             <div>
                                 <h4 className="seller-name">{ad.user.name}</h4>
-                                <span className="seller-badge"><ShieldCheck size={14} /> Usuário verificado</span>
+                                <span className="seller-badge"><ShieldCheck size={14} /> UsuÃ¡rio verificado</span>
                             </div>
                         </div>
 
@@ -199,16 +199,16 @@ export const AdDetail = () => {
                                     className="btn btn-secondary btn-block action-btn"
                                     onClick={() => navigate('/login', { state: { from: location.pathname } })}
                                 >
-                                    <User size={20} /> Faça login para contatar
+                                    <User size={20} /> FaÃ§a login para contatar
                                 </button>
                             )}
                         </div>
 
                         <div className="safety-tips">
-                            <h4>Dicas de Segurança</h4>
+                            <h4>Dicas de SeguranÃ§a</h4>
                             <ul>
-                                <li>Não pague antecipadamente.</li>
-                                <li>Encontre-se em local público e movimentado.</li>
+                                <li>NÃ£o pague antecipadamente.</li>
+                                <li>Encontre-se em local pÃºblico e movimentado.</li>
                                 <li>Verifique o produto pessoalmente.</li>
                             </ul>
                         </div>
@@ -275,5 +275,5 @@ export const AdDetail = () => {
         </div>
     );
 };
-/ /   t r i g g e r   d e p l o y  
- 
+
+// Manual deploy trigger v6
