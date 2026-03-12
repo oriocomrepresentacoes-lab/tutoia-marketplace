@@ -5,7 +5,7 @@ import {
   Home, Explore, AdDetail, CreateAd, Login, Register,
   Profile, Dashboard, AdminPanel, Messages,
   Plans, Checkout, PlansTest, ForgotPassword,
-  Terms, Privacy, Contact
+  Terms, Privacy, Contact, EditAd
 } from './pages';
 import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -73,6 +73,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/ad/:id" element={<AdDetail />} />
+            <Route path="/ad/edit/:id" element={<EditAd />} />
             <Route path="/create-ad" element={<CreateAd />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

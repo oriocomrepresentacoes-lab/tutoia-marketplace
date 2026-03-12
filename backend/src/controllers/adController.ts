@@ -255,3 +255,107 @@ export const deleteAd = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Erro ao excluir o anúncio' });
     }
 };
+
+export const updateAd = async (req: AuthRequest, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        const user_id = req.user?.id;
+        const role = req.user?.role;
+
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
+
+        const existingAd = await prisma.ad.findUnique({
+            where: { id },
+            include: { user: true }
+        });
+
+        if (!existingAd) return res.status(404).json({ error: 'Anúncio não encontrado' });
+
+        // Permission check
+        if (existingAd.user_id !== user_id && role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Não autorizado' });
+        }
+
+        const { title, description, price, type, city, category_id, keep_images } = req.body;
+
+        // Manage Images
+        let currentImages: string[] = [];
+        try {
+            if (keep_images) {
+                currentImages = JSON.parse(keep_images);
+            }
+        } catch (e) {
+            currentImages = [];
+        }
+
+        let newImages: string[] = [];
+        if (req.files) {
+            const files = req.files as Express.Multer.File[];
+            newImages = files.map((file) => file.path);
+        }
+
+        const combinedImages = [...currentImages, ...newImages];
+
+        // Check for active plan to permit more images (up to 10)
+        let maxImages = 4;
+        const hasActivePlan = await prisma.transaction.findFirst({
+            where: {
+                user_id,
+                type: 'AD_IMAGES',
+                status: 'APPROVED',
+                expires_at: { gte: new Date() }
+            }
+        });
+
+        // Also check if this ad is ALREADY premium (has a USED transaction linked to it)
+        const isAlreadyPremium = await prisma.transaction.findFirst({
+            where: {
+                ad_id: id,
+                type: 'AD_IMAGES',
+                status: 'USED',
+                expires_at: { gte: new Date() }
+            }
+        });
+
+        if (hasActivePlan || isAlreadyPremium) {
+            maxImages = 10;
+        }
+
+        if (combinedImages.length > maxImages) {
+            return res.status(400).json({ error: `Limite de imagens excedido. Máximo permitido: ${maxImages}.` });
+        }
+
+        const priceFloat = parseFloat(price);
+
+        const updatedAd = await prisma.ad.update({
+            where: { id },
+            data: {
+                title: title || existingAd.title,
+                description: description || existingAd.description,
+                price: isNaN(priceFloat) ? existingAd.price : priceFloat,
+                type: type || existingAd.type,
+                city: city || existingAd.city,
+                category_id: category_id || existingAd.category_id,
+                images: JSON.stringify(combinedImages),
+            }
+        });
+
+        // Upgrade Logic: If it wasn't premium but the user HAS an active plan, apply it now
+        if (!isAlreadyPremium && hasActivePlan) {
+            await prisma.transaction.update({
+                where: { id: hasActivePlan.id },
+                data: {
+                    status: 'USED',
+                    ad_id: updatedAd.id
+                }
+            });
+            console.log(`[Upgrade] Ad ${updatedAd.id} upgraded to premium during edit.`);
+        }
+
+        res.json({ ...updatedAd, images: combinedImages });
+
+    } catch (error) {
+        console.error('Update ad error:', error);
+        res.status(500).json({ error: 'Erro ao atualizar o anúncio.' });
+    }
+};

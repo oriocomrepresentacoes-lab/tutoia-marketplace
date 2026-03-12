@@ -16,3 +16,4 @@ export * from './ForgotPassword';
 export * from './Terms';
 export * from './Privacy';
 export * from './Contact';
+export * from './EditAd';

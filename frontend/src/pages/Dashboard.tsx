@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, ExternalLink, MapPin, UploadCloud, Link as LinkIcon, Type, ImageIcon, CheckCircle, Info } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Image as ImageIcon, Link as LinkIcon, Type, Pencil } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
@@ -103,8 +103,8 @@ export const Dashboard = () => {
     const formatPhone = (value: string) => {
         const numbers = value.replace(/\D/g, '');
         if (numbers.length <= 2) return numbers;
-        if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+        if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)} `;
+        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)} -${numbers.slice(7, 11)} `;
     };
 
     const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -410,6 +410,7 @@ export const Dashboard = () => {
                                 </div>
                                 <div className="listing-item-actions">
                                     <Link to={`/ad/${ad.id}`} className="btn-icon" title="Ver Anúncio"><ExternalLink size={20} /></Link>
+                                    <Link to={`/ad/edit/${ad.id}`} className="btn-icon" title="Editar Anúncio" style={{ color: 'var(--primary)' }}><Pencil size={20} /></Link>
                                     <button onClick={() => handleDelete(ad.id)} className="btn-icon text-danger" title="Excluir">
                                         <Trash2 size={20} />
                                     </button>
