@@ -54,12 +54,13 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         });
 
         // Auto-detect backend URL for webhooks
-        // Priority: VITE_API_URL (which is often set to the backend on Vercel) -> request headers
         const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
         const host = req.headers.host;
-        let baseUrl = process.env.VITE_API_URL || `${protocol}://${host}`;
+        // Priority: API_URL -> VERCEL_URL -> headers
+        let baseUrl = process.env.API_URL ||
+            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+            `${protocol}://${host}`;
 
-        // Remove trailing slash if exists
         if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
         const notification_url = `${baseUrl}/api/payments/webhook`;
@@ -67,6 +68,7 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         console.log('--- GENERATING PIX ---');
         console.log('Base URL detected:', baseUrl);
         console.log('Notification URL set to:', notification_url);
+        console.log('Environment - API_URL:', process.env.API_URL, 'VERCEL_URL:', process.env.VERCEL_URL);
 
         // Build Payload strictly for PIX
         const payload: any = {
@@ -174,7 +176,7 @@ export const paymentWebhook = async (req: Request, res: Response) => {
                             // Emit real-time notification to the frontend
                             const io = req.app.get('io');
                             if (io) {
-                                io.to(transaction.user_id).emit('payment_approved', {
+                                io.to(`user_${transaction.user_id}`).emit('payment_approved', {
                                     transaction_id: externalReference,
                                     type: transaction.type,
                                     message: transaction.type === 'BANNER'
