@@ -70,6 +70,13 @@ export const EditAd = () => {
 
                     // If ad already has more than 4 images, it's premium
                     const now = new Date();
+                    const isAdAlreadyPremium = plansData?.transactions?.some((t: any) =>
+                        t.ad_id === id &&
+                        t.type === 'AD_IMAGES' &&
+                        t.status === 'USED' &&
+                        new Date(t.expires_at) >= now
+                    );
+
                     if (isAdAlreadyPremium) {
                         setMaxImages(10);
                         setHasImagePlan(true);
