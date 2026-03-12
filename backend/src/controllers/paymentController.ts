@@ -54,13 +54,18 @@ export const createPayment = async (req: AuthRequest, res: Response) => {
         });
 
         // Auto-detect backend URL for webhooks
+        // Priority: VITE_API_URL (which is often set to the backend on Vercel) -> request headers
         const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
         const host = req.headers.host;
-        const notification_url = process.env.VITE_API_URL
-            ? `${process.env.VITE_API_URL}/api/payments/webhook`
-            : `${protocol}://${host}/api/payments/webhook`;
+        let baseUrl = process.env.VITE_API_URL || `${protocol}://${host}`;
+
+        // Remove trailing slash if exists
+        if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+
+        const notification_url = `${baseUrl}/api/payments/webhook`;
 
         console.log('--- GENERATING PIX ---');
+        console.log('Base URL detected:', baseUrl);
         console.log('Notification URL set to:', notification_url);
 
         // Build Payload strictly for PIX
