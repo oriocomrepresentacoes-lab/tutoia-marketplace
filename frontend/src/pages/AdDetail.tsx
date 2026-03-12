@@ -93,50 +93,87 @@ export const AdDetail = () => {
 
             <div className="ad-content">
                 <div className="ad-main">
+                    {/* Mosaic Gallery (Desktop) / Strip (Mobile) */}
                     <div className="ad-gallery-v2">
                         {ad.images && ad.images.length > 0 ? (
-                            <div className="ad-gallery-strip" onScroll={handleGalleryScroll}>
-                                {ad.images.map((img: string, idx: number) => (
+                            <>
+                                {/* Mobile Strip view */}
+                                <div className="ad-gallery-strip mobile-only" onScroll={handleGalleryScroll}>
+                                    {ad.images.map((img: string, idx: number) => (
+                                        <div
+                                            key={idx}
+                                            className="gallery-item-wrapper"
+                                            onClick={() => {
+                                                setModalImgIndex(idx);
+                                                setIsModalOpen(true);
+                                            }}
+                                        >
+                                            <img
+                                                src={getOptimizedImageUrl(img, 800)}
+                                                alt={`${ad.title} - ${idx + 1}`}
+                                                className="ad-gallery-img"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop Mosaic view */}
+                                <div className="ad-gallery-mosaic desktop-only">
                                     <div
-                                        key={idx}
-                                        className="gallery-item-wrapper"
+                                        className="mosaic-main"
                                         onClick={() => {
-                                            setModalImgIndex(idx);
+                                            setModalImgIndex(0);
                                             setIsModalOpen(true);
                                         }}
                                     >
-                                        <img
-                                            src={getOptimizedImageUrl(img, 800)}
-                                            alt={`${ad.title} - ${idx + 1}`}
-                                            className="ad-gallery-img"
-                                        />
+                                        <img src={getOptimizedImageUrl(ad.images[0], 1000)} alt={ad.title} />
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="mosaic-grid">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <div
+                                                key={i}
+                                                className={`mosaic-item ${i === 4 && ad.images.length > 5 ? 'has-more' : ''}`}
+                                                onClick={() => {
+                                                    if (ad.images[i]) {
+                                                        setModalImgIndex(i);
+                                                        setIsModalOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {ad.images[i] ? (
+                                                    <img src={getOptimizedImageUrl(ad.images[i], 500)} alt={`${ad.title} ${i}`} />
+                                                ) : (
+                                                    <div className="mosaic-placeholder"></div>
+                                                )}
+                                                {i === 4 && ad.images.length > 5 && (
+                                                    <div className="more-overlay">
+                                                        <span>+{ad.images.length - 5}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
                         ) : (
                             <div className="ad-placeholder-img">Sem imagem</div>
                         )}
-                        {ad.images && ad.images.length > 1 && (
-                            <div className="gallery-counter-tag">
-                                {currentScrollIdx + 1} / {ad.images.length}
-                            </div>
-                        )}
+
+                        <div className="gallery-counter-tag mobile-only">
+                            {ad.images && ad.images.length > 1 && (
+                                <>
+                                    {currentScrollIdx + 1} / {ad.images.length}
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     <div className="ad-info-section box-card">
                         <h1 className="ad-title">{ad.title}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="ad-price-row">
                             <p className="ad-price">{formattedPrice}</p>
                             {ad.isExpiredPremium && (
-                                <span style={{
-                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                    color: '#ef4444',
-                                    padding: '0.25rem 0.75rem',
-                                    borderRadius: '1rem',
-                                    fontSize: '0.8rem',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    fontWeight: 'bold'
-                                }}>
+                                <span className="premium-expired-badge">
                                     Plano Premium Expirado
                                 </span>
                             )}
