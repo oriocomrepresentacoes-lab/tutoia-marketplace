@@ -83,13 +83,7 @@ export const Messages = () => {
         }
     };
 
-    const handleManualReconnect = () => {
-        if (socketRef.current) {
-            socketRef.current.connect();
-        } else if (token) {
-            getSocket(token || '');
-        }
-    };
+
 
     const loadMessages = async (chat: any) => {
         setActiveChat(chat);
