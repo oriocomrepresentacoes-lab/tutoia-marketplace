@@ -27,6 +27,7 @@ export const Messages = () => {
     const [newMessage, setNewMessage] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [showPushPrompt, setShowPushPrompt] = useState(false);
+    const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -158,17 +159,38 @@ export const Messages = () => {
             const handleConnect = () => {
                 setIsConnected(true);
                 socket.emit('join', user.id);
+                // Check status of other user if we have an active chat
+                if (activeChatRef.current) {
+                    socket.emit('get_user_status', activeChatRef.current.other_user_id);
+                }
             };
             const handleDisconnect = () => setIsConnected(false);
             const handleError = () => setIsConnected(false);
 
-            socket.on('connect', handleConnect);
-            socket.on('disconnect', handleDisconnect);
-            socket.on('connect_error', handleError);
+            const handleUserOnline = (userId: string) => {
+                setOnlineUsers(prev => {
+                    const next = new Set(prev);
+                    next.add(userId);
+                    return next;
+                });
+            };
 
-            if (socket.connected) {
-                socket.emit('join', user.id);
-            }
+            const handleUserOffline = (userId: string) => {
+                setOnlineUsers(prev => {
+                    const next = new Set(prev);
+                    next.delete(userId);
+                    return next;
+                });
+            };
+
+            const handleUserStatus = ({ userId, isOnline }: { userId: string, isOnline: boolean }) => {
+                setOnlineUsers(prev => {
+                    const next = new Set(prev);
+                    if (isOnline) next.add(userId);
+                    else next.delete(userId);
+                    return next;
+                });
+            };
 
             const handleNewMessage = (msg: Message) => {
                 const currentActive = activeChatRef.current;
@@ -193,13 +215,27 @@ export const Messages = () => {
                 }
             };
 
+            socket.on('connect', handleConnect);
+            socket.on('disconnect', handleDisconnect);
+            socket.on('connect_error', handleError);
             socket.on('new_message', handleNewMessage);
+            socket.on('user_online', handleUserOnline);
+            socket.on('user_offline', handleUserOffline);
+            socket.on('user_status_response', handleUserStatus);
+
+            // Initial status check if we have an active chat
+            if (socket.connected && activeChatRef.current) {
+                socket.emit('get_user_status', activeChatRef.current.other_user_id);
+            }
 
             return () => {
                 socket.off('connect', handleConnect);
                 socket.off('disconnect', handleDisconnect);
                 socket.off('connect_error', handleError);
                 socket.off('new_message', handleNewMessage);
+                socket.off('user_online', handleUserOnline);
+                socket.off('user_offline', handleUserOffline);
+                socket.off('user_status_response', handleUserStatus);
             };
         }
     }, [user, token, location.state]);
@@ -278,25 +314,31 @@ export const Messages = () => {
                                         </button>
                                     )}
                                     <div style={{ position: 'relative' }}>
-                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                            {activeChat.other_user_name}
+                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'nowrap' }}>
+                                            <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {activeChat.other_user_name}
+                                            </span>
                                             <span
-                                                style={{
-                                                    width: '10px',
-                                                    height: '10px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: isConnected ? '#4caf50' : '#f44336',
-                                                    display: 'inline-block',
-                                                    cursor: isConnected ? 'default' : 'pointer'
-                                                }}
-                                                title={isConnected ? "Conectado" : "Desconectado - Clique para reconectar"}
-                                                onClick={!isConnected ? handleManualReconnect : undefined}
+                                                className={`online-status-dot ${onlineUsers.has(activeChat.other_user_id) ? 'online' : 'offline'}`}
+                                                title={onlineUsers.has(activeChat.other_user_id) ? "Online" : "Offline"}
                                             />
                                         </h3>
-                                        <div style={{ marginTop: '4px' }}>
+                                        <div style={{ marginTop: '2px' }}>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
                                         </div>
                                     </div>
+                                    <div
+                                        style={{
+                                            width: '12px',
+                                            height: '12px',
+                                            borderRadius: '50%',
+                                            backgroundColor: isConnected ? '#4caf50' : '#f44336',
+                                            marginLeft: 'auto',
+                                            border: '2px solid white',
+                                            boxShadow: '0 0 0 1px #eee'
+                                        }}
+                                        title={isConnected ? "Chat Conectado" : "Chat Desconectado"}
+                                    />
                                 </div>
                             </div>
 

@@ -33,28 +33,54 @@ export const io = new Server(server, {
 
 app.set('io', io);
 
+// Track online users: userId -> Set of socket IDs
+const onlineUsers = new Map<string, Set<string>>();
+
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
+    let currentUserId: string | null = null;
 
     // Diagnostics
     socket.on('ping_test', (data: any) => {
-        console.log('[Socket] Ping received from:', socket.id, data);
         socket.emit('pong_test', { time: new Date().toISOString(), originalData: data });
     });
 
     socket.on('join', (userId: any) => {
         const uid = String(userId).trim();
         if (uid && uid !== 'undefined' && uid !== 'null') {
+            currentUserId = uid;
             socket.join(`user_${uid}`);
-            console.log(`[Socket] User ${uid} joined room user_${uid}`);
-            const roomSize = io.sockets.adapter.rooms.get(`user_${uid}`)?.size || 0;
-            console.log(`[Socket] Current room user_${uid} size: ${roomSize}`);
-        } else {
-            console.warn('[Socket] Attempted join with invalid userId:', userId);
+
+            // Track online status
+            if (!onlineUsers.has(uid)) {
+                onlineUsers.set(uid, new Set());
+            }
+            onlineUsers.get(uid)?.add(socket.id);
+
+            // Broadcast that this user is online
+            io.emit('user_online', uid);
+
+            console.log(`[Socket] User ${uid} joined. Total sockets for user: ${onlineUsers.get(uid)?.size}`);
         }
     });
 
+    socket.on('get_user_status', (userId: string) => {
+        const uid = String(userId).trim();
+        const isOnline = onlineUsers.has(uid) && (onlineUsers.get(uid)?.size || 0) > 0;
+        socket.emit('user_status_response', { userId: uid, isOnline });
+    });
+
     socket.on('disconnect', () => {
+        if (currentUserId && onlineUsers.has(currentUserId)) {
+            const sockets = onlineUsers.get(currentUserId);
+            sockets?.delete(socket.id);
+
+            if (sockets?.size === 0) {
+                onlineUsers.delete(currentUserId);
+                io.emit('user_offline', currentUserId);
+                console.log(`[Socket] User ${currentUserId} is now fully offline`);
+            }
+        }
         console.log('[Socket] User disconnected:', socket.id);
     });
 });
