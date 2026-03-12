@@ -47,7 +47,7 @@ async function main() {
             price: 58000.00,
             type: 'PRODUCT',
             images: JSON.stringify(['https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg']),
-            city: 'Parnaíba',
+            city: 'Tutoia',
             user_id: user.id,
             category_id: categories[2] ? categories[2].id : categories[0].id,
             status: 'ACTIVE'

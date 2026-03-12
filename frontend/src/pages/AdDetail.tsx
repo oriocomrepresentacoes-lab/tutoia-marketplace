@@ -13,9 +13,19 @@ export const AdDetail = () => {
     const { user } = useAuthStore();
     const [ad, setAd] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [activeImage, setActiveImage] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalImgIndex, setModalImgIndex] = useState(0);
+    const [currentScrollIdx, setCurrentScrollIdx] = useState(0);
+
+    const handleGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const container = e.currentTarget;
+        const scrollLeft = container.scrollLeft;
+        const itemWidth = container.querySelector('.gallery-item-wrapper')?.clientWidth || container.clientWidth;
+        const newIdx = Math.round(scrollLeft / itemWidth);
+        if (newIdx !== currentScrollIdx) {
+            setCurrentScrollIdx(newIdx);
+        }
+    };
 
     useEffect(() => {
         fetchApi(`/ads/${id}`).then(data => {
@@ -83,33 +93,32 @@ export const AdDetail = () => {
 
             <div className="ad-content">
                 <div className="ad-main">
-                    <div className="ad-gallery">
+                    <div className="ad-gallery-v2">
                         {ad.images && ad.images.length > 0 ? (
-                            <img
-                                src={getOptimizedImageUrl(ad.images[activeImage], 800)}
-                                alt={ad.title}
-                                className="ad-hero-img"
-                                onClick={() => {
-                                    setModalImgIndex(activeImage);
-                                    setIsModalOpen(true);
-                                }}
-                                style={{ cursor: 'zoom-in' }}
-                            />
+                            <div className="ad-gallery-strip" onScroll={handleGalleryScroll}>
+                                {ad.images.map((img: string, idx: number) => (
+                                    <div
+                                        key={idx}
+                                        className="gallery-item-wrapper"
+                                        onClick={() => {
+                                            setModalImgIndex(idx);
+                                            setIsModalOpen(true);
+                                        }}
+                                    >
+                                        <img
+                                            src={getOptimizedImageUrl(img, 800)}
+                                            alt={`${ad.title} - ${idx + 1}`}
+                                            className="ad-gallery-img"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
                             <div className="ad-placeholder-img">Sem imagem</div>
                         )}
                         {ad.images && ad.images.length > 1 && (
-                            <div className="ad-thumbnails">
-                                {ad.images.map((img: string, idx: number) => (
-                                    <img
-                                        key={idx}
-                                        src={getOptimizedImageUrl(img, 200)}
-                                        alt={`Thumbnail ${idx + 1}`}
-                                        className={activeImage === idx ? 'active' : ''}
-                                        onClick={() => setActiveImage(idx)}
-                                        style={{ cursor: 'pointer', border: activeImage === idx ? '2px solid var(--primary)' : '2px solid transparent' }}
-                                    />
-                                ))}
+                            <div className="gallery-counter-tag">
+                                {currentScrollIdx + 1} / {ad.images.length}
                             </div>
                         )}
                     </div>
@@ -236,14 +245,28 @@ export const AdDetail = () => {
                     )}
 
                     <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={getOptimizedImageUrl(ad.images[modalImgIndex], 1200)}
-                            alt={`Slide ${modalImgIndex + 1}`}
-                            className="lightbox-img"
-                        />
-                        {ad.images.length > 1 && (
+                        <div className="lightbox-main-container">
+                            <img
+                                src={getOptimizedImageUrl(ad.images[modalImgIndex], 1200)}
+                                alt={`Slide ${modalImgIndex + 1}`}
+                                className="lightbox-img"
+                            />
                             <div className="lightbox-counter">
                                 {modalImgIndex + 1} / {ad.images.length}
+                            </div>
+                        </div>
+
+                        {ad.images.length > 1 && (
+                            <div className="lightbox-thumbs">
+                                {ad.images.map((img: string, idx: number) => (
+                                    <div
+                                        key={idx}
+                                        className={`lightbox-thumb ${modalImgIndex === idx ? 'active' : ''}`}
+                                        onClick={() => setModalImgIndex(idx)}
+                                    >
+                                        <img src={getOptimizedImageUrl(img, 150)} alt={`Thumb ${idx}`} />
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
