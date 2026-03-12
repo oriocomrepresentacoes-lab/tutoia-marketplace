@@ -36,7 +36,6 @@ export const Messages = () => {
     // Check if we should show push prompt
     useEffect(() => {
         if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
-            // Small delay to not overwhelm on page load
             const timer = setTimeout(() => setShowPushPrompt(true), 2000);
             return () => clearTimeout(timer);
         }
@@ -55,12 +54,12 @@ export const Messages = () => {
     useEffect(() => {
         if (window.visualViewport) {
             const handleResize = () => {
-                if (activeChat) scrollToBottom('smooth');
+                if (activeChatRef.current) scrollToBottom('smooth');
             };
             window.visualViewport.addEventListener('resize', handleResize);
             return () => window.visualViewport?.removeEventListener('resize', handleResize);
         }
-    }, [activeChat]);
+    }, []);
 
     // Sync ref with state for socket listener
     useEffect(() => {
@@ -91,31 +90,63 @@ export const Messages = () => {
         }
     };
 
-    useEffect(() => {
-        fetchApi('/messages/conversations').then(data => {
-            if (data) {
-                const urlAdId = searchParams.get('adId');
-                const urlSellerId = searchParams.get('sellerId');
+    const loadMessages = async (chat: any) => {
+        setActiveChat(chat);
+        try {
+            const data = await fetchApi(`/messages/${chat.ad_id}/${chat.other_user_id}`);
+            if (data) setMessages(data);
+            else setMessages([]);
+        } catch (error) {
+            console.error(error);
+            setMessages([]);
+        }
+    };
 
-                if (urlAdId && urlSellerId) {
-                    const existing = data.find((c: any) => c.ad_id === urlAdId && c.other_user_id === urlSellerId);
-                    if (existing) {
-                        setActiveChat(existing);
-                        loadMessages(existing);
-                    } else if (location.state?.tempChat) {
-                        const temp = location.state.tempChat;
-                        const enrichedTempChat = {
-                            ...temp,
-                            ad_id: urlAdId,
-                            other_user_id: urlSellerId
-                        };
-                        setChats([enrichedTempChat, ...data]);
-                        setActiveChat(enrichedTempChat);
-                        loadMessages(enrichedTempChat);
-                    }
+    useEffect(() => {
+        if (!user || !token) return;
+
+        fetchApi('/messages/conversations').then(data => {
+            const conversations = data || [];
+            const urlAdId = searchParams.get('adId');
+            const urlSellerId = searchParams.get('sellerId');
+
+            if (urlAdId && urlSellerId) {
+                const existing = conversations.find((c: any) => c.ad_id === urlAdId && c.other_user_id === urlSellerId);
+                if (existing) {
+                    setChats(conversations);
+                    setActiveChat(existing);
+                    loadMessages(existing);
+                } else if (location.state?.tempChat) {
+                    const temp = location.state.tempChat;
+                    const enrichedTempChat = {
+                        ...temp,
+                        ad_id: urlAdId,
+                        other_user_id: urlSellerId
+                    };
+                    setChats([enrichedTempChat, ...conversations]);
+                    setActiveChat(enrichedTempChat);
+                    loadMessages(enrichedTempChat);
                 } else {
-                    setChats(data);
+                    // Fallback: fetch ad info to create tempChat (e.g. on refresh)
+                    fetchApi(`/ads/${urlAdId}`).then(adData => {
+                        if (adData) {
+                            const enrichedTempChat = {
+                                ad_id: urlAdId,
+                                ad_title: adData.title,
+                                other_user_id: urlSellerId,
+                                other_user_name: adData.user.name,
+                                is_temp: true
+                            };
+                            setChats([enrichedTempChat, ...conversations]);
+                            setActiveChat(enrichedTempChat);
+                            loadMessages(enrichedTempChat);
+                        } else {
+                            setChats(conversations);
+                        }
+                    }).catch(() => setChats(conversations));
                 }
+            } else {
+                setChats(conversations);
             }
         }).catch(() => { });
 
@@ -125,25 +156,18 @@ export const Messages = () => {
             setIsConnected(socket.connected);
 
             const handleConnect = () => {
-                console.log('[Messages] Local connected');
                 setIsConnected(true);
-                socket.emit('join', user?.id);
+                socket.emit('join', user.id);
             };
-            const handleDisconnect = () => {
-                console.log('[Messages] Local disconnected');
-                setIsConnected(false);
-            };
-            const handleError = (err: any) => {
-                console.error('[Messages] Local error:', err);
-                setIsConnected(false);
-            };
+            const handleDisconnect = () => setIsConnected(false);
+            const handleError = () => setIsConnected(false);
 
             socket.on('connect', handleConnect);
             socket.on('disconnect', handleDisconnect);
             socket.on('connect_error', handleError);
 
             if (socket.connected) {
-                socket.emit('join', user?.id);
+                socket.emit('join', user.id);
             }
 
             const handleNewMessage = (msg: Message) => {
@@ -156,7 +180,7 @@ export const Messages = () => {
                 if (matchesAd && matchesUser) {
                     setMessages(prev => {
                         if (prev.some(p => p.id === msg.id)) return prev;
-                        if (msg.sender_id === user?.id) {
+                        if (msg.sender_id === user.id) {
                             const tempIndex = prev.findIndex(m => m.id.startsWith('temp-') && m.content === msg.content);
                             if (tempIndex !== -1) {
                                 const next = [...prev];
@@ -179,16 +203,6 @@ export const Messages = () => {
             };
         }
     }, [user, token, location.state]);
-
-    const loadMessages = async (chat: any) => {
-        setActiveChat(chat);
-        try {
-            const data = await fetchApi(`/messages/${chat.ad_id}/${chat.other_user_id}`);
-            if (data) setMessages(data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
 
     const sendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

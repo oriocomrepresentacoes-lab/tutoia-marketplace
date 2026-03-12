@@ -33,7 +33,20 @@ export const AdDetail = () => {
             navigate('/login', { state: { from: location.pathname } });
             return;
         }
-        navigate(`/messages?adId=${ad.id}&sellerId=${ad.user_id}`);
+        if (user.id === ad.user_id) {
+            alert("Você não pode iniciar um chat com seu próprio anúncio.");
+            return;
+        }
+        navigate(`/messages?adId=${ad.id}&sellerId=${ad.user_id}`, {
+            state: {
+                tempChat: {
+                    ad_id: ad.id,
+                    ad_title: ad.title,
+                    other_user_id: ad.user_id,
+                    other_user_name: ad.user.name
+                }
+            }
+        });
     };
 
     const handleWhatsappClick = (e: React.MouseEvent) => {
