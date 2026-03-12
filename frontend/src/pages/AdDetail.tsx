@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, User, Calendar, Eye, ShieldCheck, Tag, Star } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, User, Calendar, Eye, ShieldCheck, Star } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
@@ -15,17 +15,6 @@ export const AdDetail = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalImgIndex, setModalImgIndex] = useState(0);
-    const [currentScrollIdx, setCurrentScrollIdx] = useState(0);
-
-    const handleGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const container = e.currentTarget;
-        const scrollLeft = container.scrollLeft;
-        const itemWidth = container.querySelector('.gallery-item-wrapper')?.clientWidth || container.clientWidth;
-        const newIdx = Math.round(scrollLeft / itemWidth);
-        if (newIdx !== currentScrollIdx) {
-            setCurrentScrollIdx(newIdx);
-        }
-    };
 
     useEffect(() => {
         fetchApi(`/ads/${id}`).then(data => {
@@ -74,18 +63,7 @@ export const AdDetail = () => {
                 <Link to="/explore" className="back-link">&larr; Voltar para explorar</Link>
                 <div className="ad-category-badge">{ad.category.name}</div>
                 {ad.isFeatured && (
-                    <div className="featured-badge" style={{
-                        marginLeft: '0.5rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        background: 'linear-gradient(135deg, #fef08a, #f59e0b)',
-                        color: '#78350f',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '1rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold'
-                    }}>
+                    <div className="featured-badge">
                         <Star size={14} fill="currentColor" /> Destaque
                     </div>
                 )}
@@ -93,138 +71,86 @@ export const AdDetail = () => {
 
             <div className="ad-content">
                 <div className="ad-main">
-                    {/* Mosaic Gallery (Desktop) / Strip (Mobile) */}
-                    <div className="ad-gallery-v2">
+                    {/* Unified Gallery Section */}
+                    <div className="ad-gallery-container-v4">
                         {ad.images && ad.images.length > 0 ? (
-                            <>
-                                {/* Mobile Strip view */}
-                                <div className="ad-gallery-strip mobile-only" onScroll={handleGalleryScroll}>
-                                    {ad.images.map((img: string, idx: number) => (
-                                        <div
-                                            key={idx}
-                                            className="gallery-item-wrapper"
-                                            onClick={() => {
-                                                setModalImgIndex(idx);
-                                                setIsModalOpen(true);
-                                            }}
-                                        >
-                                            <img
-                                                src={getOptimizedImageUrl(img, 800)}
-                                                alt={`${ad.title} - ${idx + 1}`}
-                                                className="ad-gallery-img"
-                                            />
+                            <div className="gallery-v4">
+                                <div
+                                    className="gallery-main-frame"
+                                    onClick={() => setIsModalOpen(true)}
+                                >
+                                    <img
+                                        src={getOptimizedImageUrl(ad.images[modalImgIndex], 1000)}
+                                        alt={ad.title}
+                                        className="gallery-main-img"
+                                    />
+                                    {ad.images.length > 1 && (
+                                        <div className="gallery-index-tag">
+                                            {modalImgIndex + 1} / {ad.images.length}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
 
-                                {/* Desktop Mosaic view */}
-                                <div className="ad-gallery-mosaic desktop-only">
-                                    <div
-                                        className="mosaic-main"
-                                        onClick={() => {
-                                            setModalImgIndex(0);
-                                            setIsModalOpen(true);
-                                        }}
-                                    >
-                                        <img src={getOptimizedImageUrl(ad.images[0], 1000)} alt={ad.title} />
-                                    </div>
-                                    <div className="mosaic-grid">
-                                        {[1, 2, 3, 4].map((i) => (
+                                {ad.images.length > 1 && (
+                                    <div className="gallery-thumbs-row">
+                                        {ad.images.map((img: string, idx: number) => (
                                             <div
-                                                key={i}
-                                                className={`mosaic-item ${i === 4 && ad.images.length > 5 ? 'has-more' : ''}`}
-                                                onClick={() => {
-                                                    if (ad.images[i]) {
-                                                        setModalImgIndex(i);
-                                                        setIsModalOpen(true);
-                                                    }
-                                                }}
+                                                key={idx}
+                                                className={`gallery-thumb-box ${modalImgIndex === idx ? 'active' : ''}`}
+                                                onClick={() => setModalImgIndex(idx)}
                                             >
-                                                {ad.images[i] ? (
-                                                    <img src={getOptimizedImageUrl(ad.images[i], 500)} alt={`${ad.title} ${i}`} />
-                                                ) : (
-                                                    <div className="mosaic-placeholder"></div>
-                                                )}
-                                                {i === 4 && ad.images.length > 5 && (
-                                                    <div className="more-overlay">
-                                                        <span>+{ad.images.length - 5}</span>
-                                                    </div>
-                                                )}
+                                                <img src={getOptimizedImageUrl(img, 200)} alt={`Thumb ${idx}`} />
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            </>
+                                )}
+                            </div>
                         ) : (
-                            <div className="ad-placeholder-img">Sem imagem</div>
+                            <div className="ad-placeholder-frame">Sem imagens disponíveis</div>
                         )}
-
-                        <div className="gallery-counter-tag mobile-only">
-                            {ad.images && ad.images.length > 1 && (
-                                <>
-                                    {currentScrollIdx + 1} / {ad.images.length}
-                                </>
-                            )}
-                        </div>
                     </div>
 
-                    <div className="ad-info-section box-card">
-                        <h1 className="ad-title">{ad.title}</h1>
-                        <div className="ad-price-row">
-                            <p className="ad-price">{formattedPrice}</p>
-                            {ad.isExpiredPremium && (
-                                <span className="premium-expired-badge">
-                                    Plano Premium Expirado
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="ad-meta">
-                            <span className="meta-item"><MapPin size={16} /> {ad.city}</span>
-                            <span className="meta-item"><Calendar size={16} /> Publicado em {date}</span>
-                            <span className="meta-item"><Eye size={16} /> {ad.views} visualizações</span>
-                            <span className="meta-item"><Tag size={16} /> {ad.type === 'PRODUCT' ? 'Produto' : 'Serviço'}</span>
-                        </div>
-
-                        <div className="ad-description">
-                            <h3>Descrição</h3>
-                            <p>{ad.description}</p>
-                        </div>
+                    <div className="ad-description-box box-card">
+                        <h3>Descrição</h3>
+                        <p>{ad.description}</p>
                     </div>
+
+                    {/* Safety Tips removed from sidebar to main for better flow if needed, OR keep in sidebar */}
                 </div>
 
                 <div className="ad-sidebar">
-                    <div className="seller-card box-card">
-                        <h3>Informações do Anunciante</h3>
-                        <div className="seller-profile">
-                            <div className="seller-avatar">
-                                {ad.user.profile_picture ? (
-                                    <img src={getOptimizedImageUrl(ad.user.profile_picture, 150)} alt="Avatar" />
-                                ) : (
-                                    <User size={32} />
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="seller-name">{ad.user.name}</h4>
-                                <span className="seller-badge"><ShieldCheck size={14} /> Usuário verificado</span>
-                            </div>
+                    {/* Primary Info Sidebar - High visibility */}
+                    <div className="ad-visual-sidebar box-card sticky-element">
+                        <h1 className="ad-title-v4">{ad.title}</h1>
+                        <p className="ad-price-v4">{formattedPrice}</p>
+
+                        <div className="ad-meta-v4">
+                            <span className="meta-row"><MapPin size={18} /> {ad.city}</span>
+                            <span className="meta-row"><Calendar size={18} /> Publicado em {date}</span>
+                            <span className="meta-row"><Eye size={18} /> {ad.views} visualizações</span>
                         </div>
 
-                        <div className="seller-actions">
+                        {ad.isExpiredPremium && (
+                            <div className="premium-alert-v4">
+                                Plano Premium Expirado
+                            </div>
+                        )}
+
+                        <div className="contact-buttons-v4">
                             {user ? (
                                 <>
                                     <button
-                                        className="btn btn-primary btn-block action-btn"
+                                        className="btn btn-primary btn-block contact-btn"
                                         onClick={handleChatClick}
                                     >
-                                        <MessageCircle size={20} /> Chat
+                                        <MessageCircle size={20} /> Chat Agora
                                     </button>
                                     {ad.user.phone && (
                                         <a
                                             href={`https://wa.me/55${ad.user.phone.replace(/\D/g, '')}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="btn btn-outline btn-block action-btn whatsapp-btn"
+                                            className="btn btn-outline btn-block contact-btn whatsapp"
                                             onClick={handleWhatsappClick}
                                         >
                                             <Phone size={20} /> WhatsApp
@@ -233,27 +159,43 @@ export const AdDetail = () => {
                                 </>
                             ) : (
                                 <button
-                                    className="btn btn-secondary btn-block action-btn"
+                                    className="btn btn-secondary btn-block contact-btn"
                                     onClick={() => navigate('/login', { state: { from: location.pathname } })}
                                 >
-                                    <User size={20} /> Faça login para contatar
+                                    <User size={20} /> Entrar para contatar
                                 </button>
                             )}
                         </div>
+                    </div>
 
-                        <div className="safety-tips">
-                            <h4>Dicas de Segurança</h4>
+                    {/* Seller Details */}
+                    <div className="seller-box-v4 box-card">
+                        <div className="seller-intro">
+                            <div className="seller-pfp">
+                                {ad.user.profile_picture ? (
+                                    <img src={getOptimizedImageUrl(ad.user.profile_picture, 150)} alt="Avatar" />
+                                ) : (
+                                    <User size={28} />
+                                )}
+                            </div>
+                            <div className="seller-info">
+                                <h4 className="name">{ad.user.name}</h4>
+                                <span className="verified"><ShieldCheck size={14} /> Verificado</span>
+                            </div>
+                        </div>
+
+                        <div className="safety-box-v4">
+                            <h5>Segurança</h5>
                             <ul>
                                 <li>Não pague antecipadamente.</li>
-                                <li>Encontre-se em local público e movimentado.</li>
-                                <li>Verifique o produto pessoalmente.</li>
+                                <li>Encontre-se em local público.</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Image Lightbox Modal */}
+            {/* Lightbox Modal */}
             {isModalOpen && ad.images && ad.images.length > 0 && (
                 <div className="lightbox-overlay" onClick={() => setIsModalOpen(false)}>
                     <button className="lightbox-close" onClick={() => setIsModalOpen(false)}>&times;</button>
@@ -261,19 +203,19 @@ export const AdDetail = () => {
                     {ad.images.length > 1 && (
                         <>
                             <button
-                                className="lightbox-nav prev"
+                                className="lightbox-nav-btn prev"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setModalImgIndex((prev) => (prev > 0 ? prev - 1 : ad.images.length - 1));
+                                    setModalImgIndex(prev => prev > 0 ? prev - 1 : ad.images.length - 1);
                                 }}
                             >
                                 &#10094;
                             </button>
                             <button
-                                className="lightbox-nav next"
+                                className="lightbox-nav-btn next"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setModalImgIndex((prev) => (prev < ad.images.length - 1 ? prev + 1 : 0));
+                                    setModalImgIndex(prev => prev < ad.images.length - 1 ? prev + 1 : 0);
                                 }}
                             >
                                 &#10095;
@@ -281,36 +223,18 @@ export const AdDetail = () => {
                         </>
                     )}
 
-                    <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="lightbox-main-container">
-                            <img
-                                src={getOptimizedImageUrl(ad.images[modalImgIndex], 1200)}
-                                alt={`Slide ${modalImgIndex + 1}`}
-                                className="lightbox-img"
-                            />
-                            <div className="lightbox-counter">
-                                {modalImgIndex + 1} / {ad.images.length}
-                            </div>
+                    <div className="lightbox-wrap" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={getOptimizedImageUrl(ad.images[modalImgIndex], 1200)}
+                            alt="Zoom view"
+                            className="lightbox-zoom-img"
+                        />
+                        <div className="lightbox-pagination">
+                            {modalImgIndex + 1} / {ad.images.length}
                         </div>
-
-                        {ad.images.length > 1 && (
-                            <div className="lightbox-thumbs">
-                                {ad.images.map((img: string, idx: number) => (
-                                    <div
-                                        key={idx}
-                                        className={`lightbox-thumb ${modalImgIndex === idx ? 'active' : ''}`}
-                                        onClick={() => setModalImgIndex(idx)}
-                                    >
-                                        <img src={getOptimizedImageUrl(img, 150)} alt={`Thumb ${idx}`} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
         </div>
     );
 };
-
-// Manual deploy trigger v6
