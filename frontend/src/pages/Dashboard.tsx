@@ -174,6 +174,13 @@ export const Dashboard = () => {
         }
     };
 
+    const handleRequestPush = async () => {
+        const result = await requestNotificationPermission();
+        if (result === 'granted') {
+            await setupNotifications();
+        }
+    };
+
     const handleTestPush = async () => {
         try {
             const data = await fetchApi('/push/test', { method: 'POST' });
