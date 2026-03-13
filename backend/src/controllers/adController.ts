@@ -83,8 +83,8 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         const notificationPayload = {
             title: '🎉 Novo Anúncio no TutShop!',
             body: `${ad.title} acaba de ser postado. Confira agora!`,
-            icon: '/app-icon-v3.png',
-            data: { url: `/ad/${ad.id}` }
+            icon: 'https://tutshop.com.br/app-icon-v3.png',
+            data: { url: `https://tutshop.com.br/ad/${ad.id}` }
         };
 
         subscriptions.forEach(async (sub) => {

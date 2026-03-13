@@ -4,6 +4,8 @@ import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Ima
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
+import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
+import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
 
@@ -24,6 +26,7 @@ export const Dashboard = () => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [showPushPrompt, setShowPushPrompt] = useState(false);
 
     useEffect(() => {
         if (!user) {
@@ -32,6 +35,12 @@ export const Dashboard = () => {
         }
 
         loadData();
+
+        // Check if we should show push prompt
+        if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
+            const timer = setTimeout(() => setShowPushPrompt(true), 3000);
+            return () => clearTimeout(timer);
+        }
     }, [user, navigate]);
 
     const loadData = async () => {
@@ -162,6 +171,13 @@ export const Dashboard = () => {
             alert(error.message || 'Erro ao enviar banner');
         } finally {
             setUploadingBanner(false);
+        }
+    };
+
+    const handleRequestPush = async () => {
+        const result = await requestNotificationPermission();
+        if (result === 'granted') {
+            await setupNotifications();
         }
     };
 
@@ -425,6 +441,18 @@ export const Dashboard = () => {
                     </div>
                 )}
             </div>
+            {showPushPrompt && (
+                <PushPrompt
+                    onAccept={() => {
+                        handleRequestPush();
+                        setShowPushPrompt(false);
+                    }}
+                    onClose={() => {
+                        setShowPushPrompt(false);
+                        localStorage.setItem('pushPromptDismissed', 'true');
+                    }}
+                />
+            )}
         </div>
     );
 };

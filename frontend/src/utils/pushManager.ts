@@ -7,7 +7,7 @@ export const requestNotificationPermission = async () => {
     return await Notification.requestPermission();
 };
 
-export const setupNotifications = async () => {
+export const setupNotifications = async (): Promise<void> => {
     console.log('[PushManager] Initializing setup...');
 
     if (!('serviceWorker' in navigator)) {
@@ -24,9 +24,12 @@ export const setupNotifications = async () => {
         let registration = await navigator.serviceWorker.getRegistration();
 
         if (!registration) {
-            console.log('[PushManager] No registration found, registering manually...');
-            registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('[PushManager] No registration found, registering manually with scope /...');
+            registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
+
+        await navigator.serviceWorker.ready;
+        console.log('[PushManager] Service Worker is ready.');
 
         console.log('[PushManager] Current permission state:', Notification.permission);
 
@@ -46,12 +49,20 @@ export const setupNotifications = async () => {
             });
             console.log('[PushManager] Subscription successful!');
         } else {
-            console.log('[PushManager] Already subscribed.');
+            console.log('[PushManager] Already subscribed, checking if sync is needed...');
         }
 
         // Send to backend
         console.log('[PushManager] Syncing subscription with backend...');
         const subJSON = subscription.toJSON();
+
+        // Ensure keys are present before sending
+        if (!subJSON.keys || !subJSON.keys.p256dh || !subJSON.keys.auth) {
+            console.error('[PushManager] Subscription missing keys, force re-subscribing...');
+            await subscription.unsubscribe();
+            return setupNotifications(); // Recursion to force fresh sub
+        }
+
         await fetchApi('/push/subscribe', {
             method: 'POST',
             body: JSON.stringify({

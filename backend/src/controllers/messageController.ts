@@ -111,8 +111,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             const payload = {
                 title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
                 body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`,
-                icon: '/app-icon-v3.png',
-                data: { url: `/messages?adId=${ad_id}&sellerId=${sender_id}` }
+                icon: 'https://tutshop.com.br/app-icon-v3.png',
+                data: { url: `https://tutshop.com.br/messages?adId=${ad_id}&sellerId=${sender_id}` }
             };
 
             recipientSubscriptions.forEach(async (sub) => {
