@@ -186,7 +186,12 @@ export const Dashboard = () => {
             const data = await fetchApi('/push/test', { method: 'POST' });
             alert(data.message || 'Teste enviado!');
         } catch (error: any) {
-            alert(error.message || 'Erro ao enviar teste');
+            console.error('[Diagnostic] Full error object:', error);
+            const apiError = error.data?.error || error.message;
+            const details = error.data?.details || 'Nenhum detalhe adicional';
+            const status = error.data?.status || '500?';
+
+            alert(`FALHA NO TESTE:\n\nErro: ${apiError}\nDetalhes: ${details}\nStatus: ${status}\n\nNota: Se o erro for "Erro ao enviar notificação de teste", o backend ainda não atualizou na Vercel.`);
         }
     };
 
