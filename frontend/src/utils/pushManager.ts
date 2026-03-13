@@ -1,6 +1,6 @@
 import { fetchApi } from './api';
 
-const VAPID_PUBLIC_KEY = 'BFPGPsZZlw1Q9h_igMtlJ66j22Oq8e_Ux59Og3NkS331TLTFGr_z_vYyViVzya9Vdfe_YLU_sjxr0-FUmADAcFM';
+const VAPID_PUBLIC_KEY = 'BJlLU2RjqecgBVYJthOUkfX-CQp78WkL-9X9vWXC5-RzxTUxxwtTN0VW8Q';
 
 export const requestNotificationPermission = async () => {
     if (!('Notification' in window)) return 'unsupported';

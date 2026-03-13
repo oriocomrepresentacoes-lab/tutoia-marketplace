@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
+import { sendPushNotification } from '../utils/webPush';
 
 export const subscribe = async (req: AuthRequest, res: Response) => {
     try {
@@ -66,25 +67,41 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
             data: { url: 'https://tutshop.com.br/dashboard' }
         };
 
-        const { sendPushNotification } = await import('../utils/webPush');
+        // const { sendPushNotification } = await import('../utils/webPush');
 
         let successCount = 0;
-        for (const sub of subs) {
-            const result = await sendPushNotification({
-                endpoint: sub.endpoint,
-                keys: { p256dh: sub.p256dh, auth: sub.auth }
-            }, payload);
+        let errors = [];
 
-            if (result.shouldRemove) {
-                await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
-            } else {
-                successCount++;
+        for (const sub of subs) {
+            try {
+                const result = await sendPushNotification({
+                    endpoint: sub.endpoint,
+                    keys: { p256dh: sub.p256dh, auth: sub.auth }
+                }, payload);
+
+                if (result.shouldRemove) {
+                    await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+                } else {
+                    successCount++;
+                }
+            } catch (err: any) {
+                errors.push(`${sub.endpoint.substring(0, 20)}... : ${err.message || 'Unknown error'}`);
             }
         }
 
+        if (successCount === 0 && subs.length > 0) {
+            return res.status(500).json({
+                error: 'Falha ao enviar para todos os dispositivos registrados.',
+                details: errors.join('; ')
+            });
+        }
+
         res.json({ message: `Teste enviado com sucesso para ${successCount} inscrição(ões).` });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Test notification error:', error);
-        res.status(500).json({ error: 'Erro ao enviar notificação de teste.' });
+        res.status(500).json({
+            error: 'Erro interno no servidor ao processar teste.',
+            details: error.message || String(error)
+        });
     }
 };
