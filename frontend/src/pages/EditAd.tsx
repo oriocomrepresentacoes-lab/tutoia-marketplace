@@ -32,6 +32,7 @@ export const EditAd = () => {
             setHasImagePlan(false);
             setIsExpiredPremium(false);
             try {
+                const now = new Date();
                 const [catsData, plansData, adData] = await Promise.all([
                     fetchApi('/categories'),
                     fetchApi('/user-plans/my-plans').catch(() => null),
@@ -41,7 +42,6 @@ export const EditAd = () => {
                 if (catsData) setCategories(catsData);
 
                 if (plansData && plansData.transactions) {
-                    const now = new Date();
                     const hasActivePlan = plansData.transactions.some((t: any) =>
                         t.type === 'AD_IMAGES' &&
                         t.status === 'APPROVED' &&
