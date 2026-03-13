@@ -13,40 +13,32 @@ self.addEventListener('activate', () => {
 });
 
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push event received!');
+    console.log('[SW] Push event incoming...');
 
-    let title = 'TutShop Marketplace';
+    let title = 'Novo aviso - TutShop';
     let options = {
-        body: 'Você tem uma nova mensagem ou atualização.',
+        body: 'Você recebeu uma atualização no sistema.',
         icon: '/app-icon-v3.png',
         badge: '/app-icon-v3.png',
-        vibrate: [100, 50, 100],
+        tag: 'tutshop-alert',
+        renotify: true,
+        requireInteraction: true, // Garante que não suma no PC sem ver
         data: { url: '/dashboard' }
     };
 
     if (event.data) {
         try {
             const data = event.data.json();
-            console.log('[SW] Push data (JSON):', data);
-
             title = data.title || title;
             options.body = data.body || options.body;
-            options.icon = data.icon || options.icon;
-            if (data.data) {
-                options.data = { ...options.data, ...data.data };
-            }
+            if (data.data?.url) options.data.url = data.data.url;
         } catch (e) {
-            console.error('[SW] Could not parse push data as JSON, using as text:', e);
             options.body = event.data.text();
         }
-    } else {
-        console.warn('[SW] Push event received but no data found.');
     }
 
     event.waitUntil(
         self.registration.showNotification(title, options)
-            .then(() => console.log('[SW] Notification shown successfully!'))
-            .catch(err => console.error('[SW] Failed to show notification:', err))
     );
 });
 
