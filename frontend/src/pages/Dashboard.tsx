@@ -28,51 +28,12 @@ export const Dashboard = () => {
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [showPushPrompt, setShowPushPrompt] = useState(false);
 
-    const [swLog, setSwLog] = useState<{ timestamp: string, msg: string, data?: any } | null>(null);
-
     useEffect(() => {
         loadData();
         const interval = setInterval(loadData, 30000);
-
-        // Listen to SW logs
-        const logChannel = new BroadcastChannel('sw-logs');
-        logChannel.onmessage = (event) => {
-            console.log('[Dashboard] Received SW Log:', event.data);
-            setSwLog(event.data);
-        };
-
-        return () => {
-            clearInterval(interval);
-            logChannel.close();
-        };
+        return () => clearInterval(interval);
     }, []);
 
-    const handleManualLogTest = () => {
-        const logChannel = new BroadcastChannel('sw-logs');
-        logChannel.postMessage({
-            timestamp: new Date().toLocaleTimeString(),
-            msg: 'TESTE DE COMUNICAÇÃO: O Dashboard está ouvindo! 📣'
-        });
-        logChannel.close();
-    };
-
-    const handlePingSW = async () => {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration && registration.active) {
-            registration.active.postMessage('PING');
-        } else {
-            alert('Service Worker não está ativo ou não foi encontrado.');
-        }
-    };
-
-    const handleSimulatePush = async () => {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration && registration.active) {
-            registration.active.postMessage('SIMULATE_PUSH');
-        } else {
-            alert('Service Worker não está ativo para simulação.');
-        }
-    };
 
     useEffect(() => {
         if (!user) {
@@ -225,60 +186,6 @@ export const Dashboard = () => {
         }
     };
 
-    const handleTestPush = async () => {
-        try {
-            const data = await fetchApi('/push/test', { method: 'POST' });
-            let msg = data.message || 'Teste finalizado!';
-            if (data.details) msg += `\n\nDetalhes:\n${data.details}`;
-            alert(msg);
-        } catch (error: any) {
-            console.error('[Diagnostic] Full error object:', error);
-            const apiError = error.data?.error || error.message;
-            alert(`FALHA NO SERVIDOR:\n\nErro: ${apiError}\n\nIsso significa que o sinal nem saiu do Render.`);
-        }
-    };
-
-    const handleResetPush = async () => {
-        if (!confirm('Deseja fazer uma Limpeza Profunda? Isso apagará TODAS as suas inscrições no servidor e no navegador para resolver conflitos.')) return;
-
-        const success = await clearAllUserSubscriptions();
-        if (success) {
-            alert('Limpeza concluída! Agora, o sistema vai criar uma nova inscrição limpa.');
-            await setupNotifications();
-            alert('Reativado com sucesso! Tente o teste "Nuvem" agora.');
-            loadData();
-        } else {
-            alert('Falha na limpeza profunda.');
-        }
-    };
-
-    const handleLocalNotificationTest = async () => {
-        try {
-            if (!('serviceWorker' in navigator)) {
-                alert('Seu navegador não suporta Service Workers.');
-                return;
-            }
-
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (!registration) {
-                alert('Nenhum Service Worker encontrado. Recarregue a página (F5).');
-                return;
-            }
-
-            const title = '🔔 Teste Local (Sem Internet)';
-            const options = {
-                body: 'Se você está vendo isso, seu navegador e seu WINDOWS estão configurados corretamente! ✅',
-                icon: '/app-icon-v3.png',
-                tag: 'local-test-' + Date.now(),
-                requireInteraction: true
-            };
-
-            await registration.showNotification(title, options);
-            alert('Comando enviado ao navegador! Se o balão NÃO apareceu, o problema é no seu WINDOWS (Assistente de Foco ou bloqueio de notificações).');
-        } catch (error: any) {
-            alert('Erro no teste local: ' + error.message);
-        }
-    };
 
     if (loading) return <div className="container mt-4 loading-spinner">Carregando seus dados...</div>;
 
@@ -310,33 +217,10 @@ export const Dashboard = () => {
                     </p>
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.2.2)</h3>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
-                            <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
-                            <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
-                            <button onClick={handlePingSW} title="Ping SW" className="btn-sm btn-outline-warning" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Ping ⚡</button>
-                            <button onClick={handleSimulatePush} title="Simular Push" className="btn-sm btn-outline-success" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Sim 🔔</button>
-                            <button onClick={handleManualLogTest} title="Testar canal de logs" className="btn-sm btn-outline-secondary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Log 📣</button>
-                        </div>
-                    </div>
+                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>Notificações Push</h3>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
                         {myPlans.filter(p => p.status === 'APPROVED').length}
                     </p>
-                    {swLog && (
-                        <div style={{ marginTop: '10px', padding: '8px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-                            <p style={{ margin: 0, fontSize: '0.65rem', color: '#6c757d' }}>Último Evento Interno ({swLog.timestamp}):</p>
-                            <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 'bold', color: swLog.msg.includes('ERRO') ? 'red' : 'darkblue' }}>
-                                {swLog.msg}
-                            </p>
-                            {swLog.data && (
-                                <pre style={{ margin: '4px 0 0 0', fontSize: '0.6rem', color: '#555', maxHeight: '50px', overflow: 'auto' }}>
-                                    {JSON.stringify(swLog.data, null, 1)}
-                                </pre>
-                            )}
-                        </div>
-                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.85rem' }}>Ativas</span>
                         {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (
