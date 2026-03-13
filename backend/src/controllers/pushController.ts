@@ -67,8 +67,6 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
             data: { url: 'https://tutshop.com.br/dashboard' }
         };
 
-        // const { sendPushNotification } = await import('../utils/webPush');
-
         let successCount = 0;
         let errors = [];
 
