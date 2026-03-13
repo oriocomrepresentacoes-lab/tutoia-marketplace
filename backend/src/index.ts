@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v1.1.6-internal-diag) ---');
+console.log('--- SYSTEM BOOT (v1.1.7-sub-logs) ---');
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
@@ -108,4 +108,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT} `);
 });
-

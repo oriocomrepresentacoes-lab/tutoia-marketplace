@@ -7,6 +7,7 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
     try {
         const { endpoint, keys } = req.body;
         const user_id = req.user?.id || null;
+        console.log(`[PushController] Subscribe request for user: ${user_id}`);
 
         // Check if subscription already exists
         const existing = await prisma.pushSubscription.findUnique({
@@ -14,7 +15,7 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
         });
 
         if (existing) {
-            // Update subscription info if it changed
+            console.log(`[PushController] Updating existing subscription: ${existing.id}`);
             await prisma.pushSubscription.update({
                 where: { id: existing.id },
                 data: {
@@ -26,7 +27,8 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
             return res.status(200).json({ message: 'Subscription updated' });
         }
 
-        await prisma.pushSubscription.create({
+        console.log(`[PushController] Creating NEW subscription...`);
+        const newSub = await prisma.pushSubscription.create({
             data: {
                 endpoint,
                 p256dh: keys.p256dh,
@@ -34,10 +36,11 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
                 user_id
             }
         });
+        console.log(`[PushController] Created subscription: ${newSub.id}`);
 
         res.status(201).json({ message: 'Subscription registered' });
     } catch (error) {
-        console.error('Subscription error:', error);
+        console.error('[PushController] Subscription error:', error);
         res.status(500).json({ error: 'Failed to subscribe to push notifications' });
     }
 };
@@ -116,12 +119,14 @@ export const deleteAllSubscriptions = async (req: AuthRequest, res: Response) =>
     try {
         const user_id = req.user?.id;
         if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
+        console.log(`[PushController] DELETING ALL subscriptions for user: ${user_id}`);
 
-        await prisma.pushSubscription.deleteMany({ where: { user_id } });
+        const result = await prisma.pushSubscription.deleteMany({ where: { user_id } });
+        console.log(`[PushController] Deleted ${result.count} subscriptions.`);
 
         res.json({ message: 'Todas as inscrições foram removidas com sucesso.' });
     } catch (error: any) {
-        console.error('Delete all subscriptions error:', error);
+        console.error('[PushController] Error deleting all subscriptions:', error);
         res.status(500).json({ error: 'Erro ao remover inscrições.' });
     }
 };
