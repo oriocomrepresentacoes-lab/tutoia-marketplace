@@ -311,7 +311,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.2.0)</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.2.1)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>

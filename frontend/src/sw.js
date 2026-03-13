@@ -30,12 +30,14 @@ self.addEventListener('message', (event) => {
     }
 
     if (event.data === 'SIMULATE_PUSH') {
-        logToUI('Simulando recebimento de sinal remoto... 📡');
+        logToUI('Iniciando simulação interna... 🕹️');
         const simulatedEvent = new Event('push');
+        // @ts-ignore
+        simulatedEvent.simulated = true;
         // Adicionando dados simulados
         Object.defineProperty(simulatedEvent, 'data', {
             value: {
-                json: () => ({ title: '📣 Teste Simulado', body: 'Se você vê isso, o SW consegue abrir balões!' }),
+                json: () => ({ title: '📣 Teste Simulado (v1.2.1)', body: 'Se você vê isso, o SW consegue abrir balões!' }),
                 text: () => 'Teste Simulado'
             }
         });
@@ -51,7 +53,9 @@ function logToUI(msg, data = null) {
 }
 
 self.addEventListener('push', (event) => {
-    logToUI('Evento PUSH recebido do servidor!');
+    // @ts-ignore
+    const isSimulated = event.simulated === true;
+    logToUI(isSimulated ? 'Simulando recebimento de sinal... 🧪' : 'SINAL REAL RECEBIDO DA NUVEM! 🚀📡');
 
     let title = '🔔 Atualização TutShop';
     let options = {
@@ -77,15 +81,17 @@ self.addEventListener('push', (event) => {
             logToUI('Dados TEXTO processados:', text);
             options.body = text;
         }
-    } else {
-        logToUI('ALERTA: Evento PUSH sem dados (payload vazio).');
+    } else if (!isSimulated) {
+        logToUI('ALERTA: Evento PUSH REAL sem dados.');
     }
 
-    event.waitUntil(
-        self.registration.showNotification(title, options)
-            .then(() => logToUI('Notificação exibida com sucesso! ✅'))
-            .catch(err => logToUI('ERRO ao exibir notificação: ❌', err.message))
-    );
+    const showPromise = self.registration.showNotification(title, options)
+        .then(() => logToUI('Notificação exibida com sucesso! ✅'))
+        .catch(err => logToUI('ERRO ao exibir notificação: ❌', err.message));
+
+    if (event.waitUntil) {
+        event.waitUntil(showPromise);
+    }
 });
 
 self.addEventListener('notificationclick', (event) => {
