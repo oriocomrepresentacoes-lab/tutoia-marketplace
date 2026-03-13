@@ -15,32 +15,39 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push event incoming...');
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[SW ${timestamp}] Push event incoming...`);
 
-    let title = 'Novo aviso - TutShop';
+    let title = '🔔 Atualização TutShop';
     let options = {
-        body: 'Você recebeu uma atualização no sistema.',
+        body: 'Você recebeu uma nova atualização no marketplace.',
         icon: '/app-icon-v3.png',
         badge: '/app-icon-v3.png',
-        tag: 'tutshop-alert',
+        tag: 'tutshop-remote-alert',
         renotify: true,
-        requireInteraction: true, // Garante que não suma no PC sem ver
+        requireInteraction: true,
         data: { url: '/dashboard' }
     };
 
     if (event.data) {
         try {
             const data = event.data.json();
+            console.log(`[SW ${timestamp}] Data JSON:`, data);
             title = data.title || title;
             options.body = data.body || options.body;
             if (data.data?.url) options.data.url = data.data.url;
         } catch (e) {
+            console.warn(`[SW ${timestamp}] Data Text:`, event.data.text());
             options.body = event.data.text();
         }
+    } else {
+        console.warn(`[SW ${timestamp}] No data in push event! Showing fallback.`);
     }
 
     event.waitUntil(
         self.registration.showNotification(title, options)
+            .then(() => console.log(`[SW ${timestamp}] Notification successfully requested.`))
+            .catch(err => console.error(`[SW ${timestamp}] Display error:`, err))
     );
 });
 
