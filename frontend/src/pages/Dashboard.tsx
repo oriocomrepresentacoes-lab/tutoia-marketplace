@@ -269,7 +269,7 @@ export const Dashboard = () => {
                                     <option value="" disabled>Selecione um dos seus anúncios ativos...</option>
                                     {myAds.length === 0 && <option value="" disabled>Você não tem anúncios ativos.</option>}
                                     {myAds.map((ad: any) => (
-                                        <option key={ad.id} value={`/anuncio/${ad.id}`}>
+                                        <option key={ad.id} value={`/ad/${ad.id}`}>
                                             {ad.title} - R$ {ad.price.toFixed(2)}
                                         </option>
                                     ))}
