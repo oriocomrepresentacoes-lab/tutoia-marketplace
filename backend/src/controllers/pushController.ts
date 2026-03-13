@@ -77,24 +77,30 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
                     keys: { p256dh: sub.p256dh, auth: sub.auth }
                 }, payload);
 
-                if (result.shouldRemove) {
-                    await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
-                } else {
+                if (result.success) {
                     successCount++;
+                } else {
+                    errors.push(`${sub.endpoint.substring(0, 20)}... : ${result.error}`);
+                    if (result.shouldRemove) {
+                        await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+                    }
                 }
             } catch (err: any) {
-                errors.push(`${sub.endpoint.substring(0, 20)}... : ${err.message || 'Unknown error'}`);
+                errors.push(`${sub.endpoint.substring(0, 20)}... : ${err.message || 'Erro inesperado'}`);
             }
         }
 
         if (successCount === 0 && subs.length > 0) {
             return res.status(500).json({
-                error: 'Falha ao enviar para todos os dispositivos registrados.',
+                error: 'Falha crítica na entrega.',
                 details: errors.join('; ')
             });
         }
 
-        res.json({ message: `Teste enviado com sucesso para ${successCount} inscrição(ões).` });
+        res.json({
+            message: `Teste finalizado. Enviado: ${successCount}. Falhas: ${errors.length}.`,
+            details: errors.length > 0 ? errors.join('; ') : undefined
+        });
     } catch (error: any) {
         console.error('Test notification error:', error);
         res.status(500).json({

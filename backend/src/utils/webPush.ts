@@ -15,14 +15,18 @@ webpush.setVapidDetails(
 export const sendPushNotification = async (subscription: any, payload: any) => {
     try {
         await webpush.sendNotification(subscription, JSON.stringify(payload));
+        return { success: true, shouldRemove: false };
     } catch (error: any) {
         console.error('Error sending push notification:', error.statusCode, error.endpoint);
-        // If the subscription is no longer valid, we should theoretically remove it from DB
+
+        // 410 (Gone) or 404 (Not Found) means the subscription is definitively invalid
         if (error.statusCode === 410 || error.statusCode === 404) {
-            return { shouldRemove: true };
+            return { success: false, shouldRemove: true, error: 'Inscrição expirada ou inválida' };
         }
+
+        // Other errors (like 401 Unauthorized) mean keys are wrong
+        return { success: false, shouldRemove: false, error: `Erro ${error.statusCode}: ${error.message || 'Falha na entrega'}` };
     }
-    return { shouldRemove: false };
 };
 
 export default webpush;

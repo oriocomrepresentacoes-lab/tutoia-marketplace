@@ -95,6 +95,25 @@ export const setupNotifications = async (): Promise<void> => {
     }
 };
 
+export const forceResubscribe = async (): Promise<boolean> => {
+    try {
+        console.log('[PushManager] Forcefully clearing subscription...');
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+            }
+        }
+        console.log('[PushManager] Old subscription cleared. Re-initializing...');
+        await setupNotifications();
+        return true;
+    } catch (error) {
+        console.error('[PushManager] Failed to force resubscribe:', error);
+        return false;
+    }
+};
+
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)

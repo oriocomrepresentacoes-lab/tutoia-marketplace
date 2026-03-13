@@ -4,7 +4,7 @@ import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Ima
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
-import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
+import { requestNotificationPermission, setupNotifications, forceResubscribe } from '../utils/pushManager';
 import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
@@ -192,6 +192,17 @@ export const Dashboard = () => {
         }
     };
 
+    const handleResetPush = async () => {
+        if (!confirm('Isso vai apagar sua inscrição atual e criar uma nova. Deseja continuar?')) return;
+        const success = await forceResubscribe();
+        if (success) {
+            alert('Notificações reiniciadas com sucesso! Tente testar agora.');
+            loadData();
+        } else {
+            alert('Falha ao reiniciar notificações.');
+        }
+    };
+
     const handleLocalNotificationTest = async () => {
         try {
             if (!('serviceWorker' in navigator)) {
@@ -253,6 +264,7 @@ export const Dashboard = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
                         <h3 style={{ margin: 0 }}>Push (v1.1.1)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
+                            <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
                             <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
                         </div>
