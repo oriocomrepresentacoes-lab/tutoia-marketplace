@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v1.2.2-new-keys) ---');
+console.log(`--- SYSTEM BOOT (v1.2.2-new-keys) at ${new Date().toLocaleTimeString()} ---`);
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
