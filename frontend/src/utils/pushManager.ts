@@ -25,7 +25,7 @@ export const setupNotifications = async (): Promise<void> => {
 
         if (!registration) {
             console.log('[PushManager] No registration found, registering manually with scope /...');
-            registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            registration = await navigator.serviceWorker.register('/sw.js?v=1.0.5', { scope: '/' });
         }
 
         await navigator.serviceWorker.ready;
