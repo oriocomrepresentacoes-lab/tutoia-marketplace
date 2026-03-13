@@ -34,6 +34,7 @@ export const CreateAd = () => {
                 const hasActivePlan = plansData.transactions.some((t: any) =>
                     t.type === 'AD_IMAGES' &&
                     t.status === 'APPROVED' &&
+                    !t.ad_id &&
                     new Date(t.expires_at) >= now
                 );
                 if (hasActivePlan) {
@@ -124,9 +125,17 @@ export const CreateAd = () => {
                 )}
 
                 {hasImagePlan && (
+                    <div style={{ backgroundColor: '#ecfdf5', borderLeft: '4px solid #10b981', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
+                        <p style={{ color: '#065f46', margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
+                            ✅ **Oferta Ativa:** Você possui um plano de **10 fotos** disponível para este anúncio!
+                        </p>
+                    </div>
+                )}
+
+                {hasImagePlan && (
                     <div style={{ backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
                         <p style={{ color: '#92400e', margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>
-                            <strong>Atenção:</strong> Revise bem seus dados e fotos antes de publicar. Por segurança e para manter a integridade das regras de planos, <strong>não é possível editar anúncios</strong> após a publicação.
+                            <strong>Atenção:</strong> Revise bem seus dados e fotos antes de publicar. Por segurança, <strong>não é possível editar as imagens</strong> após a publicação (apenas título, descrição e preço).
                         </p>
                     </div>
                 )}
