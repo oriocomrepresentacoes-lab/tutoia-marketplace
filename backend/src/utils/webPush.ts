@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const publicVapidKey = process.env.VAPID_PUBLIC_KEY || 'BI1v8IS5TqrMM0Pwe-voEE_VWir4fNrxBQLSBElSOOwVRriXIR0Avantd5bIIIE7qFCxnpsAE7oPYJnDFbHsX_Q';
-const privateVapidKey = process.env.VAPID_PRIVATE_KEY || 'wZFZx5bDKKv86TVIhqdZWHxysBDxVWmoQXGJ6YRMASk';
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY || 'BC07gcyNK4qVclHvh940Lxaw5kCIcnQIUYAvzdhQlOFFQ4iIMH1eDCyLrjo0p2JCizs9e93_H8rC8Qit-U4qjI8';
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY || 'jp_nQyFDQuXTLY1t_F1LFEiuWIzL1Xat_u99mC_D7u0';
 
 webpush.setVapidDetails(
     'mailto:suporte@tutshop.com.br',

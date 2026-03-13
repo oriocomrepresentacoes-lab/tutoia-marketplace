@@ -1,6 +1,6 @@
 import { fetchApi } from './api';
 
-const VAPID_PUBLIC_KEY = 'BI1v8IS5TqrMM0Pwe-voEE_VWir4fNrxBQLSBElSOOwVRriXIR0Avantd5bIIIE7qFCxnpsAE7oPYJnDFbHsX_Q';
+const VAPID_PUBLIC_KEY = 'BC07gcyNK4qVclHvh940Lxaw5kCIcnQIUYAvzdhQlOFFQ4iIMH1eDCyLrjo0p2JCizs9e93_H8rC8Qit-U4qjI8';
 
 export const requestNotificationPermission = async () => {
     if (!('Notification' in window)) return 'unsupported';
@@ -21,8 +21,8 @@ export const setupNotifications = async (): Promise<void> => {
 
     try {
         console.log('[PushManager] Checking registration...');
-        console.log('[PushManager] Registering/Updating Service Worker with v=1.1.9...');
-        let registration = await navigator.serviceWorker.register('/sw.js?v=1.1.9', { scope: '/' });
+        console.log('[PushManager] Registering/Updating Service Worker with v=1.2.2...');
+        let registration = await navigator.serviceWorker.register('/sw.js?v=1.2.2', { scope: '/' });
 
         await navigator.serviceWorker.ready;
         console.log('[PushManager] Service Worker is ready.');
