@@ -251,7 +251,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.1.1)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
                             <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
