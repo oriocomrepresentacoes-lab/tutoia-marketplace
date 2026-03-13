@@ -184,7 +184,9 @@ export const Dashboard = () => {
     const handleTestPush = async () => {
         try {
             const data = await fetchApi('/push/test', { method: 'POST' });
-            alert(data.message || 'Teste enviado via servidor!');
+            let msg = data.message || 'Teste finalizado!';
+            if (data.details) msg += `\n\nDetalhes:\n${data.details}`;
+            alert(msg);
         } catch (error: any) {
             console.error('[Diagnostic] Full error object:', error);
             const apiError = error.data?.error || error.message;

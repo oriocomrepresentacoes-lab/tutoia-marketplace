@@ -14,13 +14,15 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
         });
 
         if (existing) {
-            // Update user_id if it's different (user logged in)
-            if (user_id && existing.user_id !== user_id) {
-                await prisma.pushSubscription.update({
-                    where: { id: existing.id },
-                    data: { user_id }
-                });
-            }
+            // Update subscription info if it changed
+            await prisma.pushSubscription.update({
+                where: { id: existing.id },
+                data: {
+                    user_id,
+                    p256dh: keys.p256dh,
+                    auth: keys.auth
+                }
+            });
             return res.status(200).json({ message: 'Subscription updated' });
         }
 
