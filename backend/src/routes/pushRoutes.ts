@@ -9,5 +9,6 @@ const router = Router();
 router.post('/subscribe', authenticate, pushController.subscribe);
 router.post('/unsubscribe', pushController.unsubscribe);
 router.post('/test', authenticate, pushController.sendTestNotification);
+router.delete('/clear-all', authenticate, pushController.deleteAllSubscriptions);
 
 export default router;

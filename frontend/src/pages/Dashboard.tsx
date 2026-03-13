@@ -4,7 +4,7 @@ import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Ima
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
-import { requestNotificationPermission, setupNotifications, forceResubscribe } from '../utils/pushManager';
+import { requestNotificationPermission, setupNotifications, clearAllUserSubscriptions } from '../utils/pushManager';
 import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
@@ -195,13 +195,16 @@ export const Dashboard = () => {
     };
 
     const handleResetPush = async () => {
-        if (!confirm('Isso vai apagar sua inscrição atual e criar uma nova. Deseja continuar?')) return;
-        const success = await forceResubscribe();
+        if (!confirm('Deseja fazer uma Limpeza Profunda? Isso apagará TODAS as suas inscrições no servidor e no navegador para resolver conflitos.')) return;
+
+        const success = await clearAllUserSubscriptions();
         if (success) {
-            alert('Notificações reiniciadas com sucesso! Tente testar agora.');
+            alert('Limpeza concluída! Agora, o sistema vai criar uma nova inscrição limpa.');
+            await setupNotifications();
+            alert('Reativado com sucesso! Tente o teste "Nuvem" agora.');
             loadData();
         } else {
-            alert('Falha ao reiniciar notificações.');
+            alert('Falha na limpeza profunda.');
         }
     };
 
@@ -264,7 +267,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.1.1)</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.1.3)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>

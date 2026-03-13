@@ -111,3 +111,17 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
         });
     }
 };
+
+export const deleteAllSubscriptions = async (req: AuthRequest, res: Response) => {
+    try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ error: " Não autorizado\ });
+
+ await prisma.pushSubscription.deleteMany({ where: { user_id } });
+
+ res.json({ message: \Todas as inscrições foram removidas com sucesso.\ });
+ } catch (error: any) {
+ console.error(\Delete all subscriptions error:\, error);
+ res.status(500).json({ error: \Erro ao remover inscrições.\ });
+ }
+};

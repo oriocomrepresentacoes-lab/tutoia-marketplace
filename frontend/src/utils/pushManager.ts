@@ -95,6 +95,26 @@ export const setupNotifications = async (): Promise<void> => {
     }
 };
 
+export const clearAllUserSubscriptions = async (): Promise<boolean> => {
+    try {
+        console.log('[PushManager] Clearing all subscriptions on server...');
+        await fetchApi('/push/clear-all', { method: 'DELETE' });
+
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+            }
+        }
+        console.log('[PushManager] Cloud and local state cleared.');
+        return true;
+    } catch (error) {
+        console.error('[PushManager] Failed to clear all subscriptions:', error);
+        return false;
+    }
+};
+
 export const forceResubscribe = async (): Promise<boolean> => {
     try {
         console.log('[PushManager] Forcefully clearing subscription...');
