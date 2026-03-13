@@ -184,14 +184,39 @@ export const Dashboard = () => {
     const handleTestPush = async () => {
         try {
             const data = await fetchApi('/push/test', { method: 'POST' });
-            alert(data.message || 'Teste enviado!');
+            alert(data.message || 'Teste enviado via servidor!');
         } catch (error: any) {
             console.error('[Diagnostic] Full error object:', error);
             const apiError = error.data?.error || error.message;
-            const details = error.data?.details || 'Nenhum detalhe adicional';
-            const status = error.data?.status || '500?';
+            alert(`FALHA NO SERVIDOR:\n\nErro: ${apiError}\n\nIsso significa que o sinal nem saiu do Render.`);
+        }
+    };
 
-            alert(`FALHA NO TESTE:\n\nErro: ${apiError}\nDetalhes: ${details}\nStatus: ${status}\n\nNota: Se o erro for "Erro ao enviar notificação de teste", o backend ainda não atualizou na Vercel.`);
+    const handleLocalNotificationTest = async () => {
+        try {
+            if (!('serviceWorker' in navigator)) {
+                alert('Seu navegador não suporta Service Workers.');
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (!registration) {
+                alert('Nenhum Service Worker encontrado. Recarregue a página (F5).');
+                return;
+            }
+
+            const title = '🔔 Teste Local (Sem Internet)';
+            const options = {
+                body: 'Se você está vendo isso, seu navegador e seu WINDOWS estão configurados corretamente! ✅',
+                icon: '/app-icon-v3.png',
+                tag: 'local-test-' + Date.now(),
+                requireInteraction: true
+            };
+
+            await registration.showNotification(title, options);
+            alert('Comando enviado ao navegador! Se o balão NÃO apareceu, o problema é no seu WINDOWS (Assistente de Foco ou bloqueio de notificações).');
+        } catch (error: any) {
+            alert('Erro no teste local: ' + error.message);
         }
     };
 
@@ -225,9 +250,12 @@ export const Dashboard = () => {
                     </p>
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <h3 style={{ margin: 0 }}>Notificações</h3>
-                        <button onClick={handleTestPush} className="btn-sm btn-outline-primary" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>Testar 🔔</button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
+                        <h3 style={{ margin: 0 }}>Push</h3>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
+                            <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
+                        </div>
                     </div>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
                         {myPlans.filter(p => p.status === 'APPROVED').length}
