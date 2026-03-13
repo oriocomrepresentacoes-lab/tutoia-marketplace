@@ -127,19 +127,26 @@
 }
 
 .change-file-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.8);
     color: white;
-    padding: 0.25rem 0.75rem;
+    padding: 0.4rem 1.2rem;
     border-radius: 2rem;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
     backdrop-filter: blur(4px);
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .change-file-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: white;
+    color: var(--primary-color);
+    border-color: white;
+    transform: scale(1.05);
 }
 
 .modern-input-group {
