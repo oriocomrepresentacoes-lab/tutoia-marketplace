@@ -41,15 +41,37 @@ export const setupNotifications = async (): Promise<void> => {
         // Check if already subscribed
         let subscription = await registration.pushManager.getSubscription();
 
+        if (subscription) {
+            // Check if VAPID key matches
+            const currentKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+            const subKey = new Uint8Array(subscription.options.applicationServerKey as ArrayBuffer);
+
+            let mismatch = currentKey.length !== subKey.length;
+            if (!mismatch) {
+                for (let i = 0; i < currentKey.length; i++) {
+                    if (currentKey[i] !== subKey[i]) {
+                        mismatch = true;
+                        break;
+                    }
+                }
+            }
+
+            if (mismatch) {
+                console.log('[PushManager] VAPID Key mismatch detected! Re-subscribing...');
+                await subscription.unsubscribe();
+                subscription = null;
+            }
+        }
+
         if (!subscription) {
-            console.log('[PushManager] Permission granted but no subscription, creating one...');
+            console.log('[PushManager] No valid subscription, creating one...');
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
             });
             console.log('[PushManager] Subscription successful!');
         } else {
-            console.log('[PushManager] Already subscribed, checking if sync is needed...');
+            console.log('[PushManager] Valid subscription found.');
         }
 
         // Send to backend
@@ -60,7 +82,7 @@ export const setupNotifications = async (): Promise<void> => {
         if (!subJSON.keys || !subJSON.keys.p256dh || !subJSON.keys.auth) {
             console.error('[PushManager] Subscription missing keys, force re-subscribing...');
             await subscription.unsubscribe();
-            return setupNotifications(); // Recursion to force fresh sub
+            return setupNotifications();
         }
 
         await fetchApi('/push/subscribe', {
