@@ -203,7 +203,7 @@ export const EditAd = () => {
                 {!hasImagePlan && !isExpiredPremium && (
                     <div style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
                         <p style={{ color: '#1e40af', margin: 0, fontSize: '0.9rem' }}>
-                            💡 Sabia que pode adicionar até 10 fotos? <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Confira os planos!</button>
+                            💡 Sabia que pode adicionar até 10 fotos? <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Conhecer oferta</button>
                         </p>
                     </div>
                 )}

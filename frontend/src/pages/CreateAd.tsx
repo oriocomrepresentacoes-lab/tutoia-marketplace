@@ -118,7 +118,7 @@ export const CreateAd = () => {
                 {!hasImagePlan && (
                     <div style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}>
                         <p style={{ color: '#1e40af', margin: 0, fontSize: '0.9rem' }}>
-                            💡 **Quer vender mais rápido?** Por apenas R$ 25,00 você pode adicionar até **10 fotos** e seu anúncio ganha um selo de verificado! <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Conhecer Planos</button>
+                            💡 **Quer vender mais rápido?** Por apenas R$ 25,00 você pode adicionar até **10 fotos** e seu anúncio ganha um selo de verificado! <button type="button" onClick={() => navigate('/plans')} style={{ background: 'none', border: 'none', color: '#1d4ed8', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Conhecer Oferta</button>
                         </p>
                     </div>
                 )}
