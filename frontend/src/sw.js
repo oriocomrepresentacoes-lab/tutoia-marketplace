@@ -14,6 +14,35 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim()); // Começa a controlar as abas agora mesmo
 });
 
+// Erros globais do SW para o Dashboard
+self.addEventListener('error', (event) => {
+    logToUI('CRITICAL SW ERROR! ❌', event.message);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+    logToUI('SW PROMISE REJECTED! ❌', event.reason);
+});
+
+// Comandos diretos do Dashboard para o SW
+self.addEventListener('message', (event) => {
+    if (event.data === 'PING') {
+        logToUI('PONG! Service Worker está VIVO e respondendo. ⚡');
+    }
+
+    if (event.data === 'SIMULATE_PUSH') {
+        logToUI('Simulando recebimento de sinal remoto... 📡');
+        const simulatedEvent = new Event('push');
+        // Adicionando dados simulados
+        Object.defineProperty(simulatedEvent, 'data', {
+            value: {
+                json: () => ({ title: '📣 Teste Simulado', body: 'Se você vê isso, o SW consegue abrir balões!' }),
+                text: () => 'Teste Simulado'
+            }
+        });
+        self.dispatchEvent(simulatedEvent);
+    }
+});
+
 const logChannel = new BroadcastChannel('sw-logs');
 function logToUI(msg, data = null) {
     const timestamp = new Date().toLocaleTimeString();
@@ -43,6 +72,7 @@ self.addEventListener('push', (event) => {
             options.body = data.body || options.body;
             if (data.data?.url) options.data.url = data.data.url;
         } catch (e) {
+            logToUI('Erro ao processar JSON, tentando Texto...');
             const text = event.data.text();
             logToUI('Dados TEXTO processados:', text);
             options.body = text;

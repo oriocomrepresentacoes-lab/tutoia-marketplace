@@ -56,6 +56,24 @@ export const Dashboard = () => {
         logChannel.close();
     };
 
+    const handlePingSW = async () => {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration && registration.active) {
+            registration.active.postMessage('PING');
+        } else {
+            alert('Service Worker não está ativo ou não foi encontrado.');
+        }
+    };
+
+    const handleSimulatePush = async () => {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration && registration.active) {
+            registration.active.postMessage('SIMULATE_PUSH');
+        } else {
+            alert('Service Worker não está ativo para simulação.');
+        }
+    };
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -293,11 +311,13 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.1.9)</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.2.0)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
                             <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
+                            <button onClick={handlePingSW} title="Ping SW" className="btn-sm btn-outline-warning" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Ping ⚡</button>
+                            <button onClick={handleSimulatePush} title="Simular Push" className="btn-sm btn-outline-success" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Sim 🔔</button>
                             <button onClick={handleManualLogTest} title="Testar canal de logs" className="btn-sm btn-outline-secondary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Log 📣</button>
                         </div>
                     </div>
