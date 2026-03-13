@@ -45,10 +45,10 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
 export const unsubscribe = async (req: AuthRequest, res: Response) => {
     try {
         const { endpoint } = req.body;
-        await prisma.pushSubscription.deleteMany({
+        await prisma.pushSubscription.delete({
             where: { endpoint }
         });
-        res.status(200).json({ message: 'Subscription removed' });
+        res.json({ message: 'Unsubscribed successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to unsubscribe' });
     }
@@ -115,13 +115,13 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
 export const deleteAllSubscriptions = async (req: AuthRequest, res: Response) => {
     try {
         const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ error: " Não autorizado\ });
+        if (!user_id) return res.status(401).json({ error: 'NÃ£o autorizado' });
 
- await prisma.pushSubscription.deleteMany({ where: { user_id } });
+        await prisma.pushSubscription.deleteMany({ where: { user_id } });
 
- res.json({ message: \Todas as inscrições foram removidas com sucesso.\ });
- } catch (error: any) {
- console.error(\Delete all subscriptions error:\, error);
- res.status(500).json({ error: \Erro ao remover inscrições.\ });
- }
+        res.json({ message: 'Todas as inscriÃ§Ãµes foram removidas com sucesso.' });
+    } catch (error: any) {
+        console.error('Delete all subscriptions error:', error);
+        res.status(500).json({ error: 'Erro ao remover inscriÃ§Ãµes.' });
+    }
 };
