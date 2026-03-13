@@ -28,7 +28,7 @@ const PlanCard = ({ title, price, features, onClick, primary = true }: PlanCardP
         </div>
         <div style={{ padding: '1.5rem', paddingTop: 0 }}>
             <button className={`btn ${primary ? 'btn-primary' : 'btn-secondary'} btn-block`} onClick={onClick}>
-                Assinar Agora
+                Adquirir Agora
             </button>
         </div>
     </div>
@@ -40,7 +40,7 @@ export const Plans = () => {
     return (
         <div className="container mt-4">
             <div className="text-center mb-5">
-                <h1>Escolha seu Plano de Adesão</h1>
+                <h1>Escolha sua Opção de Destaque</h1>
                 <p className="text-light">Aumente sua visibilidade ou turbine seus anúncios com recursos premium.</p>
             </div>
 

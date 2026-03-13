@@ -227,9 +227,9 @@ export const BannerForm = () => {
                 ) : !hasBannerRights ? (
                     <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                         <Star size={48} style={{ color: 'var(--primary)', marginBottom: '1rem', opacity: 0.8 }} />
-                        <h3 style={{ marginBottom: '1rem' }}>Recurso Bloqueado</h3>
-                        <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>O Destaque com Banner fica no topo da tela de todos os clientes por 20 dias ininterruptos, uma ótima forma de conseguir mais vendas.<br />Você precisa de uma assinatura ativa para usar essa ferramenta.</p>
-                        <button className="btn btn-primary" onClick={() => navigate('/plans')} style={{ padding: '0.75rem 2rem' }}>Assinar Agora</button>
+                        <h3 style={{ marginBottom: '1rem' }}>Destaque seu Negócio</h3>
+                        <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>O Destaque com Banner fica no topo da tela de todos os clientes por 20 dias ininterruptos, uma excelente forma de impulsionar suas vendas ou serviços sempre que você precisar.<br />Adquira este recurso pontual para dar visibilidade máxima ao seu anúncio.</p>
+                        <button className="btn btn-primary" onClick={() => navigate('/plans')} style={{ padding: '0.75rem 2rem' }}>Adquirir Agora</button>
                     </div>
                 ) : !isEditing && myBanners.length > 0 && user.role !== 'ADMIN' ? (
                     <div className="banner-selector-view">

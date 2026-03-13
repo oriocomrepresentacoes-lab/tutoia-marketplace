@@ -28,7 +28,7 @@ const PlanCard = ({ title, price, features, onClick, primary = true }: PlanCardP
         </div>
         <div style={{ padding: '1.5rem', paddingTop: 0 }}>
             <button className={`btn ${primary ? 'btn-primary' : 'btn-secondary'} btn-block`} onClick={onClick}>
-                Assinar Teste
+                Adquirir Teste
             </button>
         </div>
     </div>
@@ -41,8 +41,8 @@ export const PlansTest = () => {
         <div className="container mt-4">
             <div className="text-center mb-5">
                 <span className="badge badge-warning mb-2" style={{ backgroundColor: '#f59e0b', color: 'white', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold' }}>MODO TESTE</span>
-                <h1>Escolha seu Plano (Ambiente de Teste)</h1>
-                <p className="text-light">Assine com valor reduzido de R$ 0,50 para validar as ferramentas.</p>
+                <h1>Escolha seu Destaque (Ambiente de Teste)</h1>
+                <p className="text-light">Adquira com valor reduzido de R$ 0,50 para validar as ferramentas.</p>
             </div>
 
             <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3rem', marginTop: '3rem' }}>
