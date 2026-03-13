@@ -69,7 +69,6 @@ export const EditAd = () => {
                     setExistingImages(adData.images || []);
 
                     // If ad already has more than 4 images, it's premium
-                    const now = new Date();
                     const isAdAlreadyPremium = plansData?.transactions?.some((t: any) =>
                         t.ad_id === id &&
                         t.type === 'AD_IMAGES' &&
