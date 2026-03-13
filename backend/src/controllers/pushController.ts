@@ -60,10 +60,19 @@ export const unsubscribe = async (req: AuthRequest, res: Response) => {
 export const sendTestNotification = async (req: AuthRequest, res: Response) => {
     try {
         const user_id = req.user?.id;
+        console.log(`[PushController] sendTestNotification requested for user_id: ${user_id}`);
+
         if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
 
         const subs = await prisma.pushSubscription.findMany({ where: { user_id } });
-        if (subs.length === 0) return res.status(404).json({ error: 'Nenhuma inscrição encontrada para este dispositivo. Tente ativar as notificações primeiro.' });
+        console.log(`[PushController] Found ${subs.length} subscriptions for this user.`);
+
+        if (subs.length === 0) {
+            // Diagnostic: Are there ANY subscriptions in the DB?
+            const total = await prisma.pushSubscription.count();
+            console.log(`[PushController] DIAGNOSTIC: Total subscriptions in DB currently: ${total}`);
+            return res.status(404).json({ error: 'Nenhuma inscrição encontrada para este dispositivo. Tente ativar as notificações primeiro.' });
+        }
 
         const payload = {
             title: '🔔 Teste de Notificação TutShop',
