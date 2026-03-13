@@ -28,13 +28,30 @@ export const Dashboard = () => {
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [showPushPrompt, setShowPushPrompt] = useState(false);
 
+    const [swLog, setSwLog] = useState<{ timestamp: string, msg: string, data?: any } | null>(null);
+
+    useEffect(() => {
+        loadData();
+        const interval = setInterval(loadData, 30000);
+
+        // Listen to SW logs
+        const logChannel = new BroadcastChannel('sw-logs');
+        logChannel.onmessage = (event) => {
+            console.log('[Dashboard] Received SW Log:', event.data);
+            setSwLog(event.data);
+        };
+
+        return () => {
+            clearInterval(interval);
+            logChannel.close();
+        };
+    }, []);
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
             return;
         }
-
-        loadData();
 
         // Check if we should show push prompt
         if (Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
@@ -267,7 +284,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.1.5)</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.1.6)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
@@ -277,6 +294,19 @@ export const Dashboard = () => {
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
                         {myPlans.filter(p => p.status === 'APPROVED').length}
                     </p>
+                    {swLog && (
+                        <div style={{ marginTop: '10px', padding: '8px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+                            <p style={{ margin: 0, fontSize: '0.65rem', color: '#6c757d' }}>Último Evento Interno ({swLog.timestamp}):</p>
+                            <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 'bold', color: swLog.msg.includes('ERRO') ? 'red' : 'darkblue' }}>
+                                {swLog.msg}
+                            </p>
+                            {swLog.data && (
+                                <pre style={{ margin: '4px 0 0 0', fontSize: '0.6rem', color: '#555', maxHeight: '50px', overflow: 'auto' }}>
+                                    {JSON.stringify(swLog.data, null, 1)}
+                                </pre>
+                            )}
+                        </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.85rem' }}>Ativas</span>
                         {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (

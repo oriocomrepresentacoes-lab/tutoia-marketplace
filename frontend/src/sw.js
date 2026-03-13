@@ -14,9 +14,15 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim()); // Começa a controlar as abas agora mesmo
 });
 
-self.addEventListener('push', (event) => {
+const logChannel = new BroadcastChannel('sw-logs');
+function logToUI(msg, data = null) {
     const timestamp = new Date().toLocaleTimeString();
-    console.log(`[SW ${timestamp}] Push event incoming...`);
+    logChannel.postMessage({ timestamp, msg, data });
+    console.log(`[SW ${timestamp}] ${msg}`, data || '');
+}
+
+self.addEventListener('push', (event) => {
+    logToUI('Evento PUSH recebido do servidor!');
 
     let title = '🔔 Atualização TutShop';
     let options = {
@@ -32,22 +38,23 @@ self.addEventListener('push', (event) => {
     if (event.data) {
         try {
             const data = event.data.json();
-            console.log(`[SW ${timestamp}] Data JSON:`, data);
+            logToUI('Dados JSON processados:', data);
             title = data.title || title;
             options.body = data.body || options.body;
             if (data.data?.url) options.data.url = data.data.url;
         } catch (e) {
-            console.warn(`[SW ${timestamp}] Data Text:`, event.data.text());
-            options.body = event.data.text();
+            const text = event.data.text();
+            logToUI('Dados TEXTO processados:', text);
+            options.body = text;
         }
     } else {
-        console.warn(`[SW ${timestamp}] No data in push event! Showing fallback.`);
+        logToUI('ALERTA: Evento PUSH sem dados (payload vazio).');
     }
 
     event.waitUntil(
         self.registration.showNotification(title, options)
-            .then(() => console.log(`[SW ${timestamp}] Notification successfully requested.`))
-            .catch(err => console.error(`[SW ${timestamp}] Display error:`, err))
+            .then(() => logToUI('Notificação exibida com sucesso! ✅'))
+            .catch(err => logToUI('ERRO ao exibir notificação: ❌', err.message))
     );
 });
 
