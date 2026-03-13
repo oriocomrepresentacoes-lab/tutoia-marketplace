@@ -47,6 +47,15 @@ export const Dashboard = () => {
         };
     }, []);
 
+    const handleManualLogTest = () => {
+        const logChannel = new BroadcastChannel('sw-logs');
+        logChannel.postMessage({
+            timestamp: new Date().toLocaleTimeString(),
+            msg: 'TESTE DE COMUNICAÇÃO: O Dashboard está ouvindo! 📣'
+        });
+        logChannel.close();
+    };
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -284,11 +293,12 @@ export const Dashboard = () => {
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '5px' }}>
-                        <h3 style={{ margin: 0 }}>Push (v1.1.8)</h3>
+                        <h3 style={{ margin: 0 }}>Push (v1.1.9)</h3>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={handleResetPush} title="Limpar e Reativar" className="btn-sm btn-outline-danger" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Reset 🔄</button>
                             <button onClick={handleLocalNotificationTest} className="btn-sm btn-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Local 🖥️</button>
                             <button onClick={handleTestPush} className="btn-sm btn-primary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Nuvem 🔔</button>
+                            <button onClick={handleManualLogTest} title="Testar canal de logs" className="btn-sm btn-outline-secondary" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>Log 📣</button>
                         </div>
                     </div>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>

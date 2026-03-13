@@ -14,7 +14,8 @@ webpush.setVapidDetails(
 
 export const sendPushNotification = async (subscription: any, payload: any) => {
     try {
-        await webpush.sendNotification(subscription, JSON.stringify(payload));
+        const response = await webpush.sendNotification(subscription, JSON.stringify(payload));
+        console.log(`[WebPush] ✅ Delivery accepted! Status: ${response.statusCode}. Endpoint: ${subscription.endpoint.substring(0, 30)}...`);
         return { success: true, shouldRemove: false };
     } catch (error: any) {
         console.error('Error sending push notification:', error.statusCode, error.endpoint);
