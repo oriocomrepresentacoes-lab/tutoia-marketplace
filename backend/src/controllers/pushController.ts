@@ -63,7 +63,7 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
         const payload = {
             title: '🔔 Teste de Notificação TutShop',
             body: 'Se você recebeu isso, suas notificações estão funcionando perfeitamente! 🚀',
-            icon: 'https://tutshop.com.br/app-icon-v3.png',
+            icon: '/app-icon-v3.png',
             data: { url: 'https://tutshop.com.br/dashboard' }
         };
 
