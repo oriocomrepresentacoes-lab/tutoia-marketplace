@@ -174,10 +174,12 @@ export const Dashboard = () => {
         }
     };
 
-    const handleRequestPush = async () => {
-        const result = await requestNotificationPermission();
-        if (result === 'granted') {
-            await setupNotifications();
+    const handleTestPush = async () => {
+        try {
+            const data = await fetchApi('/push/test', { method: 'POST' });
+            alert(data.message || 'Teste enviado!');
+        } catch (error: any) {
+            alert(error.message || 'Erro ao enviar teste');
         }
     };
 
@@ -211,13 +213,19 @@ export const Dashboard = () => {
                     </p>
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
-                    <h3>Meus Planos Ativos</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h3 style={{ margin: 0 }}>Notificações</h3>
+                        <button onClick={handleTestPush} className="btn-sm btn-outline-primary" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>Testar 🔔</button>
+                    </div>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
                         {myPlans.filter(p => p.status === 'APPROVED').length}
                     </p>
-                    {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (
-                        <Link to="/plans" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Ver Planos</Link>
-                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem' }}>Ativas</span>
+                        {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (
+                            <Link to="/plans" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Ver Planos</Link>
+                        )}
+                    </div>
                 </div>
             </div>
 
