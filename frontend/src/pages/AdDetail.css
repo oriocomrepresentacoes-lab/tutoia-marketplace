@@ -60,10 +60,16 @@
     gap: 2.5rem;
 }
 
+@media (min-width: 768px) {
+    .ad-content {
+        grid-template-columns: 1.6fr 1fr;
+        align-items: flex-start;
+    }
+}
+
 @media (min-width: 1024px) {
     .ad-content {
-        grid-template-columns: 1.8fr 1fr;
-        align-items: flex-start;
+        grid-template-columns: 1.85fr 1fr;
     }
 }
 
@@ -216,7 +222,7 @@
     position: sticky;
     top: 2rem;
     z-index: 100;
-    /* Ensure sticky card stays above scrolling content */
+    width: 100%; /* Ensure full width when forced by containers */
 }
 
 .ad-visual-sidebar {
@@ -577,7 +583,7 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch; /* Fix: stretch to full width instead of centering */
     }
 
     .box-card {
