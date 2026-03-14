@@ -6,7 +6,6 @@ import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
 import { PushPrompt } from '../components/PushPrompt';
-import { NotificationDebugger } from '../components/NotificationDebugger';
 import './Dashboard.css';
 import './BannerForm.css';
 
@@ -198,16 +197,13 @@ export const Dashboard = () => {
         <div className="dashboard-page container">
             <div className="dashboard-header">
                 <div>
-                    <h1 className="page-title">Meu Painel <span style={{ fontSize: '0.5rem', opacity: 0.2 }}>v4467</span></h1>
+                    <h1 className="page-title">Meu Painel</h1>
                     <p className="page-subtitle">Gerencie seus anúncios e adesões.</p>
                 </div>
                 <Link to="/create-ad" className="btn btn-primary d-flex align-center gap-2">
                     <Plus size={20} /> Novo Anúncio
                 </Link>
             </div>
-
-            {/* Diagnostic Center for Push Notifications */}
-            <NotificationDebugger />
 
             <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
