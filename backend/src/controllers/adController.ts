@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
-import { sendPushNotification } from '../utils/webPush';
+import { messaging } from '../utils/firebaseAdmin';
 import { Server } from 'socket.io';
 
 export const createAd = async (req: AuthRequest, res: Response) => {
@@ -78,28 +78,37 @@ export const createAd = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Broadcast notification to all push subscribers (Background)
+        // Broadcast notification to all push subscribers (FCM Background)
         const subscriptions = await prisma.pushSubscription.findMany();
-        const notificationPayload = {
-            title: '🎉 Novo Anúncio no TutShop!',
-            body: `${ad.title} acaba de ser postado. Confira agora!`,
-            icon: 'https://tutshop.com.br/app-icon-v3.png',
-            data: { url: `https://tutshop.com.br/ad/${ad.id}` }
-        };
-
-        subscriptions.forEach(async (sub) => {
-            const pushSub = {
-                endpoint: sub.endpoint,
-                keys: {
-                    p256dh: sub.p256dh,
-                    auth: sub.auth
-                }
+        
+        if (subscriptions.length > 0) {
+            const tokens = subscriptions.map(s => s.token);
+            const fcmMessage = {
+                notification: {
+                    title: '🎉 Novo Anúncio no TutShop!',
+                    body: `${ad.title} acaba de ser postado. Confira agora!`
+                },
+                data: {
+                    url: `/ad/${ad.id}`
+                },
+                tokens: tokens
             };
-            const result = await sendPushNotification(pushSub, notificationPayload);
-            if (result.shouldRemove) {
-                await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
+
+            const response = await messaging.sendEachForMulticast(fcmMessage);
+
+            // Cleanup invalid tokens
+            if (response.failureCount > 0) {
+                response.responses.forEach(async (resp: any, idx: number) => {
+                    if (!resp.success) {
+                        const error = resp.error;
+                        if (error?.code === 'messaging/registration-token-not-registered' || 
+                            error?.code === 'messaging/invalid-registration-token') {
+                            await prisma.pushSubscription.delete({ where: { token: tokens[idx] } }).catch(() => {});
+                        }
+                    }
+                });
             }
-        });
+        }
 
     } catch (error) {
         console.error('Create ad error:', error);

@@ -131,9 +131,7 @@ model Transaction {
 
 model PushSubscription {
   id        String   @id @default(uuid())
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
+  token     String   @unique
   user_id   String?
   user      User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())

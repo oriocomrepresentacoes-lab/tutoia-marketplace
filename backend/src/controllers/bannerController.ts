@@ -1,3 +1,4 @@
+import { messaging } from '../utils/firebaseAdmin';
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
@@ -144,6 +145,37 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         });
 
         res.status(201).json(banner);
+
+        // Global FCM Notification
+        const subscriptions = await prisma.pushSubscription.findMany();
+        if (subscriptions.length > 0) {
+            const tokens = subscriptions.map(s => s.token);
+            const fcmMessage = {
+                notification: {
+                    title: '📢 Novo Destaque no TutShop!',
+                    body: `${banner.title} acaba de entrar em destaque. Veja agora!`
+                },
+                data: {
+                    url: banner.link || '/'
+                },
+                tokens: tokens
+            };
+
+            const response = await messaging.sendEachForMulticast(fcmMessage);
+
+            // Cleanup invalid tokens
+            if (response.failureCount > 0) {
+                response.responses.forEach(async (resp: any, idx: number) => {
+                    if (!resp.success) {
+                        const error = resp.error;
+                        if (error?.code === 'messaging/registration-token-not-registered' || 
+                            error?.code === 'messaging/invalid-registration-token') {
+                            await prisma.pushSubscription.delete({ where: { token: tokens[idx] } }).catch(() => {});
+                        }
+                    }
+                });
+            }
+        }
     } catch (error: any) {
         console.error('Error creating banner:', error);
         res.status(500).json({ error: String(error), details: error.message });

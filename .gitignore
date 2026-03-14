@@ -5,4 +5,5 @@ build/
 backend/uploads/
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+backend/firebase-service-account.json
 .DS_Store
