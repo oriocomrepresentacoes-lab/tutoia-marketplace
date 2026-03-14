@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
 import { messaging } from '../utils/firebaseAdmin';
+import * as admin from 'firebase-admin';
 
 export const subscribe = async (req: AuthRequest, res: Response) => {
     try {
