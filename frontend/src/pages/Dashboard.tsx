@@ -198,7 +198,7 @@ export const Dashboard = () => {
         <div className="dashboard-page container">
             <div className="dashboard-header">
                 <div>
-                    <h1 className="page-title">Meu Painel</h1>
+                    <h1 className="page-title">Meu Painel <span style={{ fontSize: '0.5rem', opacity: 0.2 }}>v4467</span></h1>
                     <p className="page-subtitle">Gerencie seus anúncios e adesões.</p>
                 </div>
                 <Link to="/create-ad" className="btn btn-primary d-flex align-center gap-2">
