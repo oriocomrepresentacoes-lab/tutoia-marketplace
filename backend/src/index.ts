@@ -35,6 +35,7 @@ app.set('io', io);
 
 // Track online users: userId -> Set of socket IDs
 const onlineUsers = new Map<string, Set<string>>();
+app.set('onlineUsers', onlineUsers);
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);

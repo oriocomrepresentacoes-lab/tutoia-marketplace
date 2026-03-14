@@ -99,40 +99,45 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             console.warn('[Socket] IO instance not found in req.app');
         }
 
-        // Background Push Notification (FCM)
-        const recipientSubscriptions = await prisma.pushSubscription.findMany({
-            where: { user_id: receiver_id }
-        });
+        // Background Push Notification (FCM) - Only if recipient is OFFLINE
+        const onlineUsers: Map<string, Set<string>> = req.app.get('onlineUsers');
+        const isRecipientOnline = onlineUsers && onlineUsers.get(receiver_id)?.size;
 
-        if (recipientSubscriptions.length > 0) {
-            const tokens = recipientSubscriptions.map(s => s.token);
-            const sender = await prisma.user.findUnique({ where: { id: sender_id }, select: { name: true } });
-            const ad = await prisma.ad.findUnique({ where: { id: ad_id }, select: { title: true } });
+        if (!isRecipientOnline) {
+            const recipientSubscriptions = await prisma.pushSubscription.findMany({
+                where: { user_id: receiver_id }
+            });
+            
+            if (recipientSubscriptions.length > 0) {
+                const tokens = recipientSubscriptions.map(s => s.token);
+                const sender = await prisma.user.findUnique({ where: { id: sender_id }, select: { name: true } });
+                const ad = await prisma.ad.findUnique({ where: { id: ad_id }, select: { title: true } });
 
-            const fcmMessage = {
-                notification: {
-                    title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
-                    body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`
-                },
-                data: {
-                    url: `/messages?adId=${ad_id}&sellerId=${sender_id}`
-                },
-                tokens: tokens
-            };
+                const fcmMessage = {
+                    notification: {
+                        title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
+                        body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`
+                    },
+                    data: {
+                        url: `/messages?adId=${ad_id}&sellerId=${sender_id}`
+                    },
+                    tokens: tokens
+                };
 
-            const response = await messaging.sendEachForMulticast(fcmMessage);
+                const response = await messaging.sendEachForMulticast(fcmMessage);
 
-            // Cleanup invalid tokens
-            if (response.failureCount > 0) {
-                response.responses.forEach(async (resp: any, idx: number) => {
-                    if (!resp.success) {
-                        const error = resp.error;
-                        if (error?.code === 'messaging/registration-token-not-registered' || 
-                            error?.code === 'messaging/invalid-registration-token') {
-                            await prisma.pushSubscription.delete({ where: { token: tokens[idx] } }).catch(() => {});
+                // Cleanup invalid tokens
+                if (response.failureCount > 0) {
+                    response.responses.forEach(async (resp: any, idx: number) => {
+                        if (!resp.success) {
+                            const error = resp.error;
+                            if (error?.code === 'messaging/registration-token-not-registered' || 
+                                error?.code === 'messaging/invalid-registration-token') {
+                                await prisma.pushSubscription.delete({ where: { token: tokens[idx] } }).catch(() => {});
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }
 
