@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, ShieldCheck, AlertTriangle, Send, RefreshCw, Terminal } from 'lucide-react';
+import { ShieldCheck, Send, RefreshCw, Terminal } from 'lucide-react';
 import { getToken } from 'firebase/messaging';
 import { messaging, VAPID_KEY } from '../utils/firebase';
 import { fetchApi } from '../utils/api';
