@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v2.0.0-fcm-ready) ---'); // Trigger deploy
+console.log('--- SYSTEM BOOT (v2.2.1-debug-push) ---'); // Poke Render v2
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
