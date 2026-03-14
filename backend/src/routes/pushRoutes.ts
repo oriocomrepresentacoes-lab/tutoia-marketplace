@@ -8,7 +8,7 @@ const router = Router();
 // Optional authentication to link subscription to a user
 router.post('/subscribe', authenticate, pushController.subscribe);
 router.post('/unsubscribe', pushController.unsubscribe);
-router.post('/test', authenticate, pushController.sendTestNotification);
+router.post('/test-notification', authenticate, pushController.sendTestNotification);
 router.delete('/clear-all', authenticate, pushController.deleteAllSubscriptions);
 
 export default router;
