@@ -60,6 +60,8 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
             tokens: tokens
         };
 
+        const isInitialized = (admin.apps.length > 0);
+        
         const response = await messaging.sendEachForMulticast(message);
         
         // Clean up invalid tokens
@@ -78,7 +80,9 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
         res.json({
             message: `Teste finalizado. Enviado: ${response.successCount}. Falhas: ${response.failureCount}.`,
             successCount: response.successCount,
-            failureCount: response.failureCount
+            failureCount: response.failureCount,
+            firebaseInitialized: isInitialized,
+            tokensFound: tokens.length
         });
     } catch (error: any) {
         console.error('Test notification error:', error);

@@ -14,10 +14,16 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 if (!serviceAccount) {
     try {
-        serviceAccount = require(path.join(process.cwd(), 'firebase-service-account.json'));
-        console.log('[FirebaseAdmin] Using service account from local file.');
+        const fs = require('fs');
+        const filePath = path.join(process.cwd(), 'firebase-service-account.json');
+        if (fs.existsSync(filePath)) {
+            serviceAccount = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            console.log('[FirebaseAdmin] Using service account from local file.');
+        } else {
+            console.warn('[FirebaseAdmin] Local service account file NOT found at:', filePath);
+        }
     } catch (error) {
-        console.warn('[FirebaseAdmin] Local service account file not found.');
+        console.error('[FirebaseAdmin] Error reading local service account file:', error);
     }
 }
 
