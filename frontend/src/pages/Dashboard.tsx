@@ -189,7 +189,7 @@ export const Dashboard = () => {
 
     if (loading) return <div className="container mt-4 loading-spinner">Carregando seus dados...</div>;
 
-    const activeBannerPlan = myPlans.find(t => t.type === 'BANNER' && t.status === 'APPROVED');
+    const activeBannerPlan = myPlans.find(t => t.type === 'BANNER' && (t.status === 'APPROVED' || t.status === 'USED'));
     const isAdmin = user?.role === 'ADMIN';
     const canUploadBanner = isAdmin || activeBannerPlan;
 
@@ -219,11 +219,11 @@ export const Dashboard = () => {
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
                     <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>PLANOS ATIVOS</h3>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
-                        {myPlans.filter(p => p.status === 'APPROVED').length}
+                        {myPlans.length}
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.85rem' }}>Ativas</span>
-                        {myPlans.filter(p => p.status === 'APPROVED').length === 0 && (
+                        {myPlans.length === 0 && (
                             <Link to="/plans" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Ver Planos</Link>
                         )}
                     </div>
