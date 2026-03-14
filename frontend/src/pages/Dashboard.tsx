@@ -217,7 +217,7 @@ export const Dashboard = () => {
                     </p>
                 </div>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
-                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>Notificações Push</h3>
+                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>PLANOS ATIVOS</h3>
                     <p className="stat-number" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>
                         {myPlans.filter(p => p.status === 'APPROVED').length}
                     </p>
