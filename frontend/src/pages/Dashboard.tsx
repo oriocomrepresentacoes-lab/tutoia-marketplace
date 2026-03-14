@@ -6,6 +6,7 @@ import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
 import { PushPrompt } from '../components/PushPrompt';
+import { NotificationDebugger } from '../components/NotificationDebugger';
 import './Dashboard.css';
 import './BannerForm.css';
 
@@ -204,6 +205,9 @@ export const Dashboard = () => {
                     <Plus size={20} /> Novo Anúncio
                 </Link>
             </div>
+
+            {/* Diagnostic Center for Push Notifications */}
+            <NotificationDebugger />
 
             <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
