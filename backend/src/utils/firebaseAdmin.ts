@@ -22,12 +22,35 @@ if (!serviceAccount) {
 }
 
 if (!admin.apps.length && serviceAccount) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-    console.log('[FirebaseAdmin] Firebase Admin initialized.');
+    try {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        console.log('[FirebaseAdmin] Firebase Admin initialized.');
+    } catch (error) {
+        console.error('[FirebaseAdmin] Error initializing Firebase Admin:', error);
+    }
 } else if (!serviceAccount) {
-    console.error('[FirebaseAdmin] No service account provided. Firebase features will not work.');
+    console.warn('[FirebaseAdmin] No service account provided. Firebase features will be disabled.');
 }
 
-export const messaging = admin.messaging();
+// Function to get messaging, avoids immediate crash if not initialized
+export const getMessaging = () => {
+    if (!admin.apps.length) {
+        console.warn('[FirebaseAdmin] Attempted to use Messaging but Firebase is not initialized.');
+        return null;
+    }
+    return admin.messaging();
+};
+
+const messagingProxy = {
+    sendEachForMulticast: async (message: any) => {
+        if (!admin.apps.length) {
+            console.error('[FirebaseAdmin] Cannot send notification: Firebase not initialized.');
+            return { successCount: 0, failureCount: 0, responses: [] };
+        }
+        return admin.messaging().sendEachForMulticast(message);
+    }
+} as any;
+
+export const messaging = messagingProxy as admin.messaging.Messaging;
