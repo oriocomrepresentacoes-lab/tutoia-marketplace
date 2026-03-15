@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v2.2.2-route-fix) ---'); // Poke Render v3
+console.log('--- SYSTEM BOOT (v2.3.0-smart-push-unread) ---'); // Poke Render v4
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
@@ -35,7 +35,11 @@ app.set('io', io);
 
 // Track online users: userId -> Set of socket IDs
 const onlineUsers = new Map<string, Set<string>>();
+// Track active chat focus: socketId -> { adId, otherId }
+const focusedChats = new Map<string, { adId: string; otherId: string } | null>();
+
 app.set('onlineUsers', onlineUsers);
+app.set('focusedChats', focusedChats);
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
@@ -71,6 +75,16 @@ io.on('connection', (socket) => {
         socket.emit('user_status_response', { userId: uid, isOnline });
     });
 
+    socket.on('focus_chat', (data: { adId: string; otherId: string }) => {
+        focusedChats.set(socket.id, data);
+        console.log(`[Socket] Socket ${socket.id} focused on chat ad:${data.adId} with user:${data.otherId}`);
+    });
+
+    socket.on('blur_chat', () => {
+        focusedChats.delete(socket.id);
+        console.log(`[Socket] Socket ${socket.id} blurred chat`);
+    });
+
     socket.on('disconnect', () => {
         if (currentUserId && onlineUsers.has(currentUserId)) {
             const sockets = onlineUsers.get(currentUserId);
@@ -82,6 +96,7 @@ io.on('connection', (socket) => {
                 console.log(`[Socket] User ${currentUserId} is now fully offline`);
             }
         }
+        focusedChats.delete(socket.id);
         console.log('[Socket] User disconnected:', socket.id);
     });
 });

@@ -26,22 +26,35 @@ export const getConversations = async (req: AuthRequest, res: Response) => {
         });
 
         // Deduplicate conversations (unique ad + other user combination)
+        // AND calculate unread counts
         const chatMap = new Map();
-        conversations.forEach(msg => {
+        
+        for (const msg of conversations) {
             const otherUser = msg.sender_id === user_id ? msg.receiver : msg.sender;
             const chatKey = `${msg.ad_id}_${otherUser.id}`;
 
             if (!chatMap.has(chatKey) && msg.ad) {
+                // Count unread messages RECEIVED by the current user in THIS conversation
+                const unreadCount = await prisma.message.count({
+                    where: {
+                        ad_id: msg.ad.id,
+                        receiver_id: user_id,
+                        sender_id: otherUser.id,
+                        read: false
+                    }
+                });
+
                 chatMap.set(chatKey, {
                     ad_id: msg.ad.id,
                     ad_title: msg.ad.title,
                     other_user_id: otherUser.id,
                     other_user_name: otherUser.name,
                     last_message: msg.content,
+                    unread_count: unreadCount,
                     created_at: msg.created_at
                 });
             }
-        });
+        }
 
         res.json(Array.from(chatMap.values()));
     } catch (error) {
@@ -74,6 +87,29 @@ export const getConversation = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const markAsRead = async (req: AuthRequest, res: Response) => {
+    try {
+        const { ad_id, other_user_id } = req.body;
+        const user_id = req.user?.id;
+
+        if (!user_id) return res.status(401).json({ error: 'Não autorizado' });
+
+        await prisma.message.updateMany({
+            where: {
+                ad_id,
+                receiver_id: user_id,
+                sender_id: other_user_id,
+                read: false
+            },
+            data: { read: true }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao marcar as mensagens como lidas.' });
+    }
+};
+
 export const sendMessage = async (req: AuthRequest, res: Response) => {
     try {
         const { receiver_id, ad_id, content } = req.body;
@@ -99,11 +135,27 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             console.warn('[Socket] IO instance not found in req.app');
         }
 
-        // Background Push Notification (FCM) - Only if recipient is OFFLINE
+        // Background Push Notification (FCM) - Smart logic
+        // Only send if the recipient is NOT currently focusing on this specific chat
         const onlineUsers: Map<string, Set<string>> = req.app.get('onlineUsers');
-        const isRecipientOnline = onlineUsers && onlineUsers.get(receiver_id)?.size;
+        const focusedChats: Map<string, { adId: string, otherId: string }> = req.app.get('focusedChats');
+        
+        const recipientSocketIds = onlineUsers?.get(receiver_id);
+        let isFocused = false;
 
-        if (!isRecipientOnline) {
+        if (recipientSocketIds) {
+            for (const socketId of recipientSocketIds) {
+                const focus = focusedChats.get(socketId);
+                // Sender is sender_id, recipient is receiver_id.
+                // The recipient is focused if their 'otherId' is the sender.
+                if (focus && focus.adId === ad_id && focus.otherId === sender_id) {
+                    isFocused = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isFocused) {
             const recipientSubscriptions = await prisma.pushSubscription.findMany({
                 where: { user_id: receiver_id }
             });

@@ -62,9 +62,22 @@ export const Messages = () => {
         }
     }, []);
 
-    // Sync ref with state for socket listener
+    // Sync ref with state for socket listener AND handle focus tracking
     useEffect(() => {
         activeChatRef.current = activeChat;
+        
+        if (activeChat && socketRef.current?.connected) {
+            socketRef.current.emit('focus_chat', {
+                adId: activeChat.ad_id,
+                otherId: activeChat.other_user_id
+            });
+        }
+
+        return () => {
+            if (socketRef.current?.connected) {
+                socketRef.current.emit('blur_chat');
+            }
+        };
     }, [activeChat]);
 
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -91,6 +104,22 @@ export const Messages = () => {
             const data = await fetchApi(`/messages/${chat.ad_id}/${chat.other_user_id}`);
             if (data) setMessages(data);
             else setMessages([]);
+
+            // Mark as read on backend
+            await fetchApi('/messages/mark-as-read', {
+                method: 'POST',
+                body: JSON.stringify({
+                    ad_id: chat.ad_id,
+                    other_user_id: chat.other_user_id
+                })
+            });
+
+            // Update local unread count for this chat
+            setChats(prev => prev.map(c => 
+                (c.ad_id === chat.ad_id && c.other_user_id === chat.other_user_id) 
+                ? { ...c, unread_count: 0 } 
+                : c
+            ));
         } catch (error) {
             console.error(error);
             setMessages([]);
@@ -206,6 +235,23 @@ export const Messages = () => {
                         }
                         return [...prev, msg];
                     });
+                    
+                    // If we are focused on this chat, mark as read on backend too
+                    fetchApi('/messages/mark-as-read', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            ad_id: msg.ad_id,
+                            other_user_id: msg.sender_id
+                        })
+                    }).catch(() => {});
+                } else {
+                    // Update unread count in chat list
+                    setChats(prev => prev.map(c => {
+                        if (c.ad_id === msg.ad_id && c.other_user_id === msg.sender_id) {
+                            return { ...c, unread_count: (c.unread_count || 0) + 1, last_message: msg.content };
+                        }
+                        return c;
+                    }));
                 }
             };
 
@@ -285,7 +331,12 @@ export const Messages = () => {
                                     <UserIcon size={24} />
                                 </div>
                                 <div className="chat-info">
-                                    <h4>{chat.other_user_name}</h4>
+                                    <div className="chat-info-top">
+                                        <h4>{chat.other_user_name}</h4>
+                                        {chat.unread_count > 0 && (
+                                            <span className="unread-badge">{chat.unread_count}</span>
+                                        )}
+                                    </div>
                                     <p>{chat.ad_title}</p>
                                 </div>
                             </div>
