@@ -79,12 +79,9 @@ export const createAd = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Broadcast notification to ALL PWA subscribers (FCM Background)
-        // Web users only get the Socket/Foreground notification to avoid intrusive background pushes for non-app users
-        const subscriptions = await prisma.pushSubscription.findMany({
-            where: { is_pwa: true }
-        });
-        console.log(`[Push-Global] Found ${subscriptions.length} PWA subscriptions in database.`);
+        // Broadcast notification to ALL push subscribers (FCM Background)
+        const subscriptions = await prisma.pushSubscription.findMany();
+        console.log(`[Push-Global] Found ${subscriptions.length} subscriptions in database.`);
         
         if (subscriptions.length > 0) {
             const tokens = subscriptions.map(s => s.token);
