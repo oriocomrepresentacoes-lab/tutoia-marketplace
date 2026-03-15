@@ -44,7 +44,14 @@ function App() {
         const onNewMessage = (msg: any) => {
           console.log('[App] Global new_message signal:', msg?.content || 'Signal');
           
-          // Show visual notification if not in the messages screen
+          const currentUser = useAuthStore.getState().user;
+          
+          // 1. SECURITY: Only show if I am the receiver and NOT the sender
+          if (!currentUser || msg.sender_id === currentUser.id || msg.receiver_id !== currentUser.id) {
+            return;
+          }
+
+          // 2. CONTEXT: Show visual notification if not in the messages screen
           if (window.location.pathname !== '/messages') {
             if (Notification.permission === 'granted' && navigator.serviceWorker) {
               navigator.serviceWorker.ready.then(registration => {
@@ -52,8 +59,9 @@ function App() {
                   body: msg.content,
                   icon: '/app-icon-v3.png',
                   badge: '/app-icon-v3.png',
-                  tag: `chat_${msg.ad_id}_${msg.sender_id}`,
-                  data: { url: `/messages?adId=${msg.ad_id}&otherId=${msg.sender_id}` }
+                  tag: `chat_${msg.ad_id}_${msg.sender_id}`, // Tag deduplicates across tabs
+                  data: { url: `/messages?adId=${msg.ad_id}&otherId=${msg.sender_id}` },
+                  renotify: true // Ensures it pops again if a second message comes
                 });
               });
             }
