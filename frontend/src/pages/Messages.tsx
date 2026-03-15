@@ -25,11 +25,9 @@ export const Messages = () => {
     const [activeChat, setActiveChat] = useState<any>(null);
     const activeChatRef = useRef<any>(null);
     const [newMessage, setNewMessage] = useState('');
-    const [isConnected, setIsConnected] = useState(false);
     const [showPushPrompt, setShowPushPrompt] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const socketRef = useRef<Socket | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -42,13 +40,17 @@ export const Messages = () => {
         }
     }, []);
 
-    // Auto-scroll when messages change or chat selected
+    // Unified scroll to bottom
     useEffect(() => {
-        scrollToBottom();
+        if (messages.length > 0) {
+            scrollToBottom('smooth');
+        }
     }, [messages]);
 
     useEffect(() => {
-        if (activeChat) scrollToBottom('auto');
+        if (activeChat) {
+            scrollToBottom('auto');
+        }
     }, [activeChat]);
 
     // Handle mobile keyboard (visualViewport)
