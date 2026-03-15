@@ -20,13 +20,17 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 onBackgroundMessage(messaging, (payload) => {
-    console.log('[SW] Background message received:', payload);
-    const notificationTitle = payload.notification.title || '🔔 TutShop';
+    console.log('[SW] Background message received (data-only format):', payload);
+    
+    // In data-only mode, FCM puts our custom fields into payload.data
+    const data = payload.data || {};
+    const notificationTitle = data.title || '🔔 TutShop';
+    
     const notificationOptions = {
-        body: payload.notification.body,
+        body: data.body || '',
         icon: '/app-icon-v3.png',
         badge: '/app-icon-v3.png',
-        data: payload.data || { url: '/dashboard' }
+        data: { url: data.url || '/dashboard' }
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);

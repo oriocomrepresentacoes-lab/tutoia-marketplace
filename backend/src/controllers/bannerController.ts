@@ -151,12 +151,11 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         if (subscriptions.length > 0) {
             const tokens = subscriptions.map(s => s.token);
             const fcmMessage = {
-                notification: {
-                    title: '📢 Novo Destaque no TutShop!',
-                    body: `${banner.title} acaba de entrar em destaque. Veja agora!`
-                },
                 data: {
-                    url: banner.link || '/'
+                    title: '📢 Novo Destaque no TutShop!',
+                    body: `${banner.title} acaba de entrar em destaque. Veja agora!`,
+                    url: banner.link || '/',
+                    type: 'new_banner'
                 },
                 tokens: tokens
             };
