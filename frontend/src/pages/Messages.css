@@ -250,18 +250,16 @@
 }
 
 .online-status-dot {
-    width: 14px;
-    height: 14px;
-    min-width: 14px;
-    min-height: 14px;
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px; /* Fix dimensions in flex container */
     aspect-ratio: 1 / 1;
-    border-radius: 50% !important;
+    border-radius: 100% !important;
     display: block;
-    flex-shrink: 0;
     transition: background-color 0.3s ease;
     border: 2px solid white;
-    box-sizing: content-box;
     box-shadow: 0 0 0 1px #e2e8f0;
+    box-sizing: content-box;
 }
 
 .online-status-dot.online {
