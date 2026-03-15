@@ -52,7 +52,7 @@ function App() {
                   body: msg.content,
                   icon: '/app-icon-v3.png',
                   badge: '/app-icon-v3.png',
-                  tag: 'new_message',
+                  tag: `chat_${msg.ad_id}_${msg.sender_id}`,
                   data: { url: `/messages?adId=${msg.ad_id}&otherId=${msg.sender_id}` }
                 });
               });

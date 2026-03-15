@@ -194,7 +194,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                     webpush: {
                         notification: {
                             icon: '/app-icon-v3.png',
-                            badge: '/app-icon-v3.png'
+                            badge: '/app-icon-v3.png',
+                            tag: `chat_${ad_id}_${sender_id}`
                         }
                     },
                     tokens: tokens

@@ -162,7 +162,8 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                 webpush: {
                     notification: {
                         icon: '/app-icon-v3.png',
-                        badge: '/app-icon-v3.png'
+                        badge: '/app-icon-v3.png',
+                        tag: 'new_banner'
                     }
                 },
                 tokens: tokens
