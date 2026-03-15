@@ -84,11 +84,19 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         if (subscriptions.length > 0) {
             const tokens = subscriptions.map(s => s.token);
             const fcmMessage = {
-                data: {
+                notification: {
                     title: '🎉 Novo Anúncio no TutShop!',
-                    body: `${ad.title} acaba de ser postado. Confira agora!`,
+                    body: `${ad.title} acaba de ser postado. Confira agora!`
+                },
+                data: {
                     url: `/ad/${ad.id}`,
                     type: 'new_ad'
+                },
+                webpush: {
+                    notification: {
+                        icon: '/app-icon-v3.png',
+                        badge: '/app-icon-v3.png'
+                    }
                 },
                 tokens: tokens
             };

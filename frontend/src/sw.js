@@ -20,9 +20,16 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 onBackgroundMessage(messaging, (payload) => {
-    console.log('[SW] Background message received (data-only format):', payload);
+    console.log('[SW] Background message received:', payload);
     
-    // In data-only mode, FCM puts our custom fields into payload.data
+    // IF the payload already has a 'notification' object, the browser handles it automatically.
+    // We should NOT call showNotification again to avoid duplicates.
+    if (payload.notification) {
+        console.log('[SW] Browser auto-handled the notification. Skipping manual showNotification.');
+        return;
+    }
+
+    // FALLBACK for data-only messages (if any) or custom signaling
     const data = payload.data || {};
     const notificationTitle = data.title || '🔔 TutShop';
     

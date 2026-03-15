@@ -183,11 +183,19 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                 const ad = await prisma.ad.findUnique({ where: { id: ad_id }, select: { title: true } });
 
                 const fcmMessage = {
-                    data: {
+                    notification: {
                         title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
-                        body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`,
+                        body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`
+                    },
+                    data: {
                         url: `/messages?adId=${ad_id}&otherId=${sender_id}`,
                         type: 'chat_message'
+                    },
+                    webpush: {
+                        notification: {
+                            icon: '/app-icon-v3.png',
+                            badge: '/app-icon-v3.png'
+                        }
                     },
                     tokens: tokens
                 };
