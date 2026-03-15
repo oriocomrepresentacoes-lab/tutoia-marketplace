@@ -28,6 +28,7 @@ export const Messages = () => {
     const [showPushPrompt, setShowPushPrompt] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const socketRef = useRef<Socket | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
     const [searchParams] = useSearchParams();
