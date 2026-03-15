@@ -359,14 +359,13 @@ export const Messages = () => {
                                         </button>
                                     )}
                                     <div style={{ position: 'relative' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {activeChat.other_user_name}
-                                                </span>
-                                                <span className={`status-text ${onlineUsers.has(activeChat.other_user_id) ? 'online' : 'offline'}`}>
-                                                    {onlineUsers.has(activeChat.other_user_id) ? "Online" : "Offline"}
-                                                </span>
-                                            </div>
+                                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {activeChat.other_user_name}
+                                            </span>
+                                            <span className={`status-text ${onlineUsers.has(activeChat.other_user_id) ? 'online' : 'offline'}`}>
+                                                {onlineUsers.has(activeChat.other_user_id) ? "Online" : "Offline"}
+                                            </span>
                                         </h3>
                                         <div style={{ marginTop: '2px' }}>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
