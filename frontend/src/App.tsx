@@ -62,7 +62,7 @@ function App() {
                   tag: `chat_${msg.ad_id}_${msg.sender_id}`, // Tag deduplicates across tabs
                   data: { url: `/messages?adId=${msg.ad_id}&otherId=${msg.sender_id}` },
                   renotify: true // Ensures it pops again if a second message comes
-                });
+                } as any);
               });
             }
           }
