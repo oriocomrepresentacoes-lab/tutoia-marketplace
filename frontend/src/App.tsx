@@ -46,11 +46,15 @@ function App() {
           
           // Show visual notification if not in the messages screen
           if (window.location.pathname !== '/messages') {
-            if (Notification.permission === 'granted') {
-              new Notification(`💬 Mensagem de ${msg.sender_name || 'Alguém'}`, {
-                body: msg.content,
-                icon: '/app-icon-v3.png',
-                tag: 'new_message' // Avoid duplicate bubbles for same sender/ad if they spam
+            if (Notification.permission === 'granted' && navigator.serviceWorker) {
+              navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(`💬 Mensagem de ${msg.sender_name || 'Alguém'}`, {
+                  body: msg.content,
+                  icon: '/app-icon-v3.png',
+                  badge: '/app-icon-v3.png',
+                  tag: 'new_message',
+                  data: { url: `/messages?adId=${msg.ad_id}&otherId=${msg.sender_id}` }
+                });
               });
             }
           }
