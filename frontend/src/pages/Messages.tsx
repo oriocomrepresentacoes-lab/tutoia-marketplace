@@ -82,10 +82,7 @@ export const Messages = () => {
 
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior });
-        } else {
-            const container = document.querySelector('.chat-messages');
-            if (container) container.scrollTop = container.scrollHeight;
+            messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
         }
     };
 
@@ -372,18 +369,6 @@ export const Messages = () => {
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
                                         </div>
                                     </div>
-                                    <div
-                                        style={{
-                                            width: '12px',
-                                            height: '12px',
-                                            borderRadius: '50%',
-                                            backgroundColor: isConnected ? '#4caf50' : '#f44336',
-                                            marginLeft: 'auto',
-                                            border: '2px solid white',
-                                            boxShadow: '0 0 0 1px #eee'
-                                        }}
-                                        title={isConnected ? "Chat Conectado" : "Chat Desconectado"}
-                                    />
                                 </div>
                             </div>
 
