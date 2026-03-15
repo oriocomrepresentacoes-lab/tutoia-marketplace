@@ -77,12 +77,12 @@ io.on('connection', (socket) => {
 
     socket.on('focus_chat', (data: { adId: string; otherId: string }) => {
         focusedChats.set(socket.id, data);
-        console.log(`[Socket] Socket ${socket.id} focused on chat ad:${data.adId} with user:${data.otherId}`);
+        console.log(`[Socket] Socket ${socket.id} FOCUSED on chat ad:${data.adId} with user:${data.otherId} (User associated: ${currentUserId})`);
     });
 
     socket.on('blur_chat', () => {
         focusedChats.delete(socket.id);
-        console.log(`[Socket] Socket ${socket.id} blurred chat`);
+        console.log(`[Socket] Socket ${socket.id} BLURRED chat (User associated: ${currentUserId})`);
     });
 
     socket.on('disconnect', () => {

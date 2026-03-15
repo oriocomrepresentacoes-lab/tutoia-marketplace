@@ -43,8 +43,16 @@ function App() {
 
         const onNewMessage = (msg: any) => {
           console.log('[App] Global new_message signal:', msg?.content || 'Signal');
+          
+          // Show visual notification if not in the messages screen
           if (window.location.pathname !== '/messages') {
-            console.log('[App] Background message received');
+            if (Notification.permission === 'granted') {
+              new Notification(`💬 Mensagem de ${msg.sender_name || 'Alguém'}`, {
+                body: msg.content,
+                icon: '/app-icon-v3.png',
+                tag: 'new_message' // Avoid duplicate bubbles for same sender/ad if they spam
+              });
+            }
           }
         };
 

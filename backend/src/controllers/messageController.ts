@@ -123,14 +123,25 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                 receiver_id,
                 ad_id,
                 content
+            },
+            include: {
+                sender: { select: { name: true } },
+                ad: { select: { title: true } }
             }
         });
+
+        // Add helper fields for easier notification handling
+        const enrichedMessage = {
+            ...message,
+            sender_name: message.sender?.name,
+            ad_title: message.ad?.title
+        };
 
         // Real-time notification via Socket.io
         const io: Server = req.app.get('io');
         if (io) {
             console.log(`[Socket] Emitting new_message to sender user_${sender_id} and receiver user_${receiver_id}`);
-            io.to(`user_${receiver_id}`).to(`user_${sender_id}`).emit('new_message', message);
+            io.to(`user_${receiver_id}`).to(`user_${sender_id}`).emit('new_message', enrichedMessage);
         } else {
             console.warn('[Socket] IO instance not found in req.app');
         }
@@ -143,13 +154,17 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const recipientSocketIds = onlineUsers?.get(receiver_id);
         let isFocused = false;
 
+        console.log(`[Push] Checking push for receiver ${receiver_id}. Online sockets: ${recipientSocketIds?.size || 0}`);
+
         if (recipientSocketIds) {
             for (const socketId of recipientSocketIds) {
                 const focus = focusedChats.get(socketId);
+                console.log(`[Push] Socket ${socketId} focus:`, focus);
                 // Sender is sender_id, recipient is receiver_id.
                 // The recipient is focused if their 'otherId' is the sender.
-                if (focus && focus.adId === ad_id && focus.otherId === sender_id) {
+                if (focus && String(focus.adId) === String(ad_id) && String(focus.otherId) === String(sender_id)) {
                     isFocused = true;
+                    console.log(`[Push] User is FOCUSED on this chat. Skipping push.`);
                     break;
                 }
             }
@@ -160,6 +175,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                 where: { user_id: receiver_id }
             });
             
+            console.log(`[Push] Found ${recipientSubscriptions.length} subscriptions for user ${receiver_id}`);
+
             if (recipientSubscriptions.length > 0) {
                 const tokens = recipientSubscriptions.map(s => s.token);
                 const sender = await prisma.user.findUnique({ where: { id: sender_id }, select: { name: true } });
