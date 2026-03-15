@@ -148,6 +148,8 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
 
         // Global FCM Notification
         const subscriptions = await prisma.pushSubscription.findMany();
+        console.log(`[Push-Banner] Found ${subscriptions.length} subscriptions in database.`);
+
         if (subscriptions.length > 0) {
             const tokens = subscriptions.map(s => s.token);
             const fcmMessage = {
@@ -170,12 +172,14 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             };
 
             const response = await messaging.sendEachForMulticast(fcmMessage);
+            console.log(`[Push-Banner] Multicast sent. Success: ${response.successCount}, Failure: ${response.failureCount}`);
 
             // Cleanup invalid tokens
             if (response.failureCount > 0) {
                 response.responses.forEach(async (resp: any, idx: number) => {
                     if (!resp.success) {
                         const error = resp.error;
+                        console.log(`[Push-Banner] Error for token ${tokens[idx].substring(0, 10)}...:`, error?.message);
                         if (error?.code === 'messaging/registration-token-not-registered' || 
                             error?.code === 'messaging/invalid-registration-token') {
                             await prisma.pushSubscription.delete({ where: { token: tokens[idx] } }).catch(() => {});
