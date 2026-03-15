@@ -74,7 +74,8 @@ export const createAd = async (req: AuthRequest, res: Response) => {
                 id: ad.id,
                 title: ad.title,
                 price: ad.price,
-                image: images.length > 0 ? images[0] : null
+                image: images.length > 0 ? images[0] : null,
+                user_id: ad.user_id
             });
         }
 

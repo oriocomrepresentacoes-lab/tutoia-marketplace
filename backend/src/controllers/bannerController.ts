@@ -2,6 +2,7 @@ import { messaging } from '../utils/firebaseAdmin';
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
+import { Server } from 'socket.io';
 
 export const getActiveBanners = async (req: Request, res: Response) => {
     try {
@@ -145,6 +146,19 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
         });
 
         res.status(201).json(banner);
+
+        // Real-time broadcast
+        const io: Server = req.app.get('io');
+        if (io) {
+            console.log(`[Socket] Broadcasting new_banner: ${banner.title}`);
+            io.emit('new_banner', {
+                id: banner.id,
+                title: banner.title,
+                image: banner.image,
+                link: banner.link,
+                user_id: banner.user_id
+            });
+        }
 
         // Global FCM Notification
         const subscriptions = await prisma.pushSubscription.findMany();

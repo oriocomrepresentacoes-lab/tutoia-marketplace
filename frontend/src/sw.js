@@ -22,24 +22,25 @@ const messaging = getMessaging(app);
 onBackgroundMessage(messaging, (payload) => {
     console.log('[SW] Background message received:', payload);
     
-    // IF the payload already has a 'notification' object, the browser handles it automatically.
-    // We should NOT call showNotification again to avoid duplicates.
-    if (payload.notification) {
-        console.log('[SW] Browser auto-handled the notification. Skipping manual showNotification.');
-        return;
-    }
-
-    // FALLBACK for data-only messages (if any) or custom signaling
+    // In background mode, if we have a notification object + a data object,
+    // we use a tag-based showNotification to ensure icon/badge and deduplication.
     const data = payload.data || {};
-    const notificationTitle = data.title || '🔔 TutShop';
-    
+    const notification = payload.notification || {};
+
+    const notificationTitle = notification.title || data.title || '🔔 TutShop';
+    const tagBase = data.type === 'chat_message' ? 'chat' : (data.type === 'new_ad' ? 'ad' : 'banner');
+    const uniqueId = data.id || (data.url ? data.url.split('/').pop() : 'global');
+
     const notificationOptions = {
-        body: data.body || '',
+        body: notification.body || data.body || '',
         icon: '/app-icon-v3.png',
         badge: '/app-icon-v3.png',
-        data: { url: data.url || '/dashboard' }
+        tag: `${tagBase}_${uniqueId}`,
+        data: { url: data.url || '/dashboard' },
+        renotify: true
     };
 
+    // If browser auto-showed a notification, this manual call with same tag will replace it.
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 

@@ -39,6 +39,42 @@ function App() {
 
         socket.on('new_ad', (ad: any) => {
           console.log('[App] New ad broadcast:', ad);
+          const currentUser = useAuthStore.getState().user;
+          // Filter if I created it
+          if (!currentUser || ad.user_id === currentUser.id) return;
+
+          if (Notification.permission === 'granted' && navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.showNotification('🎉 Novo Anúncio!', {
+                body: `${ad.title} acaba de ser postado. Confira agora!`,
+                icon: '/app-icon-v3.png',
+                badge: '/app-icon-v3.png',
+                tag: `ad_${ad.id}`,
+                data: { url: `/ad/${ad.id}` },
+                renotify: true
+              } as any);
+            });
+          }
+        });
+
+        socket.on('new_banner', (banner: any) => {
+          console.log('[App] New banner broadcast:', banner);
+          const currentUser = useAuthStore.getState().user;
+          // Filter if I created it
+          if (!currentUser || banner.user_id === currentUser.id) return;
+
+          if (Notification.permission === 'granted' && navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.showNotification('📢 Novo Destaque!', {
+                body: `${banner.title} entrou em destaque agora. Veja!`,
+                icon: '/app-icon-v3.png',
+                badge: '/app-icon-v3.png',
+                tag: `banner_${banner.id}`,
+                data: { url: banner.link || '/' },
+                renotify: true
+              } as any);
+            });
+          }
         });
 
         const onNewMessage = (msg: any) => {
