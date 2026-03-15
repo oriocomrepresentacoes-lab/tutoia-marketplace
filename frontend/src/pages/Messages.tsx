@@ -74,6 +74,8 @@ export const Messages = () => {
                 adId: activeChat.ad_id,
                 otherId: activeChat.other_user_id
             });
+            // Also explicitly ask for the other user's status right now
+            socketRef.current.emit('get_user_status', activeChat.other_user_id);
         }
 
         return () => {
@@ -361,10 +363,12 @@ export const Messages = () => {
                                             <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {activeChat.other_user_name}
                                             </span>
-                                            <span
-                                                className={`online-status-dot ${onlineUsers.has(activeChat.other_user_id) ? 'online' : 'offline'}`}
-                                                title={onlineUsers.has(activeChat.other_user_id) ? "Online" : "Offline"}
-                                            />
+                                            <div className="status-dot-wrapper">
+                                                <span
+                                                    className={`online-status-dot ${onlineUsers.has(activeChat.other_user_id) ? 'online' : 'offline'}`}
+                                                    title={onlineUsers.has(activeChat.other_user_id) ? "Online" : "Offline"}
+                                                />
+                                            </div>
                                         </h3>
                                         <div style={{ marginTop: '2px' }}>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Anúncio: {activeChat.ad_title}</span>
