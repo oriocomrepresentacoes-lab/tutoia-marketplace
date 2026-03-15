@@ -33,11 +33,15 @@ export const setupNotifications = async (): Promise<void> => {
         if (currentToken) {
             console.log('[PushManager] FCM Token obtained:', currentToken);
             
+            // Detect PWA status
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
             // Send to backend
             await fetchApi('/push/subscribe', {
                 method: 'POST',
                 body: JSON.stringify({
-                    token: currentToken
+                    token: currentToken,
+                    is_pwa: isPWA
                 })
             });
             console.log('[PushManager] Token synced with server.');

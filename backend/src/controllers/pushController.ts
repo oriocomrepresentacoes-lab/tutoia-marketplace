@@ -6,17 +6,17 @@ import * as admin from 'firebase-admin';
 
 export const subscribe = async (req: AuthRequest, res: Response) => {
     try {
-        const { token } = req.body;
+        const { token, is_pwa } = req.body;
         const user_id = req.user?.id || null;
-        console.log(`[PushController] FCM Subscribe request for user: ${user_id}`);
+        console.log(`[PushController] FCM Subscribe request for user: ${user_id}. PWA: ${is_pwa}`);
 
         if (!token) return res.status(400).json({ error: 'Token is required' });
 
         // Upsert subscription
         await prisma.pushSubscription.upsert({
             where: { token },
-            update: { user_id },
-            create: { token, user_id }
+            update: { user_id, is_pwa: !!is_pwa },
+            create: { token, user_id, is_pwa: !!is_pwa }
         });
 
         res.status(201).json({ message: 'Token registered successfully' });

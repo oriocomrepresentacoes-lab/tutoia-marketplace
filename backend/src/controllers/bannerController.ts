@@ -160,9 +160,11 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        // Global FCM Notification
-        const subscriptions = await prisma.pushSubscription.findMany();
-        console.log(`[Push-Banner] Found ${subscriptions.length} subscriptions in database.`);
+        // Global FCM Notification for PWA Users
+        const subscriptions = await prisma.pushSubscription.findMany({
+            where: { is_pwa: true }
+        });
+        console.log(`[Push-Banner] Found ${subscriptions.length} PWA subscriptions in database.`);
 
         if (subscriptions.length > 0) {
             const tokens = subscriptions.map(s => s.token);
