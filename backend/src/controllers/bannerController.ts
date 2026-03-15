@@ -175,7 +175,24 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                     url: banner.link || '/',
                     type: 'new_banner'
                 },
+                android: {
+                    priority: 'high' as any,
+                    notification: {
+                        sound: 'default',
+                    }
+                },
+                apns: {
+                    payload: {
+                        aps: {
+                            'content-available': 1,
+                            sound: 'default'
+                        }
+                    }
+                },
                 webpush: {
+                    headers: {
+                        Urgency: 'high'
+                    },
                     notification: {
                         icon: '/app-icon-v3.png',
                         badge: '/app-icon-v3.png',

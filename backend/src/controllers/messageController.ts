@@ -191,7 +191,24 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                         url: `/messages?adId=${ad_id}&otherId=${sender_id}`,
                         type: 'chat_message'
                     },
+                    android: {
+                        priority: 'high' as any,
+                        notification: {
+                            sound: 'default',
+                        }
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                'content-available': 1,
+                                sound: 'default'
+                            }
+                        }
+                    },
                     webpush: {
+                        headers: {
+                            Urgency: 'high'
+                        },
                         notification: {
                             icon: '/app-icon-v3.png',
                             badge: '/app-icon-v3.png',
