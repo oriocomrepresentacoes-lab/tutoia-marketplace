@@ -177,18 +177,16 @@ export const Messages = () => {
         const socket = getSocket(token || '');
         if (socket) {
             socketRef.current = socket;
-            setIsConnected(socket.connected);
 
             const handleConnect = () => {
-                setIsConnected(true);
                 socket.emit('join', user.id);
                 // Check status of other user if we have an active chat
                 if (activeChatRef.current) {
                     socket.emit('get_user_status', activeChatRef.current.other_user_id);
                 }
             };
-            const handleDisconnect = () => setIsConnected(false);
-            const handleError = () => setIsConnected(false);
+            const handleDisconnect = () => console.log('Socket disconnected');
+            const handleError = () => console.error('Socket error');
 
             const handleUserOnline = (userId: string) => {
                 setOnlineUsers(prev => {
