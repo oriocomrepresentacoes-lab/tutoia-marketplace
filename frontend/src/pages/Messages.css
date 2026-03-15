@@ -249,12 +249,22 @@
     }
 }
 
+.status-dot-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
 .online-status-dot {
     width: 12px;
     height: 12px;
-    flex: 0 0 12px; /* Fix dimensions in flex container */
+    flex: 0 0 12px;
     aspect-ratio: 1 / 1;
-    border-radius: 100% !important;
+    border-radius: 50% !important;
     display: block;
     transition: background-color 0.3s ease;
     border: 2px solid white;
