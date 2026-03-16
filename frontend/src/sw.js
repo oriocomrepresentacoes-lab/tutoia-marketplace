@@ -1,4 +1,4 @@
-/* SW Version: 2.3.0 - Emergency Baseline Restore */
+/* SW Version: 2.4.0 - Notification Deduplication */
 import { precacheAndRoute } from 'workbox-precaching';
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
@@ -21,6 +21,14 @@ const messaging = getMessaging(app);
 
 onBackgroundMessage(messaging, (payload) => {
     console.log('[SW] Background message received:', payload);
+    
+    // Deduplication Guard: If payload already has a notification object, 
+    // the browser handles it automatically via FCM. 
+    // We only show manual notification for "data-only" payloads.
+    if (payload.notification) {
+        console.log('[SW] Automatic notification detected, skipping manual display.');
+        return;
+    }
     
     const data = payload.data || {};
     const notification = payload.notification || {};
