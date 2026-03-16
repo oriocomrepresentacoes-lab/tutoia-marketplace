@@ -3,7 +3,7 @@ import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
 import { messaging } from '../utils/firebaseAdmin';
 import { Server } from 'socket.io';
-// Version: 2.2.0 - Forced High-Priority Push Update
+// Version: 2.2.1 - Fix Vercel TS Build Error and Force Render
 
 export const createAd = async (req: AuthRequest, res: Response) => {
     try {
