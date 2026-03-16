@@ -10,7 +10,6 @@ import './Dashboard.css';
 import './BannerForm.css';
 
 const NotificationDebugger = () => {
-    const [token, setToken] = useState<string | null>(null);
     const [status, setStatus] = useState<string>('checking...');
     const [loading, setLoading] = useState(false);
     const [debugLog, setDebugLog] = useState<string[]>([]);
