@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
-      filename: 'sw.js',
+      filename: 'firebase-messaging-sw.js',
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
@@ -18,6 +18,7 @@ export default defineConfig({
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',
+        gcm_sender_id: "538795891753",
         icons: [
           {
             src: '/app-icon-v3.png',

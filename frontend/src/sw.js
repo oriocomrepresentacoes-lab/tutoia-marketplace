@@ -44,6 +44,41 @@ onBackgroundMessage(messaging, (payload) => {
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
+// Manual Push Listener Fallback for maximum reliability in "Killed" state
+self.addEventListener('push', (event) => {
+    if (!event.data) return;
+    
+    try {
+        const payload = event.data.json();
+        console.log('[SW] Raw push received:', payload);
+        
+        // If it's a standard FCM payload with notification object, 
+        // the browser might handle it, but we force show it with our tag
+        // if we detect that onBackgroundMessage might not have fired.
+        const data = payload.data || {};
+        const notification = payload.notification || {};
+        
+        if (notification.title || data.title) {
+            const title = notification.title || data.title || '🔔 TutShop';
+            const tagBase = data.type === 'chat_message' ? 'chat' : (data.type === 'new_ad' ? 'ad' : 'banner');
+            const uniqueId = data.id || (data.url ? data.url.split('/').pop() : 'global');
+
+            event.waitUntil(
+                self.registration.showNotification(title, {
+                    body: notification.body || data.body || '',
+                    icon: '/app-icon-v3.png',
+                    badge: '/app-icon-v3.png',
+                    tag: `${tagBase}_${uniqueId}`,
+                    data: { url: data.url || '/dashboard' },
+                    renotify: true
+                })
+            );
+        }
+    } catch (e) {
+        console.error('[SW] Error parsing push data:', e);
+    }
+});
+
 self.addEventListener('install', (event) => {
     event.waitUntil(self.skipWaiting());
 });
