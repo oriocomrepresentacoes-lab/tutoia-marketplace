@@ -3,7 +3,7 @@ import { prisma } from '../utils/db';
 import { AuthRequest } from '../middlewares/auth';
 import { messaging } from '../utils/firebaseAdmin';
 import { Server } from 'socket.io';
-// Version: 2.2.2 - Force Restore Baseline on Render
+// Version: 2.2.3 - Emergency Cleanup Force Render
 
 export const createAd = async (req: AuthRequest, res: Response) => {
     try {
