@@ -305,6 +305,21 @@ export const deleteAd = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Não autorizado' });
         }
 
+        // Safe delete: if ad had a featured plan, release it back to APPROVED status
+        // so the user doesn't lose the benefit if they delete the ad before expiry.
+        await prisma.transaction.updateMany({
+            where: {
+                ad_id: id,
+                type: 'AD_IMAGES',
+                status: 'USED',
+                expires_at: { gte: new Date() }
+            },
+            data: {
+                status: 'APPROVED',
+                ad_id: null
+            }
+        });
+
         await prisma.ad.delete({ where: { id } });
         res.json({ message: 'Anúncio excluído com sucesso' });
     } catch (error) {
