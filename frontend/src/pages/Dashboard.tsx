@@ -9,6 +9,95 @@ import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
 
+const NotificationDebugger = () => {
+    const [token, setToken] = useState<string | null>(null);
+    const [status, setStatus] = useState<string>('checking...');
+    const [loading, setLoading] = useState(false);
+    const [debugLog, setDebugLog] = useState<string[]>([]);
+
+    const addLog = (msg: string) => setDebugLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 5));
+
+    const checkStatus = async () => {
+        setLoading(true);
+        addLog('Checking notification status...');
+        try {
+            const hasSW = 'serviceWorker' in navigator;
+            const perm = Notification.permission;
+            setStatus(`Perm: ${perm} | SW: ${hasSW ? 'YES' : 'NO'}`);
+            
+            if (hasSW) {
+                const reg = await navigator.serviceWorker.ready;
+                addLog(`SW Ready: ${reg.active?.scriptURL}`);
+                // Attempt to get current token from local storage or somewhere reachable? 
+                // Actually setupNotifications handles it, but let's try to get it again.
+                // For now just show if we have permission.
+            }
+        } catch (e: any) {
+            addLog(`Error: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForceReset = async () => {
+        if (!confirm('Isto limpará as notificações e tentará registrar novamente. Continuar?')) return;
+        setLoading(true);
+        addLog('Forcing reset...');
+        try {
+            await fetchApi('/push/clear-all', { method: 'DELETE' });
+            localStorage.removeItem('pushPromptDismissed');
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let reg of registrations) {
+                await reg.unregister();
+                addLog(`Unregistered: ${reg.active?.scriptURL}`);
+            }
+            window.location.reload();
+        } catch (e: any) {
+            addLog(`Reset failed: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTestPush = async () => {
+        setLoading(true);
+        addLog('Sending test push...');
+        try {
+            const res = await fetchApi('/push/test-notification', { method: 'POST' });
+            addLog(`Res: Succ=${res.successCount}, Fail=${res.failureCount}`);
+            if (res.failureCount > 0 && res.responses) {
+                addLog(`First Error: ${res.responses[0]?.error?.message || 'Unknown'}`);
+            }
+        } catch (e: any) {
+            addLog(`Test failed: ${e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="box-card mb-4" style={{ border: '1px solid #ecc94b', backgroundColor: '#fefcbf' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#975a16' }}>
+                <Info size={18} /> Debug de Notificações
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#744210', marginBottom: '1rem' }}>Use para identificar por que as notificações não chegam.</p>
+            
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <button onClick={checkStatus} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#ecc94b', color: '#744210' }}>Ver Status</button>
+                <button onClick={handleTestPush} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#ecc94b', color: '#744210' }}>Testar Agora</button>
+                <button onClick={handleForceReset} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#f56565', color: 'white' }}>Resetar Tudo</button>
+            </div>
+
+            <div style={{ background: 'rgba(0,0,0,0.05)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                <strong>Status:</strong> {status} <br/>
+                <div style={{ marginTop: '5px', maxHeight: '100px', overflowY: 'auto' }}>
+                    {debugLog.map((log, i) => <div key={i}>{log}</div>)}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export const Dashboard = () => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
@@ -204,6 +293,8 @@ export const Dashboard = () => {
                     <Plus size={20} /> Novo Anúncio
                 </Link>
             </div>
+
+            <NotificationDebugger />
 
             <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>

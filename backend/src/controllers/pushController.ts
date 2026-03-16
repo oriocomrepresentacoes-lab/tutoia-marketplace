@@ -13,13 +13,14 @@ export const subscribe = async (req: AuthRequest, res: Response) => {
         if (!token) return res.status(400).json({ error: 'Token is required' });
 
         // Upsert subscription
-        await prisma.pushSubscription.upsert({
+        const sub = await prisma.pushSubscription.upsert({
             where: { token },
             update: { user_id, is_pwa: !!is_pwa },
             create: { token, user_id, is_pwa: !!is_pwa }
         });
+        console.log(`[PushController] Token registered/updated in DB: ${token.substring(0, 15)}... ID: ${sub.id}`);
 
-        res.status(201).json({ message: 'Token registered successfully' });
+        res.status(201).json({ message: 'Token registered successfully', sub_id: sub.id });
     } catch (error) {
         console.error('[PushController] Subscription error:', error);
         res.status(500).json({ error: 'Failed to subscribe to push notifications' });
@@ -83,7 +84,8 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
             successCount: response.successCount,
             failureCount: response.failureCount,
             firebaseInitialized: isInitialized,
-            tokensFound: tokens.length
+            tokensFound: tokens.length,
+            responses: response.responses // Include responses for debugging
         });
     } catch (error: any) {
         console.error('Test notification error:', error);
