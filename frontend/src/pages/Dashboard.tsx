@@ -244,10 +244,10 @@ export const Dashboard = () => {
                 <div className="listing-status-badge">
                     {isExpired ? 'EXPIRADO' : (ad.status === 'ACTIVE' ? 'ATIVO' : ad.status)}
                 </div>
+                {!isExpired && ad.isFeatured && ad.expires_at && (
+                    <Timer expiresAt={ad.expires_at} />
+                )}
             </div>
-            {!isExpired && ad.isFeatured && ad.expires_at && (
-                <Timer expiresAt={ad.expires_at} />
-            )}
             <div className="listing-item-actions">
                 <Link to={`/ad/${ad.id}`} className="btn-icon" title="Ver Anúncio"><ExternalLink size={20} /></Link>
                 <Link to={`/ad/edit/${ad.id}`} className="btn-icon" title="Editar Anúncio" style={{ color: 'var(--primary)' }}><Pencil size={20} /></Link>
