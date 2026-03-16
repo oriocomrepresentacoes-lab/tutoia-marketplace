@@ -33,7 +33,7 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ]
-      },
+      } as any,
       devOptions: {
         enabled: true,
         type: 'module'
