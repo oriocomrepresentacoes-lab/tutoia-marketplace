@@ -35,9 +35,11 @@ export const AdCard = ({ ad }: AdCardProps) => {
                         <Star size={14} fill="currentColor" /> Destaque
                     </div>
                 )}
+                {ad.isExpiredPremium && (
                     <div className="expired-premium-badge">
                         Premium (10 fotos)
                     </div>
+                )}
             </div>
             <div className="listing-card-content">
                 <h3 className="listing-card-title">{ad.title}</h3>
