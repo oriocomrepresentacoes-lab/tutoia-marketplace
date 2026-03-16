@@ -220,6 +220,10 @@ export const getAds = async (req: Request, res: Response) => {
             const hadPremium = adWithPremiumHistory.has(ad.id);
             const imagesArray = JSON.parse(ad.images);
 
+            // Find expiration date if premium
+            const premiumTx = allImageTransactions.find(t => t.ad_id === ad.id);
+            const expiresAt = premiumTx ? premiumTx.expires_at : null;
+
             // It's an "Expired Premium" if it has > 4 images (or had a plan) but is not currently featured
             const isExpiredPremium = !isFeatured && (imagesArray.length > 4 || hadPremium);
 
@@ -230,6 +234,7 @@ export const getAds = async (req: Request, res: Response) => {
                 images: imagesArray,
                 isFeatured,
                 isExpiredPremium,
+                expires_at: expiresAt,
                 user
             };
         });
@@ -285,7 +290,8 @@ export const getAdById = async (req: Request, res: Response) => {
             ...ad,
             images: imagesArray,
             isFeatured,
-            isExpiredPremium
+            isExpiredPremium,
+            expires_at: premiumTransaction ? premiumTransaction.expires_at : null
         });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar o anúncio.' });

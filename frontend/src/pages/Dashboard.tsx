@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Image as ImageIcon, Link as LinkIcon, Type, Pencil } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Image as ImageIcon, Link as LinkIcon, Type, Pencil, Clock } from 'lucide-react';
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
@@ -185,6 +185,78 @@ export const Dashboard = () => {
             await setupNotifications();
         }
     };
+
+    // --- SUB-COMPONENTS ---
+    const Timer = ({ expiresAt }: { expiresAt: string }) => {
+        const [timeLeft, setTimeLeft] = useState('');
+
+        useEffect(() => {
+            const calculate = () => {
+                const now = new Date().getTime();
+                const end = new Date(expiresAt).getTime();
+                const diff = end - now;
+
+                if (diff <= 0) {
+                    setTimeLeft('Expirado');
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                if (days > 0) {
+                    setTimeLeft(`${days}d ${hours}h ${mins}m restante`);
+                } else if (hours > 0) {
+                    setTimeLeft(`${hours}h ${mins}m restante`);
+                } else {
+                    setTimeLeft(`${mins}m restante`);
+                }
+            };
+
+            calculate();
+            const timer = setInterval(calculate, 60000); // Update every minute
+            return () => clearInterval(timer);
+        }, [expiresAt]);
+
+        return (
+            <div className="countdown-badge">
+                <Clock size={12} /> {timeLeft}
+            </div>
+        );
+    };
+
+    const ListingItem = ({ ad, handleDelete, isExpired }: { ad: any, handleDelete: any, isExpired?: boolean }) => (
+        <div className={`listing-list-item ${isExpired ? 'expired-listing-item' : ''}`}>
+            <div className="listing-item-img">
+                {ad.images && ad.images.length > 0 ? (
+                    <img src={getOptimizedImageUrl(ad.images[0], 200)} alt={ad.title} />
+                ) : (
+                    <div className="placeholder">Sem foto</div>
+                )}
+            </div>
+            <div className="listing-item-info">
+                <Link to={`/ad/${ad.id}`} className="listing-item-title">{ad.title}</Link>
+                <p className="listing-item-price">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ad.price)}
+                </p>
+                <span className="listing-item-meta"><MapPin size={14} /> {ad.city}</span>
+                <div className="listing-status-badge">
+                    {isExpired ? 'EXPIRADO' : (ad.status === 'ACTIVE' ? 'ATIVO' : ad.status)}
+                </div>
+                {!isExpired && ad.isFeatured && ad.expires_at && (
+                    <Timer expiresAt={ad.expires_at} />
+                )}
+            </div>
+            <div className="listing-item-actions">
+                <Link to={`/ad/${ad.id}`} className="btn-icon" title="Ver Anúncio"><ExternalLink size={20} /></Link>
+                <Link to={`/ad/edit/${ad.id}`} className="btn-icon" title="Editar Anúncio" style={{ color: 'var(--primary)' }}><Pencil size={20} /></Link>
+                <button onClick={() => handleDelete(ad.id)} className="btn-icon text-danger" title="Excluir">
+                    <Trash2 size={20} />
+                </button>
+            </div>
+        </div>
+    );
 
 
     if (loading) return <div className="container mt-4 loading-spinner">Carregando seus dados...</div>;
@@ -410,43 +482,32 @@ export const Dashboard = () => {
 
 
             <div className="dashboard-listings box-card">
-                <h2 className="section-title">Meus Anúncios</h2>
+                {/* Active Section */}
+                <div className="dashboard-listings-section">
+                    <h2 className="dashboard-section-title">Meus Anúncios Ativos</h2>
+                    {myAds.filter((ad: any) => ad.status === 'ACTIVE' && !ad.isExpiredPremium).length > 0 ? (
+                        <div className="listing-list">
+                            {myAds.filter((ad: any) => ad.status === 'ACTIVE' && !ad.isExpiredPremium).map((ad: any) => (
+                                <ListingItem key={ad.id} ad={ad} handleDelete={handleDelete} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="empty-state">
+                            <p>Você não tem anúncios ativos no momento.</p>
+                            <Link to="/create-ad" className="btn btn-primary mt-2">Começar a Vender</Link>
+                        </div>
+                    )}
+                </div>
 
-                {myAds.length > 0 ? (
-                    <div className="listing-list">
-                        {myAds.map((ad: any) => (
-                            <div key={ad.id} className="listing-list-item">
-                                <div className="listing-item-img">
-                                    {ad.images && ad.images.length > 0 ? (
-                                        <img src={getOptimizedImageUrl(ad.images[0], 200)} alt={ad.title} />
-                                    ) : (
-                                        <div className="placeholder">Sem foto</div>
-                                    )}
-                                </div>
-                                <div className="listing-item-info">
-                                    <Link to={`/ad/${ad.id}`} className="listing-item-title">{ad.title}</Link>
-                                    <p className="listing-item-price">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ad.price)}
-                                    </p>
-                                    <span className="listing-item-meta"><MapPin size={14} /> {ad.city}</span>
-                                    <div className="listing-status-badge">
-                                        {ad.status === 'ACTIVE' ? 'Ativo' : ad.status}
-                                    </div>
-                                </div>
-                                <div className="listing-item-actions">
-                                    <Link to={`/ad/${ad.id}`} className="btn-icon" title="Ver Anúncio"><ExternalLink size={20} /></Link>
-                                    <Link to={`/ad/edit/${ad.id}`} className="btn-icon" title="Editar Anúncio" style={{ color: 'var(--primary)' }}><Pencil size={20} /></Link>
-                                    <button onClick={() => handleDelete(ad.id)} className="btn-icon text-danger" title="Excluir">
-                                        <Trash2 size={20} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="empty-state">
-                        <p>Você ainda não tem anúncios publicados.</p>
-                        <Link to="/create-ad" className="btn btn-primary mt-2">Começar a Vender</Link>
+                {/* Expired Section */}
+                {myAds.filter((ad: any) => ad.isExpiredPremium).length > 0 && (
+                    <div className="dashboard-listings-section" style={{ marginTop: '3rem' }}>
+                        <h2 className="dashboard-section-title" style={{ color: 'var(--text-light)' }}>Anúncios Expirados</h2>
+                        <div className="listing-list">
+                            {myAds.filter((ad: any) => ad.isExpiredPremium).map((ad: any) => (
+                                <ListingItem key={ad.id} ad={ad} handleDelete={handleDelete} isExpired />
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
