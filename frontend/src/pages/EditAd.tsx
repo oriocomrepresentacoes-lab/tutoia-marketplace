@@ -54,39 +54,41 @@ export const EditAd = () => {
                     }
                 }
 
-                if (adData) {
-                    setTitle(adData.title);
-                    setDescription(adData.description);
-                    // Price format "1.234,56"
-                    const formattedPrice = new Intl.NumberFormat('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(adData.price);
-                    setPrice(formattedPrice);
-                    setType(adData.type);
-                    setCity(adData.city);
-                    setCategoryId(adData.category_id);
-                    setExistingImages(adData.images || []);
+                    if (adData) {
+                        setTitle(adData.title);
+                        setDescription(adData.description);
+                        const formattedPrice = new Intl.NumberFormat('pt-BR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(adData.price);
+                        setPrice(formattedPrice);
+                        setType(adData.type);
+                        setCity(adData.city);
+                        setCategoryId(adData.category_id);
+                        setExistingImages(adData.images || []);
 
-                    // If ad already has more than 4 images, it's premium
-                    const isAdAlreadyPremium = plansData?.transactions?.some((t: any) =>
-                        t.ad_id === id &&
-                        t.type === 'AD_IMAGES' &&
-                        t.status === 'USED' &&
-                        new Date(t.expires_at) >= now
-                    );
+                        // CHECK IF THIS AD HAS AN EXPIRED PLAN
+                        const adTransactions = plansData?.transactions?.filter((t: any) => t.ad_id === id && t.type === 'AD_IMAGES');
+                        const activeTransaction = adTransactions?.find((t: any) => t.status === 'USED' && new Date(t.expires_at) >= now);
+                        const expiredTransaction = adTransactions?.find((t: any) => t.status === 'USED' && new Date(t.expires_at) < now);
 
-                    if (isAdAlreadyPremium) {
-                        setMaxImages(10);
-                        setHasImagePlan(true);
-                        setIsExpiredPremium(false);
-                    } else if (adData.images && adData.images.length > 4) {
-                        // Expired but has 10 photos
-                        setIsExpiredPremium(true);
-                        setHasImagePlan(false);
-                        setMaxImages(adData.images.length); // Allow keeping current count but locked
+                        if (activeTransaction) {
+                            // Currently Premium: FULL EDITING
+                            setMaxImages(10);
+                            setHasImagePlan(true);
+                            setIsExpiredPremium(false);
+                        } else if (expiredTransaction || (adData.images && adData.images.length > 4)) {
+                            // Expired Premium: FREEZE PHOTOS FOREVER
+                            setIsExpiredPremium(true);
+                            setHasImagePlan(false);
+                            setMaxImages(adData.images.length);
+                        } else if (hasActivePlan) {
+                            // Free Ad + User has a NEW UNUSED plan: ALLOW UPGRADE
+                            setMaxImages(10);
+                            setHasImagePlan(true);
+                            setIsExpiredPremium(false);
+                        }
                     }
-                }
             } catch (err: any) {
                 setError({ message: 'Erro ao carregar dados do anúncio' });
                 console.error(err);

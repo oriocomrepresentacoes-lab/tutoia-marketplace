@@ -64,7 +64,7 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(239, 68, 68, 0.9);
+    background: rgba(100, 116, 139, 0.9); /* Slate-500 neutral */
     color: white;
     padding: 4px 10px;
     border-radius: 9999px;

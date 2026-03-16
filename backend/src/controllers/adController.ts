@@ -379,7 +379,7 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
             }
         });
 
-        // Also check if this ad is ALREADY premium (has a USED transaction linked to it)
+        // Check if this ad is CURRENTLY premium (has a USED transaction linked to it and NOT expired)
         const isAlreadyPremium = await prisma.transaction.findFirst({
             where: {
                 ad_id: id,
@@ -389,19 +389,31 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
             }
         });
 
-        if (hasActivePlan || isAlreadyPremium) {
-            maxImages = 10;
+        // Check for ANY premium history on this ad (active or expired)
+        const totalPremiumHistory = await prisma.transaction.count({
+            where: {
+                ad_id: id,
+                type: 'AD_IMAGES'
+            }
+        });
+
+        const hasEverBeenPremium = totalPremiumHistory > 0;
+        const isCurrentlyPremium = !!isAlreadyPremium;
+
+        // PHOTO EDIT PROTECTION:
+        // If it's a 10-photo ad (has history) but IS NOT currently premium (it's expired)
+        // AND the user is trying to change images (newImages.length > 0 or existing images removed)
+        const isTryingToEditImages = newImages.length > 0 || JSON.stringify(currentImages) !== existingAd.images;
+        
+        if (hasEverBeenPremium && !isCurrentlyPremium && isTryingToEditImages) {
+             return res.status(400).json({ 
+                error: "Destaque Expirado: Este anúncio não permite mais a edição de fotos. Para novas fotos, crie um novo anúncio ou renove o destaque." 
+            });
         }
 
-        if (combinedImages.length > maxImages) {
-            // Check if it's an expired premium ad just trying to KEEP its images
-            const isJustKeepingImages = combinedImages.length === currentImages.length &&
-                newImages.length === 0 &&
-                JSON.stringify(combinedImages) === existingAd.images; // original images from DB
-
-            if (!isJustKeepingImages) {
-                return res.status(400).json({ error: `O destaque deste anúncio expirou. Para alterar ou adicionar novas fotos além de 4, você precisa renovar o plano.` });
-            }
+        // Standard image limit check for NON-PREMIUM ads
+        if (!isCurrentlyPremium && !hasActivePlan && combinedImages.length > 4) {
+             return res.status(400).json({ error: "Limite de 4 fotos excedido para anúncios gratuitos." });
         }
 
         const priceFloat = parseFloat(price);
@@ -419,8 +431,9 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
             }
         });
 
-        // Upgrade Logic: If it wasn't premium but the user HAS an active plan, apply it now
-        if (!isAlreadyPremium && hasActivePlan) {
+        // Upgrade Logic: Only allow upgrading ads that have NEVER been used with a plan before.
+        // Once an ad's premium period expires, it cannot be "re-upped" with a new plan.
+        if (!hasEverBeenPremium && hasActivePlan) {
             await prisma.transaction.update({
                 where: { id: hasActivePlan.id },
                 data: {
@@ -428,7 +441,7 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
                     ad_id: updatedAd.id
                 }
             });
-            console.log(`[Upgrade] Ad ${updatedAd.id} upgraded to premium during edit.`);
+            console.log(`[Upgrade] Ad ${updatedAd.id} upgraded to premium for the FIRST time during edit.`);
         }
 
         res.json({ ...updatedAd, images: combinedImages });
