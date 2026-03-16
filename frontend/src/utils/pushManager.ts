@@ -15,6 +15,20 @@ export const setupNotifications = async (): Promise<void> => {
         return;
     }
 
+    // Cleanup rogue Service Workers from previous naming experiments
+    try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+            // Unregister anything that isn't the primary sw.js or has the old name
+            if (reg.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+                console.log('[PushManager] Unregistering rogue worker:', reg.active.scriptURL);
+                await reg.unregister();
+            }
+        }
+    } catch (e) {
+        console.error('[PushManager] Failed to cleanup workers:', e);
+    }
+
     try {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
