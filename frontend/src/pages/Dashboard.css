@@ -210,17 +210,16 @@
 }
 
 .countdown-badge {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(37, 99, 235, 0.08);
-    color: var(--primary);
-    padding: 0.4rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-top: 0.75rem;
-    border: 1px solid rgba(37, 99, 235, 0.15);
+    color: var(--text);
+    padding: 0;
+    background: transparent;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem; /* Mesmo espaço entre meta e status */
 }
 
 .expired-listing-item {
