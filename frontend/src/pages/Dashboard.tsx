@@ -5,121 +5,9 @@ import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
-import { messaging as fcmMessaging, VAPID_KEY } from '../utils/firebase';
-import { getToken } from 'firebase/messaging';
 import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
-
-const NotificationDebugger = () => {
-    const [status, setStatus] = useState<string>('checking...');
-    const [loading, setLoading] = useState(false);
-    const [debugLog, setDebugLog] = useState<string[]>([]);
-    const [fcmToken, setFcmToken] = useState<string | null>(null);
-
-    const addLog = (msg: string) => setDebugLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10));
-
-    const checkStatus = async () => {
-        setLoading(true);
-        addLog('Checking notification status...');
-        try {
-            const hasSW = 'serviceWorker' in navigator;
-            const perm = Notification.permission;
-            setStatus(`Perm: ${perm} | SW: ${hasSW ? 'YES' : 'NO'}`);
-            
-            if (hasSW) {
-                const reg = await navigator.serviceWorker.ready;
-                addLog(`SW Work: ${reg.active?.scriptURL}`);
-                
-                try {
-                    const token = await getToken(fcmMessaging, {
-                        serviceWorkerRegistration: reg,
-                        vapidKey: VAPID_KEY
-                    });
-                    if (token) {
-                        setFcmToken(token);
-                        addLog(`Token OK: ${token.substring(0, 10)}...`);
-                    } else {
-                        addLog('Token empty - Need permission?');
-                    }
-                } catch (err: any) {
-                    addLog(`Token Err: ${err.message}`);
-                }
-            }
-        } catch (e: any) {
-            addLog(`Error: ${e.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleForceReset = async () => {
-        if (!confirm('Isto limpará as notificações e tentará registrar novamente. Continuar?')) return;
-        setLoading(true);
-        addLog('Forcing reset...');
-        try {
-            await fetchApi('/push/clear-all', { method: 'DELETE' });
-            localStorage.removeItem('pushPromptDismissed');
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let reg of registrations) {
-                await reg.unregister();
-                addLog(`Unregistered: ${reg.active?.scriptURL}`);
-            }
-            window.location.reload();
-        } catch (e: any) {
-            addLog(`Reset failed: ${e.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleTestPush = async () => {
-        setLoading(true);
-        addLog('Sending test push...');
-        try {
-            const res = await fetchApi('/push/test-notification', { method: 'POST' });
-            addLog(`Res: Succ=${res.successCount}, Fail=${res.failureCount}`);
-            addLog(`Init: ${res.firebaseInitialized ? 'YES' : 'NO'} | Tokens: ${res.tokensFound}`);
-            if (res.failureCount > 0 && res.responses) {
-                addLog(`First Error: ${res.responses[0]?.error?.message || 'Unknown'}`);
-            }
-        } catch (e: any) {
-            addLog(`Test failed: ${e.message}`);
-            if (e.data?.details) {
-                addLog(`Details: ${e.data.details}`);
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="box-card mb-4" style={{ border: '1px solid #ecc94b', backgroundColor: '#fefcbf' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#975a16' }}>
-                <Info size={18} /> Debug de Notificações
-            </h3>
-            <p style={{ fontSize: '0.9rem', color: '#744210', marginBottom: '1rem' }}>Use para identificar por que as notificações não chegam.</p>
-            
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <button onClick={checkStatus} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#ecc94b', color: '#744210' }}>Ver Status</button>
-                <button onClick={handleTestPush} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#ecc94b', color: '#744210' }}>Testar Agora</button>
-                <button onClick={handleForceReset} disabled={loading} className="btn btn-sm" style={{ backgroundColor: '#f56565', color: 'white' }}>Resetar Tudo</button>
-            </div>
-
-            <div style={{ background: 'rgba(0,0,0,0.05)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'monospace' }}>
-                <strong>Status:</strong> {status} <br/>
-                {fcmToken && (
-                    <div style={{ wordBreak: 'break-all', marginTop: '5px', color: '#2b6cb0' }}>
-                        <strong>FCM Token:</strong> {fcmToken}
-                    </div>
-                )}
-                <div style={{ marginTop: '5px', maxHeight: '150px', overflowY: 'auto', borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '5px' }}>
-                    {debugLog.map((log, i) => <div key={i}>{log}</div>)}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export const Dashboard = () => {
     const { user } = useAuthStore();
@@ -316,8 +204,6 @@ export const Dashboard = () => {
                     <Plus size={20} /> Novo Anúncio
                 </Link>
             </div>
-
-            <NotificationDebugger />
 
             <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card box-card" style={{ flex: '1', minWidth: '250px' }}>
