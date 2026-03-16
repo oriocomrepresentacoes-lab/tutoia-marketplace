@@ -132,7 +132,6 @@ model Transaction {
 model PushSubscription {
   id        String   @id @default(uuid())
   token     String   @unique
-  is_pwa    Boolean  @default(false)
   user_id   String?
   user      User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
