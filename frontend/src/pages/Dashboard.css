@@ -187,3 +187,51 @@
         min-width: 100% !important;
     }
 }
+
+/* --- Dashboard Section & Timer Styles --- */
+.dashboard-listings-section {
+    margin-bottom: 4rem;
+}
+
+.dashboard-section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 3rem; /* Espaçamento solicitado */
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-dark);
+}
+
+.countdown-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+    border: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+.expired-listing-item {
+    opacity: 0.75;
+}
+
+.expired-listing-item .listing-item-img {
+    filter: grayscale(1);
+}
+
+.expired-listing-item .listing-status-badge {
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
+.dashboard-section-title svg {
+    color: var(--primary);
+}
