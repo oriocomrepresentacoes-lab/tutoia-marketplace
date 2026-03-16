@@ -65,6 +65,20 @@ export const deleteBanner = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Você não tem permissão para excluir este banner.' });
         }
 
+        // Release the banner plan back to the user if it's still valid
+        await prisma.transaction.updateMany({
+            where: {
+                ad_id: id,
+                type: 'BANNER',
+                status: 'USED',
+                expires_at: { gte: new Date() }
+            },
+            data: {
+                status: 'APPROVED',
+                ad_id: null
+            }
+        });
+
         await prisma.banner.delete({ where: { id } });
 
         res.json({ message: 'Banner excluído com sucesso.' });
@@ -144,6 +158,17 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                 user_id
             }
         });
+
+        // 3. Mark the transaction as USED for this specific banner (1 plan = 1 banner)
+        if (!isAdmin && activeTransaction) {
+            await prisma.transaction.update({
+                where: { id: activeTransaction.id },
+                data: {
+                    status: 'USED',
+                    ad_id: banner.id // We reuse ad_id field for banner link in Transactions
+                }
+            });
+        }
 
         res.status(201).json(banner);
 
