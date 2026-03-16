@@ -5,6 +5,8 @@ import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
 import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
+import { messaging as fcmMessaging, VAPID_KEY } from '../utils/firebase';
+import { getToken } from 'firebase/messaging';
 import { PushPrompt } from '../components/PushPrompt';
 import './Dashboard.css';
 import './BannerForm.css';
@@ -13,8 +15,9 @@ const NotificationDebugger = () => {
     const [status, setStatus] = useState<string>('checking...');
     const [loading, setLoading] = useState(false);
     const [debugLog, setDebugLog] = useState<string[]>([]);
+    const [fcmToken, setFcmToken] = useState<string | null>(null);
 
-    const addLog = (msg: string) => setDebugLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 5));
+    const addLog = (msg: string) => setDebugLog(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10));
 
     const checkStatus = async () => {
         setLoading(true);
@@ -26,10 +29,22 @@ const NotificationDebugger = () => {
             
             if (hasSW) {
                 const reg = await navigator.serviceWorker.ready;
-                addLog(`SW Ready: ${reg.active?.scriptURL}`);
-                // Attempt to get current token from local storage or somewhere reachable? 
-                // Actually setupNotifications handles it, but let's try to get it again.
-                // For now just show if we have permission.
+                addLog(`SW Work: ${reg.active?.scriptURL}`);
+                
+                try {
+                    const token = await getToken(fcmMessaging, {
+                        serviceWorkerRegistration: reg,
+                        vapidKey: VAPID_KEY
+                    });
+                    if (token) {
+                        setFcmToken(token);
+                        addLog(`Token OK: ${token.substring(0, 10)}...`);
+                    } else {
+                        addLog('Token empty - Need permission?');
+                    }
+                } catch (err: any) {
+                    addLog(`Token Err: ${err.message}`);
+                }
             }
         } catch (e: any) {
             addLog(`Error: ${e.message}`);
@@ -64,11 +79,15 @@ const NotificationDebugger = () => {
         try {
             const res = await fetchApi('/push/test-notification', { method: 'POST' });
             addLog(`Res: Succ=${res.successCount}, Fail=${res.failureCount}`);
+            addLog(`Init: ${res.firebaseInitialized ? 'YES' : 'NO'} | Tokens: ${res.tokensFound}`);
             if (res.failureCount > 0 && res.responses) {
                 addLog(`First Error: ${res.responses[0]?.error?.message || 'Unknown'}`);
             }
         } catch (e: any) {
             addLog(`Test failed: ${e.message}`);
+            if (e.data?.details) {
+                addLog(`Details: ${e.data.details}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -89,7 +108,12 @@ const NotificationDebugger = () => {
 
             <div style={{ background: 'rgba(0,0,0,0.05)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'monospace' }}>
                 <strong>Status:</strong> {status} <br/>
-                <div style={{ marginTop: '5px', maxHeight: '100px', overflowY: 'auto' }}>
+                {fcmToken && (
+                    <div style={{ wordBreak: 'break-all', marginTop: '5px', color: '#2b6cb0' }}>
+                        <strong>FCM Token:</strong> {fcmToken}
+                    </div>
+                )}
+                <div style={{ marginTop: '5px', maxHeight: '150px', overflowY: 'auto', borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '5px' }}>
                     {debugLog.map((log, i) => <div key={i}>{log}</div>)}
                 </div>
             </div>

@@ -32,12 +32,14 @@ if (!admin.apps.length && serviceAccount) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
-        console.log('[FirebaseAdmin] Firebase Admin initialized.');
-    } catch (error) {
-        console.error('[FirebaseAdmin] Error initializing Firebase Admin:', error);
+        console.log('[FirebaseAdmin] Firebase Admin initialized successfully.');
+    } catch (error: any) {
+        console.error('[FirebaseAdmin] Error initializing Firebase Admin:', error.message);
     }
 } else if (!serviceAccount) {
-    console.warn('[FirebaseAdmin] No service account provided. Firebase features will be disabled.');
+    console.warn('[FirebaseAdmin] No service account provided. ENV exists?', !!process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+    console.log('[FirebaseAdmin] Firebase Admin already initialized or pending.');
 }
 
 // Function to get messaging, avoids immediate crash if not initialized
