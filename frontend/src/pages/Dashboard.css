@@ -189,6 +189,10 @@
 }
 
 /* --- Dashboard Section & Timer Styles --- */
+.dashboard-section-card {
+    margin-bottom: 4rem !important;
+}
+
 .dashboard-listings-section {
     margin-bottom: 4rem;
 }

@@ -303,14 +303,14 @@ export const Dashboard = () => {
             </div>
 
             {isAdmin && (
-                <div className="box-card mb-4" style={{ backgroundColor: 'rgba(147, 51, 234, 0.05)', border: '1px solid #9333ea' }}>
+                <div className="box-card mb-4 dashboard-section-card" style={{ backgroundColor: 'rgba(147, 51, 234, 0.05)', border: '1px solid #9333ea' }}>
                     <h2 className="section-title" style={{ color: '#9333ea' }}>Painel Administrativo</h2>
                     <p>Você tem acesso total para criar e gerenciar banners sem restrições de pagamento.</p>
                 </div>
             )}
 
             {canUploadBanner && (
-                <div className="box-card mb-4" style={{ backgroundColor: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)' }}>
+                <div className="box-card mb-4 dashboard-section-card" style={{ backgroundColor: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)' }}>
                     <h2 className="section-title">
                         {isAdmin ? 'Enviar Novo Banner' : 'Adicionar Banner Destaque'}
                     </h2>
@@ -481,7 +481,7 @@ export const Dashboard = () => {
             )}
 
 
-            <div className="dashboard-listings box-card">
+            <div className="dashboard-listings box-card dashboard-section-card">
                 {/* Active Section */}
                 <div className="dashboard-listings-section">
                     <h2 className="dashboard-section-title">Meus Anúncios Ativos</h2>
