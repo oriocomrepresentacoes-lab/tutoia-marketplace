@@ -40,9 +40,10 @@ export const EditAd = () => {
                 ]);
 
                 if (catsData) setCategories(catsData);
-
+ 
+                let hasActivePlan = false;
                 if (plansData && plansData.transactions) {
-                    const hasActivePlan = plansData.transactions.some((t: any) =>
+                    hasActivePlan = plansData.transactions.some((t: any) =>
                         t.type === 'AD_IMAGES' &&
                         t.status === 'APPROVED' &&
                         !t.ad_id && // Must not be linked to another ad
