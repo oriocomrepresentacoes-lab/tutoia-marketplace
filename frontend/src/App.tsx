@@ -22,7 +22,6 @@ function App() {
   const { user } = useAuthStore();
   const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     // Logic for Push Prompt: Mandatory for logged in users
