@@ -2,50 +2,48 @@ import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import './InstallPrompt.css';
 
-export const InstallPrompt = () => {
+interface InstallPromptProps {
+    onClose: () => void;
+}
+
+export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    const [showPrompt, setShowPrompt] = useState(false);
 
     useEffect(() => {
+        // Use the global prompt if available
+        if ((window as any).deferredPrompt) {
+            setDeferredPrompt((window as any).deferredPrompt);
+        }
+
         const handler = (e: Event) => {
-            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
-            // Show the custom install prompt
-            setShowPrompt(true);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handler);
-        };
+        return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
+        const promptToUse = deferredPrompt || (window as any).deferredPrompt;
+        if (!promptToUse) return;
 
-        // Show the install prompt
-        deferredPrompt.prompt();
-
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
+        promptToUse.prompt();
+        const { outcome } = await promptToUse.userChoice;
 
         if (outcome === 'accepted') {
-            setShowPrompt(false);
+            onClose();
         }
-
-        // We've used the prompt, and can't use it again, throw it away
         setDeferredPrompt(null);
+        (window as any).deferredPrompt = null;
     };
 
-    if (!showPrompt) return null;
+    if (!deferredPrompt && !(window as any).deferredPrompt) return null;
 
     return (
         <div className="install-prompt-overlay">
             <div className="install-prompt-modal">
-                <button className="close-prompt-btn" onClick={() => setShowPrompt(false)}>
+                <button className="close-prompt-btn" onClick={onClose}>
                     <X size={20} />
                 </button>
 
@@ -58,7 +56,7 @@ export const InstallPrompt = () => {
                     <Download size={20} /> Instalar Aplicativo
                 </button>
 
-                <button className="btn btn-secondary later-btn" onClick={() => setShowPrompt(false)}>
+                <button className="btn btn-secondary later-btn" onClick={onClose}>
                     Agora não
                 </button>
             </div>

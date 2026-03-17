@@ -11,14 +11,54 @@ import {
 import { BannerForm } from './pages/BannerForm';
 import { InstallPrompt } from './components/InstallPrompt';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
-import { setupNotifications } from './utils/pushManager';
+import { setupNotifications, requestNotificationPermission } from './utils/pushManager';
+import { PushPrompt } from './components/PushPrompt';
 
 import { getSocket } from './utils/socket';
 
 function App() {
   const { user } = useAuthStore();
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [canShowInstall, setCanShowInstall] = useState(false);
+
+  useEffect(() => {
+    // Logic for Push Prompt: Only for logged in users
+    if (user && Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
+      const timer = setTimeout(() => setShowPushPrompt(true), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      // We store that we CAN show install, but we wait for push prompt first
+      setCanShowInstall(true);
+      (window as any).deferredPrompt = e;
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
+    // If push prompt is NOT showing anymore AND we never showed install prompt this session AND we can show it
+    const pushHandled = localStorage.getItem('pushPromptDismissed') || Notification.permission !== 'default';
+    if (!showPushPrompt && pushHandled && canShowInstall && !showInstallPrompt) {
+        setShowInstallPrompt(true);
+    }
+  }, [showPushPrompt, canShowInstall]);
+
+  const handlePushAccept = async () => {
+    const result = await requestNotificationPermission();
+    if (result === 'granted') {
+      await setupNotifications();
+    }
+    setShowPushPrompt(false);
+    localStorage.setItem('pushPromptDismissed', 'true');
+  };
 
   useEffect(() => {
     if (user) {
@@ -123,7 +163,18 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app-container">
-        <InstallPrompt />
+        {showPushPrompt && (
+          <PushPrompt 
+            onAccept={handlePushAccept}
+            onClose={() => {
+              setShowPushPrompt(false);
+              localStorage.setItem('pushPromptDismissed', 'true');
+            }}
+          />
+        )}
+        
+        {showInstallPrompt && <InstallPrompt onClose={() => setShowInstallPrompt(false)} />}
+        
         <Navbar />
         <main className="main-content">
           <Routes>
