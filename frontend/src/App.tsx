@@ -18,31 +18,44 @@ import { PushPrompt } from './components/PushPrompt';
 
 import { getSocket } from './utils/socket';
 
-function App() {
-  const { user } = useAuthStore();
+// Nagging Manager for Prompts
+const PromptManager = ({ user }: { user: any }) => {
+  const location = useLocation();
   const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
-    // Logic for Push Prompt: Mandatory for logged in users
-    if (user && Notification.permission === 'default') {
-      const timer = setTimeout(() => setShowPushPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowPushPrompt(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
+    // 1. Installation Listener
     const handler = (e: Event) => {
       e.preventDefault();
-      setShowInstallPrompt(true); // Offer installation first
       (window as any).deferredPrompt = e;
+      setShowInstallPrompt(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
+    
+    // Check if they are already stashed
+    if ((window as any).deferredPrompt) {
+      setShowInstallPrompt(true);
+    }
+
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  useEffect(() => {
+    // 2. Persistent Logic (Navigation trigger)
+    
+    // Push nagging: Only for logged in users, always if permission is default
+    if (user && Notification.permission === 'default') {
+      setShowPushPrompt(true);
+    } else {
+      setShowPushPrompt(false);
+    }
+
+    // Install nagging: Always if browser allows
+    if ((window as any).deferredPrompt) {
+      setShowInstallPrompt(true);
+    }
+  }, [location.pathname, user]);
 
   const handlePushAccept = async () => {
     const result = await requestNotificationPermission();
@@ -51,6 +64,23 @@ function App() {
     }
     setShowPushPrompt(false);
   };
+
+  return (
+    <>
+      {showPushPrompt && (
+        <PushPrompt 
+          onAccept={handlePushAccept}
+          onClose={() => setShowPushPrompt(false)}
+        />
+      )}
+      
+      {showInstallPrompt && <InstallPrompt onClose={() => setShowInstallPrompt(false)} />}
+    </>
+  );
+};
+
+function App() {
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (user) {
@@ -155,16 +185,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app-container">
-        {showPushPrompt && (
-          <PushPrompt 
-            onAccept={handlePushAccept}
-            onClose={() => {
-              setShowPushPrompt(false);
-            }}
-          />
-        )}
-        
-        {showInstallPrompt && <InstallPrompt onClose={() => setShowInstallPrompt(false)} />}
+        <PromptManager user={user} />
         
         <Navbar />
         <main className="main-content">
