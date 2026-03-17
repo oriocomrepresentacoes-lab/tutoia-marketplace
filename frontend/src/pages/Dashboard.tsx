@@ -4,7 +4,6 @@ import { Plus, Trash2, ExternalLink, MapPin, UploadCloud, Info, CheckCircle, Ima
 import { fetchApi } from '../utils/api';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { useAuthStore } from '../store/authStore';
-import { requestNotificationPermission, setupNotifications } from '../utils/pushManager';
 import './Dashboard.css';
 import './BannerForm.css';
 
