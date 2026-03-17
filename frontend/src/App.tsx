@@ -25,31 +25,26 @@ function App() {
   const [canShowInstall, setCanShowInstall] = useState(false);
 
   useEffect(() => {
-    // Logic for Push Prompt: Only for logged in users
-    if (user && Notification.permission === 'default' && !localStorage.getItem('pushPromptDismissed')) {
-      const timer = setTimeout(() => setShowPushPrompt(true), 5000);
+    // Logic for Push Prompt: Mandatory for logged in users
+    if (user && Notification.permission === 'default') {
+      const timer = setTimeout(() => setShowPushPrompt(true), 3000);
       return () => clearTimeout(timer);
+    } else {
+      setShowPushPrompt(false);
     }
   }, [user]);
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      // We store that we CAN show install, but we wait for push prompt first
       setCanShowInstall(true);
+      setShowInstallPrompt(true); // Offer installation first
       (window as any).deferredPrompt = e;
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  useEffect(() => {
-    // If push prompt is NOT showing anymore AND we never showed install prompt this session AND we can show it
-    const pushHandled = localStorage.getItem('pushPromptDismissed') || Notification.permission !== 'default';
-    if (!showPushPrompt && pushHandled && canShowInstall && !showInstallPrompt) {
-        setShowInstallPrompt(true);
-    }
-  }, [showPushPrompt, canShowInstall]);
 
   const handlePushAccept = async () => {
     const result = await requestNotificationPermission();
@@ -57,7 +52,6 @@ function App() {
       await setupNotifications();
     }
     setShowPushPrompt(false);
-    localStorage.setItem('pushPromptDismissed', 'true');
   };
 
   useEffect(() => {
@@ -168,7 +162,6 @@ function App() {
             onAccept={handlePushAccept}
             onClose={() => {
               setShowPushPrompt(false);
-              localStorage.setItem('pushPromptDismissed', 'true');
             }}
           />
         )}
