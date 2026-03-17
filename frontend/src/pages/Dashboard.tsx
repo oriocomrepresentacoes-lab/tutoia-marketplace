@@ -30,7 +30,7 @@ export const Dashboard = () => {
 
     useEffect(() => {
         loadData();
-        const interval = setInterval(loadData, 30000);
+        const interval = setInterval(() => loadData(true), 30000); // Background refresh
         return () => clearInterval(interval);
     }, []);
 
@@ -48,8 +48,8 @@ export const Dashboard = () => {
         }
     }, [user, navigate]);
 
-    const loadData = async () => {
-        setLoading(true);
+    const loadData = async (isBackground = false) => {
+        if (!isBackground) setLoading(true);
         try {
             const [adsData, plansData, bannersData] = await Promise.all([
                 fetchApi(`/ads?user_id=${user?.id}`),

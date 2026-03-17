@@ -219,7 +219,7 @@
     border: none;
     font-size: 0.9rem;
     font-weight: 600;
-    margin-top: 0.5rem; /* Mesmo espaço entre meta e status */
+    margin-top: 0.75rem; /* Aumentado ligeiramente para alinhar visualmente */
 }
 
 .expired-listing-item {
