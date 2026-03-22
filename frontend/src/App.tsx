@@ -184,6 +184,20 @@ function App() {
       setTimeout(() => {
         setupNotifications();
       }, 5000); // 5s delay to be safe
+
+      // 3. Visibility Change: Clear focus when backgrounded
+      // This is crucial for iOS where the socket may stay connected while minimized.
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+          console.log('[App] App hidden, blurring chat focus...');
+          getSocket().emit('blur_chat');
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, [user]);
 

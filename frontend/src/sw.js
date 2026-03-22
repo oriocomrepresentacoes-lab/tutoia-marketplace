@@ -39,8 +39,8 @@ onBackgroundMessage(messaging, (payload) => {
 
     const notificationOptions = {
         body: notification.body || data.body || '',
-        icon: '/app-icon-v3.png',
-        badge: '/app-icon-v3.png',
+        icon: self.location.origin + '/app-icon-v3.png',
+        badge: self.location.origin + '/app-icon-v3.png',
         tag: `${tagBase}_${uniqueId}`,
         data: { url: data.url || '/dashboard' },
         renotify: true
