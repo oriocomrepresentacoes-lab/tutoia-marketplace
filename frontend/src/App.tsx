@@ -71,6 +71,7 @@ const PromptManager = ({ user }: { user: any }) => {
         <PushPrompt 
           onAccept={handlePushAccept}
           onClose={() => setShowPushPrompt(false)}
+          isMandatory={!!user}
         />
       )}
       

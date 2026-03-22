@@ -4,15 +4,18 @@ import './PushPrompt.css';
 interface PushPromptProps {
     onAccept: () => void;
     onClose: () => void;
+    isMandatory?: boolean;
 }
 
-export const PushPrompt = ({ onAccept, onClose }: PushPromptProps) => {
+export const PushPrompt = ({ onAccept, onClose, isMandatory = false }: PushPromptProps) => {
     return (
         <div className="push-prompt-overlay">
             <div className="push-prompt-modal">
-                <button className="close-push-btn" onClick={onClose}>
-                    <X size={24} />
-                </button>
+                {!isMandatory && (
+                    <button className="close-push-btn" onClick={onClose}>
+                        <X size={24} />
+                    </button>
+                )}
 
                 <div className="push-prompt-icon-container">
                     <Bell size={40} />
@@ -27,9 +30,11 @@ export const PushPrompt = ({ onAccept, onClose }: PushPromptProps) => {
                     <button className="btn btn-primary" onClick={onAccept}>
                         Ativar Notificações
                     </button>
-                    <button className="btn btn-secondary" onClick={onClose}>
-                        Agora não
-                    </button>
+                    {!isMandatory && (
+                        <button className="btn btn-secondary" onClick={onClose}>
+                            Agora não
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
