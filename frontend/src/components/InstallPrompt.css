@@ -193,3 +193,48 @@
     color: var(--text);
     font-size: 1.2rem;
 }
+
+/* iOS Instruction Styles */
+.ios-install-instructions {
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.ios-steps {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.ios-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.step-icon-circle {
+    background: #f1f5f9;
+    color: var(--primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.ios-understand-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+}
