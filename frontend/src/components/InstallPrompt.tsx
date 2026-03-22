@@ -22,7 +22,8 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
             const userAgent = navigator.userAgent || '';
             
             const ios = /iPad|iPhone|iPod/.test(platform) || 
-                       (userAgent.includes("Mac") && "ontouchend" in document);
+                       (userAgent.includes("Mac") && "ontouchend" in document) ||
+                       window.location.search.includes('force-ios');
             
             const standalone = window.matchMedia('(display-mode: standalone)').matches || 
                              (window.navigator as any).standalone === true;
