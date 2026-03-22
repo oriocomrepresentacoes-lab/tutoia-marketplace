@@ -27,7 +27,6 @@ onBackgroundMessage(messaging, (payload) => {
 
     // Deduplication Guard: On Android/Windows, the browser handles 'notification' blocks automatically.
     // However, on iOS Safari PWA, it DOES NOT show them automatically.
-    // So we only skip manual display if it's NOT an iOS device.
     if (payload.notification && !isIOS) {
         console.log('[SW] Automatic notification detected (non-iOS), skipping manual display.');
         return;
@@ -49,7 +48,51 @@ onBackgroundMessage(messaging, (payload) => {
         renotify: true
     };
 
+    // Use event.waitUntil inside the handler if possible, but Firebase SDK doesn't always 
+    // provide the event object here. We'll rely on the native listener for iOS-specific waiting.
     self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Native Push Event Fallback: Crucial for iOS Safari PWA Background Notifications
+self.addEventListener('push', (event) => {
+    console.log('[SW] PUSH event received (Native):', event);
+    
+    // If the browser already has a notification displayed for this push, 
+    // it usually won't trigger if it was handled automatically.
+    // But on iOS PWA, we usually need to handle it manually.
+    
+    let payload;
+    try {
+        payload = event.data ? event.data.json() : null;
+        console.log('[SW] PUSH data (Native):', payload);
+    } catch (e) {
+        console.warn('[SW] PUSH error parsing data:', e);
+        return;
+    }
+
+    if (!payload) return;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // Only process native push for iOS background users, to avoid duplicates on Android
+    if (isIOS) {
+        const data = payload.data || {};
+        const notification = payload.notification || {};
+        
+        const title = notification.title || data.title || '🔔 TutShop';
+        const options = {
+            body: notification.body || data.body || '',
+            icon: self.location.origin + '/app-icon-v3.png',
+            badge: self.location.origin + '/app-icon-v3.png',
+            tag: data.tag || (data.url ? data.url.split('/').pop() : 'push_ios'),
+            data: { url: data.url || '/dashboard' },
+            renotify: true
+        };
+
+        event.waitUntil(self.registration.showNotification(title, options));
+        console.log('[SW] PUSH notification shown on iOS:', title);
+    }
 });
 
 self.addEventListener('notificationclick', (event) => {
