@@ -190,7 +190,8 @@ function App() {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
           console.log('[App] App hidden, blurring chat focus...');
-          getSocket().emit('blur_chat');
+          const socket = getSocket();
+          if (socket) socket.emit('blur_chat');
         }
       };
 
