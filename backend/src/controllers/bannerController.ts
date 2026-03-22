@@ -8,14 +8,6 @@ export const getActiveBanners = async (req: Request, res: Response) => {
     try {
         const now = new Date();
 
-        // 1. Strict Auto-cleanup: Delete physically from DB if end_date < now
-        // This keeps the database lean and follows user's rules strictly.
-        await prisma.banner.deleteMany({
-            where: {
-                end_date: { lt: now }
-            }
-        });
-
         const banners = await prisma.banner.findMany({
             where: {
                 active: true,
