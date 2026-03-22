@@ -113,14 +113,9 @@ export const createAd = async (req: AuthRequest, res: Response) => {
                             Urgency: 'high'
                         },
                         notification: {
-                            title: '🎉 Novo Anúncio no TutShop!',
-                            body: `${ad.title} acaba de ser postado. Confira agora!`,
                             icon: '/app-icon-v3.png',
                             badge: '/app-icon-v3.png',
                             tag: 'new_ad'
-                        },
-                        fcm_options: {
-                            link: `/ad/${ad.id}`
                         }
                     },
                     tokens: tokens
