@@ -43,7 +43,11 @@ const PromptManager = ({ user }: { user: any }) => {
 
   useEffect(() => {
     // 2. Persistent Logic (Navigation trigger)
-    
+    const platform = (navigator as any).userAgentData?.platform || navigator.platform || '';
+    const userAgent = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(platform) || (userAgent.includes("Mac") && "ontouchend" in document) || window.location.search.includes('force-ios');
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+
     // Push nagging: Only for logged in users, always if permission is default
     if (user && Notification.permission === 'default') {
       setShowPushPrompt(true);
@@ -51,8 +55,8 @@ const PromptManager = ({ user }: { user: any }) => {
       setShowPushPrompt(false);
     }
 
-    // Install nagging: Always if browser allows
-    if ((window as any).deferredPrompt) {
+    // Install nagging: Always if browser allows OR if it's iOS (not installed)
+    if ((window as any).deferredPrompt || (isIOS && !isStandalone)) {
       setShowInstallPrompt(true);
     }
   }, [location.pathname, user]);
