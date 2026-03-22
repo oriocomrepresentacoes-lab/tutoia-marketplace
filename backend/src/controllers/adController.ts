@@ -116,6 +116,9 @@ export const createAd = async (req: AuthRequest, res: Response) => {
                             icon: '/app-icon-v3.png',
                             badge: '/app-icon-v3.png',
                             tag: 'new_ad'
+                        },
+                        fcm_options: {
+                            link: `/ad/${ad.id}`
                         }
                     },
                     tokens: tokens

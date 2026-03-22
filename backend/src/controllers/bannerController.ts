@@ -222,6 +222,9 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                         icon: '/app-icon-v3.png',
                         badge: '/app-icon-v3.png',
                         tag: 'new_banner'
+                    },
+                    fcm_options: {
+                        link: banner.link || '/'
                     }
                 },
                 tokens: tokens
