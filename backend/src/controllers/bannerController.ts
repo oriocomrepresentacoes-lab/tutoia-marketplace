@@ -219,9 +219,14 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                         Urgency: 'high'
                     },
                     notification: {
+                        title: '📢 Novo Destaque no TutShop!',
+                        body: `${banner.title} acaba de entrar em destaque. Veja agora!`,
                         icon: '/app-icon-v3.png',
                         badge: '/app-icon-v3.png',
                         tag: 'new_banner'
+                    },
+                    fcm_options: {
+                        link: banner.link || '/'
                     }
                 },
                 tokens: tokens

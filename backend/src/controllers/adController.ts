@@ -83,45 +83,50 @@ export const createAd = async (req: AuthRequest, res: Response) => {
         const subscriptions = await prisma.pushSubscription.findMany();
         console.log(`[Push-Global] Found ${subscriptions.length} subscriptions in database.`);
         
-        if (subscriptions.length > 0) {
-            const tokens = subscriptions.map(s => s.token);
-            const fcmMessage = {
-                notification: {
-                    title: '🎉 Novo Anúncio no TutShop!',
-                    body: `${ad.title} acaba de ser postado. Confira agora!`
-                },
-                data: {
-                    url: `/ad/${ad.id}`,
-                    type: 'new_ad'
-                },
-                android: {
-                    priority: 'high' as any,
+            if (subscriptions.length > 0) {
+                const tokens = subscriptions.map(s => s.token);
+                const fcmMessage = {
                     notification: {
-                        sound: 'default',
-                    }
-                },
-                apns: {
-                    payload: {
-                        aps: {
-                            'content-available': 1,
-                            sound: 'default'
-                        }
-                    }
-                },
-                webpush: {
-                    headers: {
-                        Urgency: 'high'
+                        title: '🎉 Novo Anúncio no TutShop!',
+                        body: `${ad.title} acaba de ser postado. Confira agora!`
                     },
-                    notification: {
-                        icon: '/app-icon-v3.png',
-                        badge: '/app-icon-v3.png',
-                        tag: 'new_ad'
-                    }
-                },
-                tokens: tokens
-            };
+                    data: {
+                        url: `/ad/${ad.id}`,
+                        type: 'new_ad'
+                    },
+                    android: {
+                        priority: 'high' as any,
+                        notification: {
+                            sound: 'default',
+                        }
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                'content-available': 1,
+                                sound: 'default'
+                            }
+                        }
+                    },
+                    webpush: {
+                        headers: {
+                            Urgency: 'high'
+                        },
+                        notification: {
+                            title: '🎉 Novo Anúncio no TutShop!',
+                            body: `${ad.title} acaba de ser postado. Confira agora!`,
+                            icon: '/app-icon-v3.png',
+                            badge: '/app-icon-v3.png',
+                            tag: 'new_ad'
+                        },
+                        fcm_options: {
+                            link: `/ad/${ad.id}`
+                        }
+                    },
+                    tokens: tokens
+                };
 
-            const response = await messaging.sendEachForMulticast(fcmMessage);
+                const response = await messaging.sendEachForMulticast(fcmMessage);
             console.log(`[Push-Global] Multicast sent. Success: ${response.successCount}, Failure: ${response.failureCount}`);
 
             // Cleanup invalid tokens

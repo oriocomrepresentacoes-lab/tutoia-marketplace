@@ -210,9 +210,14 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                             Urgency: 'high'
                         },
                         notification: {
+                            title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
+                            body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`,
                             icon: '/app-icon-v3.png',
                             badge: '/app-icon-v3.png',
                             tag: `chat_${ad_id}_${sender_id}`
+                        },
+                        fcm_options: {
+                            link: `/messages?adId=${ad_id}&otherId=${sender_id}`
                         }
                     },
                     tokens: tokens
