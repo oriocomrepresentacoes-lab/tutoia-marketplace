@@ -198,7 +198,9 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                 },
                 data: {
                     url: banner.link || '/',
-                    type: 'new_banner'
+                    type: 'new_banner',
+                    title: '📢 Novo Destaque no TutShop!',
+                    body: `${banner.title} acaba de entrar em destaque. Veja agora!`
                 },
                 android: {
                     priority: 'high' as any,
