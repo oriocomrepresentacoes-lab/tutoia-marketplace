@@ -23,7 +23,7 @@ onBackgroundMessage(messaging, (payload) => {
     console.log('[SW] Background message received:', payload);
     
     // Deduplication Guard: If payload already has a notification object, 
-    // the browser handles it automatically via FCM on most platforms (Android/Windows).
+    // the browser handles it automatically via FCM. 
     // We only show manual notification for "data-only" payloads.
     if (payload.notification) {
         console.log('[SW] Automatic notification detected, skipping manual display.');
@@ -31,19 +31,16 @@ onBackgroundMessage(messaging, (payload) => {
     }
     
     const data = payload.data || {};
-    const notification = payload.notification || {}; // Safe fallback
+    const notification = payload.notification || {};
 
     const notificationTitle = notification.title || data.title || '🔔 TutShop';
     const tagBase = data.type === 'chat_message' ? 'chat' : (data.type === 'new_ad' ? 'ad' : 'banner');
     const uniqueId = data.id || (data.url ? data.url.split('/').pop() : 'global');
 
-    // Use absolute URLs for Safari compatibility
-    const iconUrl = new URL('/app-icon-v3.png', self.location.origin).href;
-
     const notificationOptions = {
         body: notification.body || data.body || '',
-        icon: iconUrl,
-        badge: iconUrl,
+        icon: '/app-icon-v3.png',
+        badge: '/app-icon-v3.png',
         tag: `${tagBase}_${uniqueId}`,
         data: { url: data.url || '/dashboard' },
         renotify: true
