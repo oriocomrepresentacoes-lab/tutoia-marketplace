@@ -1,4 +1,4 @@
-/* SW Version: 2.4.0 - Notification Deduplication */
+/* SW Version: 2.5.0 - iOS Native Fallback */
 import { precacheAndRoute } from 'workbox-precaching';
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
