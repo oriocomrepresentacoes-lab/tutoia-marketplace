@@ -25,14 +25,26 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
 
         const onInstalled = () => {
             console.log('--- SINAL RECEBIDO: appinstalled ---');
-            setProgress(100);
-            setStatus('Instalado com sucesso! 🎉');
             
-            // Success delay before closing
-            setTimeout(() => {
-                onClose();
-                setIsInstalling(false);
-            }, 2000);
+            // Final smooth dash to 100%
+            let finalProgress = 90;
+            const finalInterval = setInterval(() => {
+                finalProgress += 2;
+                if (finalProgress >= 100) {
+                    clearInterval(finalInterval);
+                    setProgress(100);
+                    setStatus('Instalado com sucesso! 🎉');
+                    
+                    // Give user time to see the success (3.5s)
+                    setTimeout(() => {
+                        onClose();
+                        setIsInstalling(false);
+                    }, 3500);
+                } else {
+                    setProgress(finalProgress);
+                    setStatus('Finalizando no dispositivo...');
+                }
+            }, 50);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
@@ -50,33 +62,33 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
         let currentProgress = 0;
         
         const interval = setInterval(() => {
-            // Cap at 90% while waiting for the "signal" (appinstalled)
+            // Cap at 90% while waiting for signal
             if (currentProgress >= 90) {
-                if (currentProgress < 95) {
-                    currentProgress += 0.1; // Very slow crawl
-                    setStatus('Finalizando configuração...');
+                if (currentProgress < 94) {
+                    currentProgress += 0.05; // Even slower crawl
+                    setStatus('Aguardando resposta do Android...');
                     setProgress(currentProgress);
                 } else {
-                    setStatus('Aguardando resposta do sistema...');
+                    setStatus('Quase lá...');
                     clearInterval(interval);
                 }
                 return;
             }
 
-            // Simulated realistic growth
+            // Simulated realistic, slower growth
             if (currentProgress < 30) {
-                currentProgress += Math.random() * 5;
-                setStatus('Preparando sistema...');
-            } else if (currentProgress < 75) {
                 currentProgress += Math.random() * 3;
-                setStatus('Baixando arquivos essenciais...');
-            } else {
+                setStatus('Iniciando transferência...');
+            } else if (currentProgress < 80) {
                 currentProgress += Math.random() * 1.5;
-                setStatus('Verificando integridade...');
+                setStatus('Processando pacotes...');
+            } else {
+                currentProgress += Math.random() * 0.8;
+                setStatus('Extraindo arquivos...');
             }
 
             setProgress(currentProgress);
-        }, 400);
+        }, 500);
 
         return () => clearInterval(interval);
     };
