@@ -24,13 +24,15 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
         };
 
         const onInstalled = () => {
-            console.log('PWA detectado como instalado com sucesso!');
+            console.log('--- SINAL RECEBIDO: appinstalled ---');
             setProgress(100);
             setStatus('Instalado com sucesso! 🎉');
+            
+            // Success delay before closing
             setTimeout(() => {
                 onClose();
                 setIsInstalling(false);
-            }, 1500);
+            }, 2000);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
@@ -43,32 +45,37 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     }, [onClose]);
 
     const startSimulation = () => {
-        console.log('Iniciando simulação de progresso...');
+        console.log('Iniciando "Ilusão" de progresso...');
         setIsInstalling(true);
         let currentProgress = 0;
         
         const interval = setInterval(() => {
-            if (currentProgress >= 98) {
-                clearInterval(interval);
+            // Cap at 90% while waiting for the "signal" (appinstalled)
+            if (currentProgress >= 90) {
+                if (currentProgress < 95) {
+                    currentProgress += 0.1; // Very slow crawl
+                    setStatus('Finalizando configuração...');
+                    setProgress(currentProgress);
+                } else {
+                    setStatus('Aguardando resposta do sistema...');
+                    clearInterval(interval);
+                }
                 return;
             }
 
             // Simulated realistic growth
             if (currentProgress < 30) {
-                currentProgress += Math.random() * 8;
+                currentProgress += Math.random() * 5;
                 setStatus('Preparando sistema...');
-            } else if (currentProgress < 85) {
+            } else if (currentProgress < 75) {
                 currentProgress += Math.random() * 3;
-                setStatus('Baixando arquivos do App...');
+                setStatus('Baixando arquivos essenciais...');
             } else {
-                currentProgress += 0.5;
-                setStatus('Quase lá! Finalizando...');
+                currentProgress += Math.random() * 1.5;
+                setStatus('Verificando integridade...');
             }
 
-            setProgress(prev => {
-                const next = Math.min(Math.max(prev, currentProgress), 98);
-                return next;
-            });
+            setProgress(currentProgress);
         }, 400);
 
         return () => clearInterval(interval);
@@ -77,25 +84,26 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     const handleInstallClick = async () => {
         console.log('Botão Instalar clicado');
         const promptToUse = deferredPrompt || (window as any).deferredPrompt;
+        
         if (!promptToUse) {
-            console.error('Nenhum deferredPrompt disponível');
+            console.warn('Prompt não disponível, tentando simulação direta...');
+            startSimulation();
             return;
         }
 
         try {
             promptToUse.prompt();
             const { outcome } = await promptToUse.userChoice;
-            console.log('Resultado da escolha do usuário:', outcome);
+            console.log('Outcome do PWA:', outcome);
 
             if (outcome === 'accepted') {
-                setIsInstalling(true);
                 startSimulation();
             } else {
                 onClose();
             }
         } catch (err) {
-            console.error('Erro ao processar instalação:', err);
-            onClose();
+            console.error('Erro no fluxo PWA:', err);
+            startSimulation(); // Fallback to simulation
         } finally {
             setDeferredPrompt(null);
             (window as any).deferredPrompt = null;
