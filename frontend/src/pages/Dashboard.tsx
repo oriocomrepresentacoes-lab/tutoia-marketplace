@@ -252,10 +252,11 @@ export const Dashboard = () => {
 
     return (
         <div className="dashboard-page container">
-            <div className="dashboard-header">
-                <div>
-                    <h1 className="page-title">Meu Painel</h1>
-                    <p className="page-subtitle">Gerencie seus anúncios e adesões.</p>
+            <div className="dashboard-header animate-fade-in">
+                <div className="header-info">
+                    <h1>Olá, {user?.name || 'Vendedor'}!</h1>
+                    <p className="subtitle">Gerencie seus anúncios e banners em um só lugar.</p>
+                    <span className="app-version-badge">v2.5.0</span>
                 </div>
                 <Link to="/create-ad" className="btn btn-primary d-flex align-center gap-2">
                     <Plus size={20} /> Novo Anúncio

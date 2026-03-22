@@ -179,7 +179,15 @@ function App() {
         };
       }
 
-      console.log('[App] User detected, initializing notifications...');
+      // Check for Service Worker updates and force reload
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('[App] Service Worker controller changed, reloading...');
+          window.location.reload();
+        });
+      }
+
+      console.log('[App] User detected (v2.5.0), initializing notifications...');
       // Small delay to ensure service worker is ready
       setTimeout(() => {
         setupNotifications();
