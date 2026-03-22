@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Share, PlusSquare } from 'lucide-react';
 import './InstallPrompt.css';
 
 interface InstallPromptProps {
@@ -11,9 +11,29 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     const [isInstalling, setIsInstalling] = useState(false);
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState('Preparando instalação...');
+    
+    // Platform detection
+    const [isIOS, setIsIOS] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
+        const checkPlatform = () => {
+            const platform = (navigator as any).userAgentData?.platform || navigator.platform || '';
+            const userAgent = navigator.userAgent || '';
+            
+            const ios = /iPad|iPhone|iPod/.test(platform) || 
+                       (userAgent.includes("Mac") && "ontouchend" in document);
+            
+            const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                             (window.navigator as any).standalone === true;
+            
+            setIsIOS(ios);
+            setIsStandalone(standalone);
+        };
+
+        checkPlatform();
         console.log('--- InstallPrompt Montado ---');
+        
         // Use the global prompt if available
         if ((window as any).deferredPrompt) {
             setDeferredPrompt((window as any).deferredPrompt);
@@ -131,7 +151,12 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
         }
     };
 
-    if (!deferredPrompt && !(window as any).deferredPrompt && !isInstalling) return null;
+    // Do not show if already installed
+    if (isStandalone) return null;
+
+    // Show if we have a prompt OR we are on iOS (to show instructions) OR we are currently installing
+    const canShow = !!deferredPrompt || !!(window as any).deferredPrompt || isIOS || isInstalling;
+    if (!canShow) return null;
 
     return (
         <div className="install-prompt-overlay">
@@ -156,6 +181,27 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
                             ></div>
                         </div>
                         <p className="progress-percentage">{Math.round(progress)}%</p>
+                    </div>
+                ) : isIOS ? (
+                    <div className="ios-install-instructions">
+                        <p className="install-prompt-desc">Para instalar no seu iPhone, siga estes passos simples:</p>
+                        <ul className="ios-steps">
+                            <li className="ios-step">
+                                <div className="step-icon-circle">
+                                    <Share size={20} />
+                                </div>
+                                <span>Toque no botão de <strong>Compartilhar</strong> na barra do Safari.</span>
+                            </li>
+                            <li className="ios-step">
+                                <div className="step-icon-circle">
+                                    <PlusSquare size={20} />
+                                </div>
+                                <span>Role para baixo e selecione <strong>Adicionar à Tela de Início</strong>.</span>
+                            </li>
+                        </ul>
+                        <button className="btn btn-primary ios-understand-btn" onClick={onClose}>
+                            Entendi
+                        </button>
                     </div>
                 ) : (
                     <>
