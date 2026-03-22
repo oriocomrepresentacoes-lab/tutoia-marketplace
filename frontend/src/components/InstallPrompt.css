@@ -237,4 +237,13 @@
     padding: 1rem;
     border-radius: 12px;
     font-weight: 700;
-}
+}
+
+.ios-pwa-badge {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin: 1.5rem 0 1rem;
+    line-height: 1.4;
+    padding: 0 1rem;
+    opacity: 0.8;
+}

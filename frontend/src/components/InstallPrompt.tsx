@@ -15,6 +15,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     // Platform detection
     const [isIOS, setIsIOS] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [showIosInstructions, setShowIosInstructions] = useState(false);
 
     useEffect(() => {
         const checkPlatform = () => {
@@ -33,6 +34,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
         };
 
         checkPlatform();
+        // ... (rest of the effects)
         console.log('--- InstallPrompt Montado ---');
         
         // Use the global prompt if available
@@ -184,25 +186,45 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
                         <p className="progress-percentage">{Math.round(progress)}%</p>
                     </div>
                 ) : isIOS ? (
-                    <div className="ios-install-instructions">
-                        <p className="install-prompt-desc">Para instalar no seu iPhone, siga estes passos simples:</p>
-                        <ul className="ios-steps">
-                            <li className="ios-step">
-                                <div className="step-icon-circle">
-                                    <Share size={20} />
-                                </div>
-                                <span>Toque no botão de <strong>Compartilhar</strong> na barra do Safari.</span>
-                            </li>
-                            <li className="ios-step">
-                                <div className="step-icon-circle">
-                                    <PlusSquare size={20} />
-                                </div>
-                                <span>Role para baixo e selecione <strong>Adicionar à Tela de Início</strong>.</span>
-                            </li>
-                        </ul>
-                        <button className="btn btn-primary ios-understand-btn" onClick={onClose}>
-                            Entendi
-                        </button>
+                    <div className="ios-install-flow">
+                        {!showIosInstructions ? (
+                            <>
+                                <p className="install-prompt-desc">Gostaria de instalar o app no seu dispositivo?</p>
+                                <button 
+                                    className="btn btn-primary install-btn" 
+                                    onClick={() => setShowIosInstructions(true)}
+                                >
+                                    Siga as instruções →
+                                </button>
+                                <p className="ios-pwa-badge">
+                                    Contamos com tecnologia PWA que permite instalar o app a partir do safari de forma manual totalmente segura.
+                                </p>
+                                <button className="btn btn-secondary later-btn" onClick={onClose}>
+                                    Agora não
+                                </button>
+                            </>
+                        ) : (
+                            <div className="ios-install-instructions">
+                                <p className="install-prompt-desc">Para instalar no seu iPhone, siga estes passos simples:</p>
+                                <ul className="ios-steps">
+                                    <li className="ios-step">
+                                        <div className="step-icon-circle">
+                                            <Share size={20} />
+                                        </div>
+                                        <span>Toque no botão de <strong>Compartilhar</strong> na barra do Safari.</span>
+                                    </li>
+                                    <li className="ios-step">
+                                        <div className="step-icon-circle">
+                                            <PlusSquare size={20} />
+                                        </div>
+                                        <span>Role para baixo e selecione <strong>Adicionar à Tela de Início</strong>.</span>
+                                    </li>
+                                </ul>
+                                <button className="btn btn-primary ios-understand-btn" onClick={onClose}>
+                                    Entendi
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <>
