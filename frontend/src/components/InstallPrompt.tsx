@@ -13,6 +13,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     const [status, setStatus] = useState('Preparando instalação...');
 
     useEffect(() => {
+        console.log('--- InstallPrompt Montado ---');
         // Use the global prompt if available
         if ((window as any).deferredPrompt) {
             setDeferredPrompt((window as any).deferredPrompt);
@@ -37,6 +38,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
                     
                     // Give user time to see the success (3.5s)
                     setTimeout(() => {
+                        console.log('Chamando onClose após sucesso');
                         onClose();
                         setIsInstalling(false);
                     }, 3500);
@@ -51,6 +53,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
         window.addEventListener('appinstalled', onInstalled);
 
         return () => {
+            console.log('--- InstallPrompt DESMONTADO ---');
             window.removeEventListener('beforeinstallprompt', handler);
             window.removeEventListener('appinstalled', onInstalled);
         };
@@ -94,30 +97,36 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     };
 
     const handleInstallClick = async () => {
-        console.log('Botão Instalar clicado');
+        console.log('--- handleInstallClick iniciado ---');
         const promptToUse = deferredPrompt || (window as any).deferredPrompt;
         
         if (!promptToUse) {
-            console.warn('Prompt não disponível, tentando simulação direta...');
+            console.warn('Simulando instalação (prompt ausente)');
             startSimulation();
             return;
         }
 
         try {
+            console.log('Disparando prompt do sistema...');
+            setIsInstalling(true); // Bloqueia a UI imediatamente
+            
             promptToUse.prompt();
             const { outcome } = await promptToUse.userChoice;
-            console.log('Outcome do PWA:', outcome);
+            console.log('Decisão do usuário:', outcome);
 
             if (outcome === 'accepted') {
+                console.log('Instalação aceita - iniciando simulação');
                 startSimulation();
             } else {
+                console.log('Instalação recusada');
+                setIsInstalling(false);
                 onClose();
             }
         } catch (err) {
-            console.error('Erro no fluxo PWA:', err);
-            startSimulation(); // Fallback to simulation
+            console.error('Falha no processo de instalação:', err);
+            startSimulation(); // Fallback
         } finally {
-            setDeferredPrompt(null);
+            // Só limpamos o bridge global, mas mantemos o estado interno se isInstalling for true
             (window as any).deferredPrompt = null;
         }
     };
