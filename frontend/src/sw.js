@@ -22,11 +22,14 @@ const messaging = getMessaging(app);
 onBackgroundMessage(messaging, (payload) => {
     console.log('[SW] Background message received:', payload);
     
-    // Deduplication Guard: If payload already has a notification object, 
-    // the browser handles it automatically via FCM. 
-    // We only show manual notification for "data-only" payloads.
-    if (payload.notification) {
-        console.log('[SW] Automatic notification detected, skipping manual display.');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // Deduplication Guard: On Android/Windows, the browser handles 'notification' blocks automatically.
+    // However, on iOS Safari PWA, it DOES NOT show them automatically.
+    // So we only skip manual display if it's NOT an iOS device.
+    if (payload.notification && !isIOS) {
+        console.log('[SW] Automatic notification detected (non-iOS), skipping manual display.');
         return;
     }
     

@@ -189,7 +189,9 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
                     },
                     data: {
                         url: `/messages?adId=${ad_id}&otherId=${sender_id}`,
-                        type: 'chat_message'
+                        type: 'chat_message',
+                        title: `💬 Nova mensagem de ${sender?.name || 'Alguém'}`,
+                        body: `${content.substring(0, 50)}${content.length > 50 ? '...' : ''}\nRef: ${ad?.title || 'Anúncio'}`
                     },
                     android: {
                         priority: 'high' as any,

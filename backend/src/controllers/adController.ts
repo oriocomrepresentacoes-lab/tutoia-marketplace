@@ -92,7 +92,9 @@ export const createAd = async (req: AuthRequest, res: Response) => {
                     },
                     data: {
                         url: `/ad/${ad.id}`,
-                        type: 'new_ad'
+                        type: 'new_ad',
+                        title: '🎉 Novo Anúncio no TutShop!',
+                        body: `${ad.title} acaba de ser postado. Confira agora!`
                     },
                     android: {
                         priority: 'high' as any,
