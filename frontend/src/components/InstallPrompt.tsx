@@ -43,6 +43,7 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
     }, [onClose]);
 
     const startSimulation = () => {
+        console.log('Iniciando simulação de progresso...');
         setIsInstalling(true);
         let currentProgress = 0;
         
@@ -54,33 +55,51 @@ export const InstallPrompt = ({ onClose }: InstallPromptProps) => {
 
             // Simulated realistic growth
             if (currentProgress < 30) {
-                currentProgress += Math.random() * 5;
+                currentProgress += Math.random() * 8;
                 setStatus('Preparando sistema...');
             } else if (currentProgress < 85) {
-                currentProgress += Math.random() * 2;
+                currentProgress += Math.random() * 3;
                 setStatus('Baixando arquivos do App...');
             } else {
                 currentProgress += 0.5;
-                setStatus('Finalizando instalação no dispositivo...');
+                setStatus('Quase lá! Finalizando...');
             }
 
-            setProgress(Math.min(currentProgress, 98));
-        }, 300);
+            setProgress(prev => {
+                const next = Math.min(Math.max(prev, currentProgress), 98);
+                return next;
+            });
+        }, 400);
+
+        return () => clearInterval(interval);
     };
 
     const handleInstallClick = async () => {
+        console.log('Botão Instalar clicado');
         const promptToUse = deferredPrompt || (window as any).deferredPrompt;
-        if (!promptToUse) return;
-
-        promptToUse.prompt();
-        const { outcome } = await promptToUse.userChoice;
-
-        if (outcome === 'accepted') {
-            startSimulation();
+        if (!promptToUse) {
+            console.error('Nenhum deferredPrompt disponível');
+            return;
         }
-        
-        setDeferredPrompt(null);
-        (window as any).deferredPrompt = null;
+
+        try {
+            promptToUse.prompt();
+            const { outcome } = await promptToUse.userChoice;
+            console.log('Resultado da escolha do usuário:', outcome);
+
+            if (outcome === 'accepted') {
+                setIsInstalling(true);
+                startSimulation();
+            } else {
+                onClose();
+            }
+        } catch (err) {
+            console.error('Erro ao processar instalação:', err);
+            onClose();
+        } finally {
+            setDeferredPrompt(null);
+            (window as any).deferredPrompt = null;
+        }
     };
 
     if (!deferredPrompt && !(window as any).deferredPrompt && !isInstalling) return null;
