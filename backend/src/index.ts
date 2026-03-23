@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v2.5.0-ios-push-sync) ---'); // Poke Render v2.5
+console.log('--- SYSTEM BOOT (v2.5.1-ios-test-fix) ---'); // Poke Render v2.5.1
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 
@@ -122,5 +122,5 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT} `);
+    console.log(`🚀 Backend TutShop v2.5.1 listening on port ${PORT}`);
 });

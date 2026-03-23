@@ -57,7 +57,36 @@ export const sendTestNotification = async (req: AuthRequest, res: Response) => {
                 body: 'Suas notificações Firebase estão funcionando perfeitamente! 🚀'
             },
             data: {
-                url: '/dashboard'
+                url: '/dashboard',
+                type: 'test',
+                title: '🔔 Teste FCM TutShop',
+                body: 'Suas notificações Firebase estão funcionando perfeitamente! 🚀'
+            },
+            android: {
+                priority: 'high' as any,
+                notification: {
+                    sound: 'default',
+                }
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        'content-available': 1,
+                        sound: 'default'
+                    }
+                }
+            },
+            webpush: {
+                headers: {
+                    Urgency: 'high'
+                },
+                notification: {
+                    icon: '/app-icon-v3.png',
+                    badge: '/app-icon-v3.png',
+                },
+                fcm_options: {
+                    link: '/dashboard'
+                }
             },
             tokens: tokens
         };
