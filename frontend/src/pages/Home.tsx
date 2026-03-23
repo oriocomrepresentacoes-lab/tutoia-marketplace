@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { fetchApi } from '../utils/api';
@@ -8,25 +8,70 @@ import { LoadingState } from '../components/LoadingState';
 import './Home.css';
 
 export const Home = () => {
-    const [ads, setAds] = useState([]);
+    const [ads, setAds] = useState<any[]>([]);
     const [banners, setBanners] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const observer = useRef<IntersectionObserver | null>(null);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        setLoading(true);
-        Promise.all([
-            fetchApi('/ads?sort=recent&limit=12'),
-            fetchApi('/banners/active')
-        ]).then(([adsData, bannerData]) => {
-            if (adsData && adsData.ads) setAds(adsData.ads);
-            if (bannerData) {
-                setBanners(bannerData);
+    const lastAdElementRef = useCallback((node: HTMLDivElement) => {
+        if (loading || loadingMore) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1);
             }
-            setLoading(false);
-        }).catch(() => setLoading(false));
+        });
+        if (node) observer.current.observe(node);
+    }, [loading, loadingMore, hasMore]);
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setLoading(true);
+            try {
+                const [adsData, bannerData] = await Promise.all([
+                    fetchApi('/ads?sort=recent&limit=12&page=1'),
+                    fetchApi('/banners/active')
+                ]);
+                if (adsData && adsData.ads) {
+                    setAds(adsData.ads);
+                    setHasMore(adsData.meta.hasNextPage);
+                }
+                if (bannerData) {
+                    setBanners(bannerData);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        if (page > 1) {
+            const loadMoreAds = async () => {
+                setLoadingMore(true);
+                try {
+                    const data = await fetchApi(`/ads?sort=recent&limit=12&page=${page}`);
+                    if (data && data.ads) {
+                        setAds(prev => [...prev, ...data.ads]);
+                        setHasMore(data.meta.hasNextPage);
+                    }
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    setLoadingMore(false);
+                }
+            };
+            loadMoreAds();
+        }
+    }, [page]);
 
     return (
         <div className="home-page">
@@ -61,14 +106,26 @@ export const Home = () => {
 
                 {loading ? (
                     <LoadingState />
-                ) : (
-                    <div className="listing-grid">
-                        {ads.length > 0 ? (
-                            ads.map((ad: any) => <AdCard key={ad.id} ad={ad} />)
-                        ) : (
-                            <p className="empty-state">Nenhum anúncio encontrado. Seja o primeiro a anunciar!</p>
+                ) : ads.length > 0 ? (
+                    <>
+                        <div className="listing-grid">
+                            {ads.map((ad: any, index: number) => <AdCard key={`${ad.id}-${index}`} ad={ad} />)}
+                        </div>
+
+                        {/* Sentinel for Infinite Scroll */}
+                        <div ref={lastAdElementRef} style={{ height: '20px', margin: '1rem 0' }} />
+
+                        {loadingMore && (
+                            <div className="loading-more-spinner" style={{ textAlign: 'center', padding: '1rem' }}>
+                                <div className="spinner-border text-primary" role="status" style={{ width: '1.5rem', height: '1.5rem' }}>
+                                    <span className="visually-hidden">Carregando mais...</span>
+                                </div>
+                                <p className="text-muted mt-2" style={{ fontSize: '0.875rem' }}>Buscando mais anúncios...</p>
+                            </div>
                         )}
-                    </div>
+                    </>
+                ) : (
+                    <p className="empty-state">Nenhum anúncio encontrado. Seja o primeiro a anunciar!</p>
                 )}
             </div>
 

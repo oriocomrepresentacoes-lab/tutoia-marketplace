@@ -192,54 +192,75 @@ export const getAds = async (req: Request, res: Response) => {
         if (sort === 'views') orderBy = { views: 'desc' };
         if (sort === 'price_asc') orderBy = { price: 'asc' };
 
-        const [totalCount, ads] = await Promise.all([
-            prisma.ad.count({ where: filter }),
+        // --- HIGHLIGHT PINNING LOGIC ---
+        // Find ALL active highlight transactions
+        const allActiveHighlights = await prisma.transaction.findMany({
+            where: {
+                type: 'AD_IMAGES',
+                status: 'USED',
+                expires_at: { gte: new Date() },
+                ad_id: { not: null }
+            },
+            select: { ad_id: true }
+        });
+
+        const featuredAdIdsArray = Array.from(new Set(allActiveHighlights.map(t => String(t.ad_id))));
+        const featuredAdIdsSet = new Set(featuredAdIdsArray);
+        
+        const normalAdsFilter = { ...filter };
+        let featuredAds: any[] = [];
+        
+        if (featuredAdIdsArray.length > 0) {
+            normalAdsFilter.id = { notIn: featuredAdIdsArray };
+            
+            // Only fetch featured ads if we are on the first page
+            if (p === 1) {
+                featuredAds = await prisma.ad.findMany({
+                    where: { ...filter, id: { in: featuredAdIdsArray } },
+                    orderBy: { created_at: 'desc' },
+                    include: {
+                        category: true,
+                        user: { select: { name: true, phone: true, profile_picture: true } }
+                    }
+                });
+            }
+        }
+
+        const [totalCountNormal, normalAds] = await Promise.all([
+            prisma.ad.count({ where: normalAdsFilter }),
             prisma.ad.findMany({
-                where: filter,
+                where: normalAdsFilter,
                 orderBy,
                 skip,
                 take: l,
                 include: {
                     category: true,
-                    user: {
-                        select: { name: true, phone: true, profile_picture: true }
-                    }
+                    user: { select: { name: true, phone: true, profile_picture: true } }
                 },
             })
         ]);
 
-        // Find active highlight transactions linked to specific ads (20-day limit valid)
-        // Optimization: only check highlights for the returned 'ads' subset
-        const adIds = ads.map(a => a.id);
-        const activeHighlights = await prisma.transaction.findMany({
-            where: {
-                type: 'AD_IMAGES',
-                status: 'USED',
-                expires_at: { gte: new Date() },
-                ad_id: { in: adIds }
-            },
-            select: { ad_id: true }
-        });
+        // Combine for processing. Featured ads will naturally be at the beginning of the array.
+        const allFetchedAds = [...featuredAds, ...normalAds];
+        const fetchedAdIds = allFetchedAds.map(a => a.id);
 
         const allImageTransactions = await prisma.transaction.findMany({
             where: {
                 type: 'AD_IMAGES',
-                ad_id: { in: adIds }
+                ad_id: { in: fetchedAdIds }
             },
             select: { ad_id: true, expires_at: true }
         });
 
-        // Create lookup Sets
-        const featuredAdIds = new Set(activeHighlights.map(t => t.ad_id));
         const adWithPremiumHistory = new Set(allImageTransactions.map(t => t.ad_id));
 
         // map images JSON to array and attach flags
-        const formattedAds = ads.map(ad => {
-            const isFeatured = featuredAdIds.has(ad.id);
+        const formattedAds = allFetchedAds.map(ad => {
+            const isFeatured = featuredAdIdsSet.has(ad.id);
             const hadPremium = adWithPremiumHistory.has(ad.id);
             const imagesArray = JSON.parse(ad.images);
 
-            // Find expiration date if premium
+            // Find expiration date if premium history exists
             const premiumTx = allImageTransactions.find(t => t.ad_id === ad.id);
             const expiresAt = premiumTx ? premiumTx.expires_at : null;
 
@@ -258,36 +279,24 @@ export const getAds = async (req: Request, res: Response) => {
             };
         });
 
-        // Sort to bring featured ads to the top within this page
-        formattedAds.sort((a, b) => {
-            if (a.isFeatured && !b.isFeatured) return -1;
-            if (!a.isFeatured && b.isFeatured) return 1;
-            return 0;
-        });
-
-        if (isHomePageQuery) {
-            cache.set(cacheKey, {
-                ads: formattedAds,
-                meta: {
-                    totalCount,
-                    page: p,
-                    limit: l,
-                    totalPages: Math.ceil(totalCount / l),
-                    hasNextPage: skip + l < totalCount
-                }
-            }, 120); // 2 mins
-        }
-
-        res.json({
+        // The 'totalCount' logic for pagination will safely track the 'normal' ads space.
+        // It prevents offset drift since featured ads don't consume the 'take: limit' offset block.
+        const responseData = {
             ads: formattedAds,
             meta: {
-                totalCount,
+                totalCount: totalCountNormal,
                 page: p,
                 limit: l,
-                totalPages: Math.ceil(totalCount / l),
-                hasNextPage: skip + l < totalCount
+                totalPages: Math.ceil(totalCountNormal / l),
+                hasNextPage: skip + l < totalCountNormal
             }
-        });
+        };
+
+        if (isHomePageQuery) {
+            cache.set(cacheKey, responseData, 120); // 2 mins
+        }
+
+        res.json(responseData);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar anúncios.' });
     }
