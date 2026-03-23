@@ -57,10 +57,6 @@ onBackgroundMessage(messaging, (payload) => {
 self.addEventListener('push', (event) => {
     console.log('[SW] PUSH event received (Native):', event);
     
-    // If the browser already has a notification displayed for this push, 
-    // it usually won't trigger if it was handled automatically.
-    // But on iOS PWA, we usually need to handle it manually.
-    
     let payload;
     try {
         payload = event.data ? event.data.json() : null;
