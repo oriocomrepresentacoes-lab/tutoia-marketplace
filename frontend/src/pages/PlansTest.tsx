@@ -63,7 +63,7 @@ export const PlansTest = () => {
                     price="0,50"
                     features={[
                         "Até 10 fotos por anúncio",
-                        "Selo de anúncio verificado",
+                        "Selo de anuncio destaque",
                         "Melhor visibilidade na busca",
                         "Válido por 20 dias"
                     ]}

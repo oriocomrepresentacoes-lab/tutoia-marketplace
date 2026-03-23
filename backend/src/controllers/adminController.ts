@@ -139,3 +139,31 @@ export const getAdminAds = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: 'Erro ao buscar anúncios' });
     }
 };
+
+// Get financial statistics for Admin dashboard
+export const getFinancialStats = async (req: AuthRequest, res: Response) => {
+    try {
+        if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+
+        const approvedTransactions = await prisma.transaction.findMany({
+            where: { status: 'APPROVED' },
+            select: { transaction_amount: true, type: true }
+        });
+
+        const stats = {
+            totalRevenue: 0,
+            bannerRevenue: 0,
+            adImagesRevenue: 0
+        };
+
+        approvedTransactions.forEach(tx => {
+            stats.totalRevenue += tx.transaction_amount;
+            if (tx.type === 'BANNER') stats.bannerRevenue += tx.transaction_amount;
+            if (tx.type === 'AD_IMAGES') stats.adImagesRevenue += tx.transaction_amount;
+        });
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar estatísticas financeiras' });
+    }
+};

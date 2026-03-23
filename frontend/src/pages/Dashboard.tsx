@@ -13,6 +13,7 @@ export const Dashboard = () => {
     const [myAds, setMyAds] = useState([]);
     const [myPlans, setMyPlans] = useState<any[]>([]);
     const [myBanners, setMyBanners] = useState<any[]>([]);
+    const [financialStats, setFinancialStats] = useState({ totalRevenue: 0, bannerRevenue: 0, adImagesRevenue: 0 });
     const [loading, setLoading] = useState(true);
 
     const [bannerTitle, setBannerTitle] = useState('');
@@ -42,10 +43,11 @@ export const Dashboard = () => {
     const loadData = async (isBackground = false) => {
         if (!isBackground) setLoading(true);
         try {
-            const [adsData, plansData, bannersData] = await Promise.all([
+            const [adsData, plansData, bannersData, financesData] = await Promise.all([
                 fetchApi(`/ads?user_id=${user?.id}`),
                 fetchApi('/user-plans/my-plans'),
-                fetchApi('/banners/my-banners')
+                fetchApi('/banners/my-banners'),
+                user?.role === 'ADMIN' ? fetchApi('/admin/finances') : Promise.resolve(null)
             ]);
 
             if (adsData && adsData.ads) setMyAds(adsData.ads);
@@ -53,6 +55,7 @@ export const Dashboard = () => {
                 setMyPlans(plansData.transactions || []);
             }
             if (bannersData) setMyBanners(bannersData);
+            if (financesData) setFinancialStats(financesData);
         } catch (error) {
             console.error(error);
         } finally {
@@ -290,8 +293,29 @@ export const Dashboard = () => {
 
             {isAdmin && (
                 <div className="box-card mb-4 dashboard-section-card" style={{ backgroundColor: 'rgba(147, 51, 234, 0.05)', border: '1px solid #9333ea' }}>
-                    <h2 className="section-title" style={{ color: '#9333ea' }}>Painel Administrativo</h2>
-                    <p>Você tem acesso total para criar e gerenciar banners sem restrições de pagamento.</p>
+                    <h2 className="section-title" style={{ color: '#9333ea' }}>Painel Institucional & Financeiro</h2>
+                    <p style={{ marginBottom: '1.5rem' }}>Você tem acesso total para criar banners sem restrições. Abaixo estão as estatísticas financeiras de faturamento real pelo MercadoPago.</p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
+                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Faturamento Total Real</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', color: '#9333ea', fontSize: '1.8rem' }}>
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialStats.totalRevenue)}
+                            </h3>
+                        </div>
+                        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
+                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Tíquetes de Banners</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', color: '#9333ea', fontSize: '1.8rem' }}>
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialStats.bannerRevenue)}
+                            </h3>
+                        </div>
+                        <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
+                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Anúncios Destaque</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', color: '#9333ea', fontSize: '1.8rem' }}>
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialStats.adImagesRevenue)}
+                            </h3>
+                        </div>
+                    </div>
                 </div>
             )}
 
