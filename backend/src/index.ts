@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-console.log('--- SYSTEM BOOT (v2.5.1-ios-test-fix) ---'); // Poke Render v2.5.1
+console.log('--- SYSTEM BOOT (v2.6.0-performance-optimized) ---'); // Poke Render v2.6
 console.log('Current Time:', new Date().toISOString());
 app.set('trust proxy', 1);
 

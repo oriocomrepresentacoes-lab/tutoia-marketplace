@@ -11,8 +11,8 @@ interface Banner {
     position: string;
 }
 
-export const BannerWidget = ({ position }: { position: string }) => {
-    const [banners, setBanners] = useState<Banner[]>([]);
+export const BannerWidget = ({ position, initialBanners }: { position: string, initialBanners?: any[] }) => {
+    const [banners, setBanners] = useState<Banner[]>(initialBanners?.filter(b => b.position === position) || []);
     const [currentIndex, setCurrentIndex] = useState(0);
     const timeoutRef = useRef<any>(null);
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -22,6 +22,14 @@ export const BannerWidget = ({ position }: { position: string }) => {
     const minSwipeDistance = 50;
 
     useEffect(() => {
+        if (initialBanners && initialBanners.length > 0) {
+            const active = initialBanners.filter((b: Banner) => b.position === position);
+            if (active.length > 0) {
+                setBanners(active);
+                return;
+            }
+        }
+
         let isMounted = true;
         fetchApi('/banners/active').then(data => {
             if (isMounted && data) {

@@ -1,11 +1,20 @@
 import { messaging } from '../utils/firebaseAdmin';
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
+import { cache } from '../utils/cache';
 import { AuthRequest } from '../middlewares/auth';
 import { Server } from 'socket.io';
 
 export const getActiveBanners = async (req: Request, res: Response) => {
     try {
+        const cacheKey = 'banners_active';
+        const cachedData = cache.get<any[]>(cacheKey);
+        
+        if (cachedData) {
+            console.log('[Cache] Returning cached active banners.');
+            return res.json(cachedData);
+        }
+
         const now = new Date();
 
         const banners = await prisma.banner.findMany({
@@ -17,6 +26,9 @@ export const getActiveBanners = async (req: Request, res: Response) => {
                 ]
             }
         });
+
+        cache.set(cacheKey, banners, 300); // 5 mins
+        res.json(banners);
 
         res.json(banners);
     } catch (error) {
@@ -73,6 +85,7 @@ export const deleteBanner = async (req: AuthRequest, res: Response) => {
 
         await prisma.banner.delete({ where: { id } });
 
+        cache.delete('banners_active');
         res.json({ message: 'Banner excluído com sucesso.' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir banner.' });
@@ -109,6 +122,7 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
                     position: position || existing.position,
                 }
             });
+            cache.delete('banners_active');
             return res.json(updatedBanner);
         }
 
@@ -162,6 +176,7 @@ export const createBanner = async (req: AuthRequest, res: Response) => {
             });
         }
 
+        cache.delete('banners_active');
         res.status(201).json(banner);
 
         // Real-time broadcast

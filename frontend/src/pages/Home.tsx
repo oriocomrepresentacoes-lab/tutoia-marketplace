@@ -9,14 +9,21 @@ import './Home.css';
 
 export const Home = () => {
     const [ads, setAds] = useState([]);
+    const [banners, setBanners] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         setLoading(true);
-        fetchApi('/ads?sort=recent&limit=12').then(data => {
-            if (data && data.ads) setAds(data.ads);
+        Promise.all([
+            fetchApi('/ads?sort=recent&limit=12'),
+            fetchApi('/banners/active')
+        ]).then(([adsData, bannerData]) => {
+            if (adsData && adsData.ads) setAds(adsData.ads);
+            if (bannerData) {
+                setBanners(bannerData);
+            }
             setLoading(false);
         }).catch(() => setLoading(false));
     }, []);
@@ -46,7 +53,7 @@ export const Home = () => {
             </section>
 
             <div className="container">
-                <BannerWidget position="home_topo" />
+                <BannerWidget position="home_topo" initialBanners={banners} />
             </div>
 
             <div className="container mt-4">
@@ -66,7 +73,7 @@ export const Home = () => {
             </div>
 
             <div className="container">
-                <BannerWidget position="home_topo" />
+                <BannerWidget position="home_topo" initialBanners={banners} />
             </div>
         </div>
     );

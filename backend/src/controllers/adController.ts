@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/db';
+import { cache } from '../utils/cache';
 import { AuthRequest } from '../middlewares/auth';
 import { messaging } from '../utils/firebaseAdmin';
 import { Server } from 'socket.io';
@@ -64,6 +65,7 @@ export const createAd = async (req: AuthRequest, res: Response) => {
             });
         }
 
+        cache.delete('ads_recent_home');
         res.status(201).json(ad);
 
         // Real-time broadcast for active users
@@ -158,6 +160,18 @@ export const getAds = async (req: Request, res: Response) => {
         const l = parseInt(String(limit)) || 20;
         const skip = (p - 1) * l;
 
+        // Caching for Home Page Recent Ads
+        const isHomePageQuery = !search && !category && !city && !type && !user_id && sort === 'recent' && l === 12 && p === 1;
+        const cacheKey = 'ads_recent_home';
+
+        if (isHomePageQuery) {
+            const cached = cache.get<any>(cacheKey);
+            if (cached) {
+                console.log('[Cache] Returning cached home page ads.');
+                return res.json(cached);
+            }
+        }
+
         let filter: any = { status: status ? String(status) : 'ACTIVE' };
 
         if (user_id) filter.user_id = String(user_id);
@@ -251,6 +265,19 @@ export const getAds = async (req: Request, res: Response) => {
             return 0;
         });
 
+        if (isHomePageQuery) {
+            cache.set(cacheKey, {
+                ads: formattedAds,
+                meta: {
+                    totalCount,
+                    page: p,
+                    limit: l,
+                    totalPages: Math.ceil(totalCount / l),
+                    hasNextPage: skip + l < totalCount
+                }
+            }, 120); // 2 mins
+        }
+
         res.json({
             ads: formattedAds,
             meta: {
@@ -332,6 +359,7 @@ export const deleteAd = async (req: AuthRequest, res: Response) => {
         });
 
         await prisma.ad.delete({ where: { id } });
+        cache.delete('ads_recent_home');
         res.json({ message: 'Anúncio excluído com sucesso' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao excluir o anúncio' });
@@ -455,6 +483,7 @@ export const updateAd = async (req: AuthRequest, res: Response) => {
             console.log(`[Upgrade] Ad ${updatedAd.id} upgraded to premium for the FIRST time during edit.`);
         }
 
+        cache.delete('ads_recent_home');
         res.json({ ...updatedAd, images: combinedImages });
 
     } catch (error) {
