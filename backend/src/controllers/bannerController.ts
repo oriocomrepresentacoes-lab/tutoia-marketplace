@@ -21,9 +21,21 @@ export const getActiveBanners = async (req: Request, res: Response) => {
             where: {
                 active: true,
                 OR: [
-                    { end_date: null },
-                    { end_date: { gte: now } }
+                    {
+                        user: { role: 'ADMIN' }
+                    },
+                    {
+                        OR: [
+                            { end_date: null },
+                            { end_date: { gte: now } }
+                        ]
+                    }
                 ]
+            },
+            include: {
+                user: {
+                    select: { role: true }
+                }
             }
         });
 
