@@ -3,6 +3,7 @@ import { fetchApi } from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { Users, Image, Shield, AlertTriangle, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/imageUtils';
 import './AdminPanel.css';
 
 export const AdminPanel = () => {
@@ -226,7 +227,7 @@ export const AdminPanel = () => {
                                 {banners.map(b => (
                                     <tr key={b.id}>
                                         <td>
-                                            <div className="admin-banner-preview" style={{ backgroundImage: `url(${b.image.startsWith('http') ? b.image : `http://localhost:5000${b.image}`})` }}></div>
+                                            <div className="admin-banner-preview" style={{ backgroundImage: `url(${getOptimizedImageUrl(b.image)})` }}></div>
                                         </td>
                                         <td>
                                             <div className="font-medium">{b.title}</div>
@@ -291,7 +292,7 @@ export const AdminPanel = () => {
                                 {ads.map(ad => (
                                     <tr key={ad.id}>
                                         <td>
-                                            <div className="admin-banner-preview" style={{ backgroundImage: `url(${ad.images[0]?.startsWith('http') ? ad.images[0] : `http://localhost:5000${ad.images[0]}`})`, width: '60px', height: '60px' }}></div>
+                                            <div className="admin-banner-preview" style={{ backgroundImage: `url(${getOptimizedImageUrl(ad.images[0])})`, width: '60px', height: '60px' }}></div>
                                         </td>
                                         <td>
                                             <div className="font-medium">{ad.title}</div>

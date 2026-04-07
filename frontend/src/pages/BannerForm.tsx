@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { fetchApi } from '../utils/api';
 import { UploadCloud, Link as LinkIcon, Type, Image as ImageIcon, Shield, Star, CheckCircle, Info } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/imageUtils';
 import './Dashboard.css';
 import './BannerForm.css';
 
@@ -78,7 +79,7 @@ export const BannerForm = () => {
                 if (banner) {
                     setTitle(banner.title);
                     setLink(banner.link || '');
-                    setPreview(banner.image.startsWith('http') ? banner.image : `http://localhost:5000${banner.image}`);
+                    setPreview(getOptimizedImageUrl(banner.image));
                     const bannerLink = banner.link || '';
                     if (bannerLink.startsWith('/anuncio/')) {
                         setLinkType('internal');
@@ -237,7 +238,7 @@ export const BannerForm = () => {
                         <div style={{ display: 'grid', gap: '1rem' }}>
                             {myBanners.map(banner => (
                                 <div key={banner.id} className="box-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
-                                    <img src={banner.image.startsWith('http') ? banner.image : `http://localhost:5000${banner.image}`} alt={banner.title} style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <img src={getOptimizedImageUrl(banner.image)} alt={banner.title} style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
                                     <div style={{ flex: 1 }}>
                                         <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>{banner.title}</h4>
                                         <p style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Criado em: {new Date(banner.created_at).toLocaleDateString('pt-BR')}</p>

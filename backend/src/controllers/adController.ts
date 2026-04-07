@@ -234,7 +234,7 @@ export const getAds = async (req: Request, res: Response) => {
                 skip,
                 take: l,
                 include: {
-                    category: true,
+                    category: { select: { name: true } },
                     user: { select: { name: true, phone: true, profile_picture: true } }
                 },
             })
@@ -307,7 +307,10 @@ export const getAdById = async (req: Request, res: Response) => {
         const id = req.params.id as string;
         const ad = await prisma.ad.findUnique({
             where: { id },
-            include: { user: { select: { name: true, phone: true, profile_picture: true } }, category: true },
+            include: { 
+                user: { select: { name: true, phone: true, profile_picture: true } }, 
+                category: { select: { id: true, name: true } } 
+            },
         });
 
         if (!ad) return res.status(404).json({ error: 'Anúncio não encontrado.' });

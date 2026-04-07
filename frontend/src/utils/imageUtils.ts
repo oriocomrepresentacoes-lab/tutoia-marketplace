@@ -11,6 +11,6 @@ export const getOptimizedImageUrl = (url: string | null | undefined, width?: num
         }
     }
 
-    // Default fallback for local images or other CDNs
-    return url.startsWith('http') ? url : `http://localhost:5000${url}`;
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    return url.startsWith('http') ? url : `${apiUrl}${url}`;
 };

@@ -5,6 +5,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import apiRoutes from './routes';
+import { startKeepAlive } from './utils/keep-alive';
 
 dotenv.config();
 
@@ -123,4 +124,5 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`🚀 Backend TutShop v2.5.1 listening on port ${PORT}`);
+    startKeepAlive();
 });
